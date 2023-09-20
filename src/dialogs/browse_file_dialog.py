@@ -24,7 +24,7 @@ from ui.dlgBrowseFile import Ui_BrowseFile
 class BrowseFileDlg(Ui_BrowseFile, QDialog):
     """File dialog"""
 
-    def __init__(self, _settings: Settings, _build: Build, task, _win: Ui_MainWindow):
+    def __init__(self, _settings: Settings, _build: Build, task, _win: Ui_MainWindow = None):
         """
         File dialog init
         :param _build: A pointer to the currently loaded build
@@ -32,7 +32,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         :param task: str: Either "Open" or "Save"
         :param _win: A pointer to MainWindow
         """
-        super().__init__(_win)
+        super().__init__(None)
         self.win = _win
         self.build = _build
         self.settings = _settings
@@ -53,6 +53,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         for idx in range(0, self.hLayout_SaveAs.count()):
             self.hLayout_SaveAs.itemAt(idx).widget().setHidden(not self.save)
 
+        self.lineEdit_SaveAs.setText(_build.filename)
         self.list_Files.set_delegate()
         self.list_Files_width = self.list_Files.width()
         self.max_filename_width = 100
@@ -169,26 +170,26 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         self.list_Files.setCurrentRow(0)
         self.connect_triggers()
 
-    @Slot()
+    # @Slot()
     def lineedit_currdir_changed(self, new_dir):
         # print(f"current_dir_changed {new_dir}")
         self.change_dir(new_dir)
 
-    @Slot()
+    # @Slot()
     def lineedit_currdir_editing_finished(self):
         """After the directory text box has finished being edited, change directory."""
         # print("editing_finished", self.lineEdit_CurrDir.text())
         # forcibly refill the list box
         self.change_dir(self.lineEdit_CurrDir.text())
 
-    @Slot()
+    # @Slot()
     def change_dir_clicked(self):
         """the change dir button is selecte, open a directory chooser dialog."""
         new_dir = str(QFileDialog.getExistingDirectory(self.win, "Select Directory"))
         if new_dir != "":
             self.change_dir(new_dir)
 
-    @Slot()
+    # @Slot()
     def list_file_clicked(self, item: QListWidgetItem):
         """
         Populate the SaveAs text box as files are selected in the list
@@ -202,7 +203,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
             # Clean the toolTip. The toolTip is the only place we can get the cleanest copy of the file name
             self.lineEdit_SaveAs.setText(re.sub("<[^<]+?>", "", item.toolTip()))
 
-    @Slot()
+    # @Slot()
     def list_file_double_clicked(self, item: QListWidgetItem):
         """
         Selecting a file or directory for opening / saving
@@ -217,7 +218,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
             # do something interesting, like return with the information
             self.file_chosen(item)
 
-    @Slot()
+    # @Slot()
     def task_button_clicked(self):
         """
         Selecting a file or directory for opening / saving
@@ -265,7 +266,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
             self.selected_file = info["path"]
             self.accept()
 
-    @Slot()
+    # @Slot()
     def rename_file(self):
         """"""
         curr_item = self.list_Files.currentItem()
