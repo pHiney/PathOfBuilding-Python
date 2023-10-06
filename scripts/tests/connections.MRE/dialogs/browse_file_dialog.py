@@ -11,20 +11,20 @@ import re
 from PySide6.QtWidgets import QDialog, QListWidgetItem, QFileDialog
 from PySide6.QtCore import Qt, Slot
 
-from PoB.build import Build
-from dialogs.popup_dialogs import yes_no_dialog
-from PoB.settings import Settings
-from PoB.pob_file import get_file_info
-from widgets.ui_utils import html_colour_text
+# from PoB.build import Build
+# from dialogs.popup_dialogs import yes_no_dialog
+# from PoB.settings import Settings
+# from PoB.pob_file import get_file_info
+# from widgets.ui_utils import html_colour_text
 
-from ui.PoB_Main_Window import Ui_MainWindow
+# from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgBrowseFile import Ui_BrowseFile
 
 
 class BrowseFileDlg(Ui_BrowseFile, QDialog):
     """File dialog"""
 
-    def __init__(self, _settings: Settings, _build: Build, task, _win: Ui_MainWindow = None):
+    def __init__(self, task, _win = None):
         """
         File dialog init
         :param _build: A pointer to the currently loaded build
@@ -34,8 +34,6 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         """
         super().__init__(None)
         self.win = _win
-        self.build = _build
-        self.settings = _settings
         self.selected_file = ""
         self.triggers_connected = False
         self.save = task == "Save"
@@ -53,12 +51,12 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         for idx in range(0, self.hLayout_SaveAs.count()):
             self.hLayout_SaveAs.itemAt(idx).widget().setHidden(not self.save)
 
-        self.lineEdit_SaveAs.setText(_build.filename)
+        # self.lineEdit_SaveAs.setText(_build.filename)
         self.list_Files.set_delegate()
         self.list_Files_width = self.list_Files.width()
         self.max_filename_width = 100
 
-        self.change_dir(self.settings.build_path)  # connects triggers
+        self.change_dir(os.getcwd())  # connects triggers
 
     # Overridden function
     def resizeEvent(self, event):
@@ -119,29 +117,30 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
             # find longest name
             max_length = max([len(s) for s in files_grabbed])
             for filename in files_grabbed:
-                text, class_name = get_file_info(self.settings, filename, max_length, self.max_filename_width)
-                if text != "":
-                    self.add_path_to_listbox(filename, text, class_name, False)
+                # text, class_name = get_file_info(self.settings, filename, max_length, self.max_filename_width)
+                # if text != "":
+                text, class_name =  "", ""
+                self.add_path_to_listbox(filename, text, class_name, False)
 
     def add_path_to_listbox(self, filename, _text, class_name, is_dir):
         """
         Add one directory or file to the listbox.
         :param filename: name of file in current directory, no html tags.
-        :param _text: The name of the file, class name and verions (with colours).
+        :param _text: The name of the file, class name and versions (with colours).
         :param class_name: The class name (for tooltip colour).
         :param is_dir: True if a directory
         :return: QListWidgetItem: the item added.
         """
         if is_dir:
-            lwi = QListWidgetItem(html_colour_text(self.settings.qss_default_text, f"[{_text}]"))
+            lwi = QListWidgetItem(f"[{_text}]")
             # If _name is .., then add the parent directory, else the subdirectory
             path = _text == ".." and os.pardir or _text
             _path = os.path.abspath(os.path.join(self.lineEdit_CurrDir.text(), path))
-            lwi.setToolTip(f"<nobr>{html_colour_text(self.settings.qss_default_text, _path)}</nobr>")
+            lwi.setToolTip(f"<nobr>{_path}</nobr>")
         else:
             lwi = QListWidgetItem(_text)
             _path = os.path.abspath(os.path.join(self.lineEdit_CurrDir.text(), filename))
-            lwi.setToolTip(f"<nobr>{html_colour_text(class_name, filename)}</nobr>")
+            lwi.setToolTip(f"<nobr>{filename}</nobr>")
         info = {
             "filename": filename,
             "path": _path,
