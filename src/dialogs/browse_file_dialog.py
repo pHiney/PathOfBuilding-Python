@@ -112,7 +112,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         for name in dirs:
             self.add_path_to_listbox(f"{name}", f"{name}", "", True)
 
-        files_grabbed = glob.glob("*.xml") + glob.glob("*.xml2")
+        files_grabbed = glob.glob("*.xml") + glob.glob("*.xml2") + glob.glob("*.json")
         if files_grabbed:
             # Don't use listBox's sort method as it puts the directories at the bottom
             files_grabbed.sort(key=str.casefold)
@@ -127,7 +127,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         """
         Add one directory or file to the listbox.
         :param filename: name of file in current directory, no html tags.
-        :param _text: The name of the file, class name and verions (with colours).
+        :param _text: The name of the file, class name and versions (with colours).
         :param class_name: The class name (for tooltip colour).
         :param is_dir: True if a directory
         :return: QListWidgetItem: the item added.
@@ -185,7 +185,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
     # @Slot()
     def change_dir_clicked(self):
         """the change dir button is selecte, open a directory chooser dialog."""
-        new_dir = str(QFileDialog.getExistingDirectory(self.win, "Select Directory"))
+        new_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if new_dir != "":
             self.change_dir(new_dir)
 

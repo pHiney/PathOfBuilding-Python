@@ -29,8 +29,9 @@ class ItemSlotUI(QWidget):
         self.widget_height = 26
         # self.setGeometry(0, 0, 320, self.widget_height)
         self.setMinimumHeight(self.widget_height)
-        self.other_weapon_slot: ItemSlotUI = None
+        self.other_weapon_slot = None
         self.parent_notify = parent_notify
+        self.lastSelectedItem = None
 
         # preserve the original name, EG: "Weapon 1 Swap"
         self.slot_name = title
@@ -115,8 +116,11 @@ class ItemSlotUI(QWidget):
         """Return a known size. Without this the default row height is about 22"""
         return QSize(self.label.width() + self.combo_item_list.width() + 5, self.widget_height)
 
-    def add_item(self, _item: Item):
-        """add an item to the drop down"""
+    def add_item(self, _item: Item, _active=False):
+        """
+        add an item to the drop down
+        :param: _item: Item(): the item
+        """
         self.combo_item_list.addItem(_item.name, _item)
         self.combo_item_list.view().setMinimumWidth(self.combo_item_list.minimumSizeHint().width() + 50)
 
@@ -132,23 +136,32 @@ class ItemSlotUI(QWidget):
         """clear the combo box"""
         # print("self.combo_item_list.clear")
         # for each item, self.clear_item_slot(_item)
-        while self.combo_item_list.count() > 0:
-            self.clear_item_slot()
-            self.combo_item_list.removeItem(0)
-        # self.combo_item_list.clear()
-        self.combo_item_list.addItem("None", 0)
+        try:
+            while self.combo_item_list.count() > 0:
+                self.clear_item_slot()
+                self.combo_item_list.removeItem(0)
+            self.combo_item_list.addItem("None", 0)
+        except RuntimeError:  # Timing error. During a clear, this is cleaned up before we complete.
+            pass
         self.active = False
 
     @Slot()
     def combobox_change_text(self, _text):
         """Set the comboBox's tooltip"""
-        # print("combobox_change_text", self.slot_name, _text)
+        # print(f"combobox_change_text, {self.slot_name=}, {_text=}")
         if self.combo_item_list.currentIndex() == 0:
             self.combo_item_list.setToolTip("")
+            if self.lastSelectedItem:
+                self.lastSelectedItem.active = False
+            self.lastSelectedItem = None
         else:
             item = self.combo_item_list.currentData()
-            if type(item) == Item:
+            if type(item) is Item:
                 self.combo_item_list.setToolTip(item.tooltip())
+                if self.lastSelectedItem:
+                    self.lastSelectedItem.active = False
+                item.active = True
+                self.lastSelectedItem = item
                 # Clear the other slot if this is a two-hander
                 if item.two_hand:
                     self.other_weapon_slot.clear_default_item()
@@ -191,13 +204,13 @@ class ItemSlotUI(QWidget):
                             self.combo_item_list.setCurrentIndex(idx)
                         else:
                             self.clear_default_item()
-                    # case "AbyssJewel":
-                    #     title_parts = self.title[-1].split("#")
-                    #     idx = int(title_parts[-1])
-                    #     if self.combo_item_list.count() > idx:
-                    #         self.combo_item_list.setCurrentIndex(idx)
-                    #     else:
-                    #         self.clear_default_item()
+                    case "AbyssJewel":
+                        title_parts = self.title[-1].split("#")
+                        idx = int(title_parts[-1])
+                        if self.combo_item_list.count() > idx:
+                            self.combo_item_list.setCurrentIndex(idx)
+                        else:
+                            self.clear_default_item()
                     case "Jewel":
                         # Different rules for jewels
                         pass

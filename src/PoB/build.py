@@ -10,10 +10,11 @@ numerous Passive Trees (at various Player Levels, or various Cluster Jewels)
 associated with a Player.
 """
 
+import builtins
 import re
 import xml.etree.ElementTree as ET
 from pprint import pprint
-from pathlib import Path
+from pathlib import Path, WindowsPath
 from typing import Union
 
 from PoB.constants import (
@@ -22,6 +23,7 @@ from PoB.constants import (
     _VERSION_str,
     bandits,
     empty_build,
+    empty_build_xml,
     empty_gem,
     empty_socket_group,
     program_title,
@@ -30,10 +32,12 @@ from PoB.constants import (
 from PoB.settings import Settings
 from PoB.tree import Tree
 from PoB.spec import Spec
-from PoB.pob_file import read_xml, write_xml
+from PoB.pob_file import read_v1_custom_mods, read_json, read_xml, write_xml
 from dialogs.popup_dialogs import critical_dialog, yes_no_dialog
 from widgets.ui_utils import (
     _debug,
+    is_str_a_boolean,
+    is_str_a_number,
     str_to_bool,
     bool_to_str,
     print_a_xml_element,
@@ -65,24 +69,26 @@ class Build:
         self.compare_spec = None
 
         # variables from the xml
+        self.json = True
+        self.xml_PoB = None
+        self.xml_root = None
         self.xml_build = None
-        self.root = None
-        self.build = None
-        self.import_field = None
-        self.calcs = None
-        self.skills = None
-        self.tree = None
-        self.notes = None
-        self.notes_html = None
-        self.tree_view = None
-        self.items = None
-        self.config = None
+        self.xml_import_field = None
+        self.xml_calcs = None
+        self.xml_skills = None
+        self.xml_tree = None
+        self.xml_notes = None
+        self.xml_notes_html = None
+        self.xml_tree_view = None
+        self.xml_items = None
+        self.xml_config = None
         self.last_account_hash = ""
         self.last_character_hash = ""
         self.last_realm = ""
         self.last_league = ""
 
-        self.gems_by_name_or_id = None
+        self.json_build = None
+
         self.nodes_assigned = 0
         self.ascnodes_assigned = 0
         self.sockets_assigned = 0
@@ -92,7 +98,7 @@ class Build:
            So yes, build variables are filled out twice on start up
            Once from here, and the 2nd from MainWindow.init.build_loader("Default")
            """
-        self.new(ET.ElementTree(ET.fromstring(empty_build)))
+        self.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}', {self.current_tree.version}"
@@ -127,55 +133,55 @@ class Build:
 
     @property
     def className(self):
-        return self.build.get("className", "Scion")
+        return self.xml_build.get("className", "Scion")
 
     @className.setter
     def className(self, new_name):
-        self.build.set("className", new_name)
+        self.xml_build.set("className", new_name)
 
     @property
     def ascendClassName(self):
-        return self.build.get("ascendClassName", "None")
+        return self.xml_build.get("ascendClassName", "None")
 
     @ascendClassName.setter
     def ascendClassName(self, new_name):
-        self.build.set("ascendClassName", new_name)
+        self.xml_build.set("ascendClassName", new_name)
 
     @property
     def level(self):
-        return int(self.build.get("level"))
+        return int(self.xml_build.get("level"))
 
     @level.setter
     def level(self, new_level):
-        self.build.set("level", f"{new_level}")
+        self.xml_build.set("level", f"{new_level}")
         self.win.spin_level.setValue(new_level)
 
     @property
     def mainSocketGroup(self):
         # Use a property to ensure the correct +/- 1
-        return max(int(self.build.get("mainSocketGroup", 1)) - 1, 0)
+        return max(int(self.xml_build.get("mainSocketGroup", 1)) - 1, 0)
 
     @mainSocketGroup.setter
     def mainSocketGroup(self, new_group):
         # Use a property to ensure the correct +/- 1
-        self.build.set("mainSocketGroup", f"{new_group + 1}")
+        self.xml_build.set("mainSocketGroup", f"{new_group + 1}")
 
     @property
     def resistancePenalty(self):
-        return self.get_config_tag_item("Input", "resistancePenalty", "number", "0")
+        return self.get_config_tag_item("Input", "resistancePenalty", -60)
 
     @resistancePenalty.setter
-    def resistancePenalty(self, new_name):
-        self.set_config_tag_item("Input", "resistancePenalty", "number", new_name)
+    def resistancePenalty(self, new_value):
+        self.set_config_tag_item("Input", "resistancePenalty", new_value)
 
     @property
     def bandit(self):
-        return self.get_config_tag_item("Input", "bandit", "string", "None")
+        return self.get_config_tag_item("Input", "bandit", "None")
 
     @bandit.setter
-    def bandit(self, new_name):
-        self.build.set("bandit", new_name)
-        self.set_config_tag_item("Input", "bandit", "string", new_name)
+    def bandit(self, new_bandit):
+        self.xml_build.set("bandit", new_bandit)
+        self.set_config_tag_item("Input", "bandit", new_bandit)
         set_combo_index_by_data(self.win.combo_Bandits, self.bandit)
 
     def set_bandit_by_number(self, new_int):
@@ -184,45 +190,49 @@ class Build:
 
     @property
     def pantheonMajorGod(self):
-        return self.get_config_tag_item("Input", "pantheonMajorGod", "string", "None")
+        return self.get_config_tag_item("Input", "pantheonMajorGod", "None")
 
     @pantheonMajorGod.setter
     def pantheonMajorGod(self, new_name):
-        self.build.set("pantheonMajorGod", new_name)
-        self.set_config_tag_item("Input", "pantheonMajorGod", "string", new_name)
+        self.xml_build.set("pantheonMajorGod", new_name)
+        self.set_config_tag_item("Input", "pantheonMajorGod", new_name)
 
     @property
     def pantheonMinorGod(self):
-        return self.get_config_tag_item("Input", "pantheonMinorGod", "string", "None")
+        return self.get_config_tag_item("Input", "pantheonMinorGod", "None")
 
     @pantheonMinorGod.setter
     def pantheonMinorGod(self, new_name):
-        self.build.set("pantheonMinorGod", new_name)
-        self.set_config_tag_item("Input", "pantheonMinorGod", "string", new_name)
+        self.xml_build.set("pantheonMinorGod", new_name)
+        self.set_config_tag_item("Input", "pantheonMinorGod", new_name)
 
     @property
     def targetVersion(self):
-        return self.build.get("targetVersion")
+        return self.xml_build.get("targetVersion")
 
     @targetVersion.setter
     def targetVersion(self, new_name):
-        self.build.set("targetVersion", new_name)
+        self.xml_build.set("targetVersion", new_name)
+
+    @property
+    def version_int(self):
+        return int(self.xml_build.get("version", "1"))
 
     @property
     def version(self):
-        return self.build.get("version", "2")
+        return self.xml_build.get("version", "1")
 
     @version.setter
     def version(self, curr_ver):
-        self.build.set("version", curr_ver)
+        self.xml_build.set("version", curr_ver)
 
     @property
     def viewMode(self):
-        return self.build.get("viewMode")
+        return self.xml_build.get("viewMode")
 
     @viewMode.setter
     def viewMode(self, curr_mode):
-        self.build.set("viewMode", curr_mode.upper())
+        self.xml_build.set("viewMode", curr_mode.upper())
 
     @property
     def current_spec(self):
@@ -235,118 +245,220 @@ class Build:
 
     # @property
     # def (self):
-    #     return self.build[""]
+    #     return self.xml_build[""]
 
     # @.setter
     # def (self, new_name):
-    #     self.build[""] = new_name
+    #     self.xml_build[""] = new_name
 
-    def get_config_tag_item(self, key, name, value_type, default=Union[str, int, bool]):
+    def get_config_tag_item(self, key, name, default=Union[str, int, float, bool]):
         """
         Get an item from the <Config> ... </Config> tag set
 
         :param key: string: the key: Input or Placeholder for example
         :param name: string: the value of the 'name' property
-        :param value_type: string: just to be confusing, the name of the 'value' property (string, boolean, number)
         :param default: Union[str, int, bool]): a default value in case the item is not in the xml
         :return: The appropriate value from xml or the default
         """
-        for _input in self.config.findall(key):
-            if _input.get("name") == name:
-                _value = _input.get(value_type, default)
-                match value_type:
+        _input = [element for element in self.xml_config.findall(key) if element.get("name") == name]
+        if _input:
+            _input = _input[0]
+            # Find out what kind of value we have. Assume that XML might have: name="x" number="1" or: number="1" name="x"
+            key = [key for key in _input.keys() if key in ("string", "boolean", "number")]
+            if key:
+                match key[0]:
                     case "string":
-                        return _value
+                        return _input.get("string")
                     case "boolean":
-                        return str_to_bool(_value)
+                        return str_to_bool(_input.get("boolean"))
                     case "number":
-                        return int(_value)
-        return None
+                        _value = _input.get("number")
+                        # is this an int or simple float (1.2) ?
+                        if is_str_a_number(_value):
+                            return int(_input.get("number", f"{default}"))
+                        elif is_str_a_number(_value.replace(".", "")):
+                            return float(_input.get("number", f"{default}"))
+                        else:
+                            print(f"get_config_tag_item: Can't determine if this is a number, returning default: {key}/{name}, {_value}")
+                            return default
+            else:
+                return default
+        else:
+            return default
 
-    def set_config_tag_item(self, key, name, value_type, new_value=Union[str, int, bool]):
+        # for _input in self.config.findall(key):
+        #     if _input.get("name") == name:
+        #         # Find out what kind of value we have. Assume that XML might have name="x" number="1" or number="1" name="x"
+        #         keys = _input.keys()[:]
+        #         keys.remove("name")
+        #         match keys[0]:
+        #             case "string":
+        #                 return _input.get("string", f"{default}")
+        #             case "boolean":
+        #                 return str_to_bool(_input.get("boolean", f"{default}"))
+        #             case "number":
+        #                 _value = _input.get("number", f"{default}")
+        #                 # is this an int or simple float (1.2) ?
+        #                 if is_str_a_number(_value):
+        #                     return int(_input.get("number", f"{default}"))
+        #                 elif is_str_a_number(_value.replace(".", "")):
+        #                     return float(_input.get("number", f"{default}"))
+        #                 else:
+        #                     print(f"get_config_tag_item: Can't determine if this is a number, returning default: {key}/{name}, {_value}")
+        #                     return default
+        # return default
+
+    def set_config_tag_item(self, key, name, new_value=Union[builtins.str, int, float, bool]):
         """
-        Get an item from the <Config> ... </Config> tag set
+        Set an item from the <Config> ... </Config> tag set
 
         :param key: string: the key: Input or Placeholder for example
         :param name: string: the value of the 'name' property
-        :param value_type: string: just to be confusing, the name of the 'value' property (string, boolean, number)
         :param new_value: Union[str, int, bool]): the value to be recorded
         :return: The appropriate value from xml or "default"
         """
-        for _input in self.config.findall(key):
-            if _input.get("name") == name:
-                match value_type:
-                    case "boolean":
-                        new_value = bool_to_str(new_value)
-                    case "number":
-                        new_value = f"{new_value}"
-                return _input.set(value_type, new_value)
-        # if we get here, the key/ name combo was not found, lets make one and add it
-        self.config.append(ET.fromstring(f'<{key} name="{name}" {value_type}="{new_value}" />'))
+        # find element name for output
+        match new_value:
+            # bool() must come before int
+            case bool():
+                value_type = "boolean"
+            case int() | float():
+                value_type = "number"
+            case _:
+                value_type = "string"
+        # Find an existing entry
+        _input = [element for element in self.xml_config.findall(key) if element.get("name") == name]
+        # print(f"set_config_tag_item, {key=}, {name=}, {new_value=}, {value_type=}, {type(new_value), {_input}}")
+        if _input:
+            _input[0].set(value_type, f"{new_value}")
+        else:
+            # The key / name combo was not found, lets make one and add it.
+            self.xml_config.append(ET.fromstring(f'<{key} name="{name}" {value_type}="{new_value}" />'))
+
+    def delete_config_tag_item(self, key, name):
+        """
+        Delete an item from the <Config> ... </Config> tag set
+        :param key: string: the key: Input or Placeholder for example
+        :param name: string: the value of the 'name' property
+        :return: The appropriate value from xml or "default"
+        """
+        # Find an existing entry
+        _input = [element for element in self.xml_config.findall(key) if element.get("name") == name]
+        if _input:
+            del _input[0]
+
+    def delete_config_all_tag_item(self, key):
+        """
+        Delete an item from the <Config> ... </Config> tag set
+        :param key: string: the key: Input or Placeholder for example
+        :return: The appropriate value from xml or "default"
+        """
+        # Find an existing entry
+        for _input in self.xml_config.findall(key):
+            del _input
 
     def new(self, _xml):
         """
-        common function to load internal variables from the dictionary
+        common function to load internal variables from the ET
 
         :param _xml: xml tree object from loading the source XML or the default one
         :return: N/A
         """
 
-        self.name = "Default"
-        self.xml_build = _xml
-        self.root = _xml.getroot()
-        self.build = self.root.find("Build")
-        self.import_field = self.root.find("Import")
-        if self.import_field is not None:
-            self.last_account_hash = self.import_field.get("lastAccountHash", "")
-            self.last_character_hash = self.import_field.get("lastCharacterHash", "")
-            self.last_realm = self.import_field.get("lastRealm", "")
-            self.last_league = self.import_field.get("lastLeague", "")
-        self.calcs = self.root.find("Calcs")
-        self.skills = self.root.find("Skills")
-        self.tree = self.root.find("Tree")
-        self.notes = self.root.find("Notes")
-        self.notes_html = self.root.find("NotesHTML")
-        # lua version doesn't have NotesHTML, expect it to be missing
-        if self.notes_html is None:
-            self.notes_html = ET.Element("NotesHTML")
-            self.root.append(self.notes_html)
-        self.tree_view = self.root.find("TreeView")
-        self.items = self.root.find("Items")
-        self.config = self.root.find("Config")
+        if self.json:
+            self.json_build = empty_build
+        else:
+            self.name = "Default"
+            self.xml_PoB = _xml
+            self.xml_root = _xml.getroot()
+            self.xml_build = self.xml_root.find("Build")
+            self.xml_import_field = self.xml_root.find("Import")
+            if self.xml_import_field is not None:
+                self.last_account_hash = self.xml_import_field.get("lastAccountHash", "")
+                self.last_character_hash = self.xml_import_field.get("lastCharacterHash", "")
+                self.last_realm = self.xml_import_field.get("lastRealm", "")
+                self.last_league = self.xml_import_field.get("lastLeague", "")
+            self.xml_calcs = self.xml_root.find("Calcs")
+            self.xml_skills = self.xml_root.find("Skills")
+            self.xml_tree = self.xml_root.find("Tree")
+            self.xml_notes = self.xml_root.find("Notes")
+            self.xml_notes_html = self.xml_root.find("NotesHTML")
+            # lua version doesn't have NotesHTML, expect it to be missing
+            if self.xml_notes_html is None:
+                self.xml_notes_html = ET.Element("NotesHTML")
+                self.xml_root.append(self.xml_notes_html)
+            self.xml_tree_view = self.xml_root.find("TreeView")
+            self.xml_items = self.xml_root.find("Items")
+            self.xml_config = self.xml_root.find("Config")
+            # print("build.new", print_a_xml_element(self.config))
 
-        self.specs.clear()
-        # Find invalid trees, alert and convert to latest
-        invalid_spec_versions = set()
-        for xml_spec in self.tree.findall("Spec"):
-            vers = xml_spec.get("treeVersion", _VERSION_str)
-            if vers not in tree_versions.keys():
-                v = re.sub("_", ".", vers)
-                invalid_spec_versions.add(v)
-                xml_spec.set("treeVersion", _VERSION_str)
-                title = xml_spec.get("title", "Default")
-                xml_spec.set("title", f"{title} ({self.tr('was')} v{v})")
-        if invalid_spec_versions:
-            critical_dialog(
-                self.win,
-                f"{self.tr('Load build')}: v{self.version}",
-                f"{self.tr('The build contains the following unsupported Tree versions')}:\n"
-                f"{str(invalid_spec_versions)[1:-1]}\n\n"
-                + self.tr(f"These will be converted to {_VERSION} and renamed to indicate this.\n"),
-                self.tr("Close"),
-            )
+            self.specs.clear()
+            # Find invalid trees, alert and convert to latest
+            invalid_spec_versions = set()
+            for xml_spec in self.xml_tree.findall("Spec"):
+                vers = xml_spec.get("treeVersion", _VERSION_str)
+                if vers not in tree_versions.keys():
+                    v = re.sub("_", ".", vers)
+                    invalid_spec_versions.add(v)
+                    xml_spec.set("treeVersion", _VERSION_str)
+                    title = xml_spec.get("title", "Default")
+                    xml_spec.set("title", f"{title} ({self.tr('was')} v{v})")
+            if invalid_spec_versions:
+                critical_dialog(
+                    self.win,
+                    f"{self.tr('Load build')}: v{self.version}",
+                    f"{self.tr('The build contains the following unsupported Tree versions')}:\n"
+                    f"{str(invalid_spec_versions)[1:-1]}\n\n"
+                    + self.tr(f"These will be converted to {_VERSION} and renamed to indicate this.\n"),
+                    self.tr("Close"),
+                )
 
-        # Do not use self.new_spec() as this will duplicate the xml information
-        for xml_spec in self.tree.findall("Spec"):
-            self.specs.append(Spec(self, xml_spec))
-        self.current_spec = self.specs[0]
+            # Do not use self.new_spec() as this will duplicate the xml information
+            for xml_spec in self.xml_tree.findall("Spec"):
+                self.specs.append(Spec(self, xml_spec))
+            self.current_spec = self.specs[0]
 
-        # In the xml, activeSpec is 1 based, but python indexes are 0 based, so we subtract 1
-        self.activeSpec = int(self.tree.get("activeSpec", 1)) - 1
-        self.current_spec = self.specs[self.activeSpec]
-        self.className = self.current_spec.classId_str()
-        self.ascendClassName = self.current_spec.ascendClassId_str()
+            # In the xml, activeSpec is 1 based, but python indexes are 0 based, so we subtract 1
+            self.activeSpec = int(self.xml_tree.get("activeSpec", 1)) - 1
+            self.current_spec = self.specs[self.activeSpec]
+            self.className = self.current_spec.classId_str()
+            self.ascendClassName = self.current_spec.ascendClassId_str()
         # new
+
+    def load_from_file(self, filename):
+        """
+        Load a build. Use new() as a common function.
+
+        :param filename: str: XML file to load.
+        :return: N/A
+        """
+        if type(filename) is Path or type(filename) is WindowsPath:
+            filename = filename.name
+        self.json = "json" in filename
+
+        if self.json:
+            self.json_build = read_json(filename)
+            self.new(self.json_build)
+        else:
+            _build_pob = read_xml(filename)
+            if _build_pob is None:
+                # How do we want to deal with corrupt builds
+                critical_dialog(
+                    self.win,
+                    self.tr("Load Build"),
+                    f"{self.tr('An error occurred to trying load')}:\n{filename}",
+                    self.tr("Close"),
+                )
+            self.new(_build_pob)
+        # else:
+        self.filename = filename
+        self.name = Path(Path(filename).name).stem
+        if self.version_int == 1:
+            # Custom Mods has newlines in it, but python XML turns them into a space.
+            custom_mods = read_v1_custom_mods(filename)
+            if custom_mods:
+                # add in a str of custom mods
+                self.set_config_tag_item("Input", "customMods", custom_mods)
 
     def save_to_xml(self, version="2"):
         """
@@ -354,19 +466,11 @@ class Build:
         :param:version: str. 1 for version 1 xml data,  2 for updated.
         :return: N/A
         """
-        self.import_field.set("lastAccountHash", self.last_account_hash)
-        self.import_field.set("lastCharacterHash", self.last_character_hash)
-        self.import_field.set("lastRealm", self.last_realm)
-        self.import_field.set("lastLeague", self.last_league)
-        match version:
-            case "1":
-                self.notes.text, dummy_var = self.win.notes_ui.save(version)
-            case "2":
-                self.notes.text, self.notes_html.text = self.win.notes_ui.save(version)
-        self.win.stats.save(self.build)
-        self.win.skills_ui.save()
-        self.win.items_ui.save(version)
-        self.win.config_ui.save()
+        self.version = version
+        self.xml_import_field.set("lastAccountHash", self.last_account_hash)
+        self.xml_import_field.set("lastCharacterHash", self.last_character_hash)
+        self.xml_import_field.set("lastRealm", self.last_realm)
+        self.xml_import_field.set("lastLeague", self.last_league)
         for spec in self.specs:
             spec.save()
         # ensure these get updated to match last tree shown.
@@ -375,25 +479,25 @@ class Build:
 
         """Debug Please leave until build is mostly complete"""
         # print("build")
-        # print(ET.tostring(self.build, encoding='utf8'))  # .decode('utf8'))
+        # print(ET.tostring(self.xml_build, encoding='utf8'))  # .decode('utf8'))
         # print("import_field")
-        # print(ET.tostring(self.import_field, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_import_field, encoding='utf8').decode('utf8'))
         # print("calcs")
-        # print(ET.tostring(self.calcs, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_calcs, encoding='utf8').decode('utf8'))
         # print("skills")
-        # print(ET.tostring(self.skills, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_skills, encoding='utf8').decode('utf8'))
         # print("tree")
-        # print(ET.tostring(self.tree, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_tree, encoding='utf8').decode('utf8'))
         # print("notes")
-        # print(ET.tostring(self.notes, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_notes, encoding='utf8').decode('utf8'))
         # print("notes_html")
-        # print(ET.tostring(self.notes_html, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_notes_html, encoding='utf8').decode('utf8'))
         # print("tree_view")
-        # print(ET.tostring(self.tree_view, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_tree_view, encoding='utf8').decode('utf8'))
         # print("items")
-        # print(ET.tostring(self.items, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_items, encoding='utf8').decode('utf8'))
         # print("config")
-        # print(ET.tostring(self.config, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.xml_config, encoding='utf8').decode('utf8'))
         """Debug Please leave until build is mostly complete"""
 
     def save_build_to_file(self, filename):
@@ -403,7 +507,8 @@ class Build:
         :param filename:
         :return:
         """
-        write_xml(filename, self.xml_build)
+        write_xml(filename, self.xml_PoB)
+        self.name = Path(Path(filename).name).stem
 
     def ask_for_save_if_modified(self):
         """
@@ -501,8 +606,8 @@ class Build:
             destination -= 1
         self.specs.remove(spec)
         self.specs.insert(destination, spec)
-        self.tree.remove(xml_spec)
-        self.tree.insert(destination, xml_spec)
+        self.xml_tree.remove(xml_spec)
+        self.xml_tree.insert(destination, xml_spec)
 
     def new_spec(self, new_title="", version=_VERSION_str, xml_spec=None, destination=-1):
         """
@@ -522,10 +627,10 @@ class Build:
             spec.title = new_title
         if destination == -1:
             self.specs.append(spec)
-            self.tree.append(spec.xml_spec)
+            self.xml_tree.append(spec.xml_spec)
         else:
             self.specs.insert(destination, spec)
-            self.tree.insert(destination, spec.xml_spec)
+            self.xml_tree.insert(destination, spec.xml_spec)
         return spec
 
     def copy_spec(self, source, destination):
@@ -573,37 +678,16 @@ class Build:
             # Then remove all
             for count in range(len(self.specs)):
                 xml_spec = self.specs[0].xml_spec
-                self.tree.remove(xml_spec)
+                self.xml_tree.remove(xml_spec)
                 del self.specs[count]
         elif 0 <= index < len(self.specs):
             xml_spec = self.specs[index].xml_spec
-            self.tree.remove(xml_spec)
+            self.xml_tree.remove(xml_spec)
             del self.specs[index]
 
     """
     ################################################### IMPORT ###################################################
     """
-
-    def load_from_file(self, filename):
-        """
-        Load a build. Use new() as a common function.
-
-        :param filename: str: XML file to load.
-        :return: N/A
-        """
-        _build_pob = read_xml(filename)
-        if _build_pob is None:
-            critical_dialog(
-                self.win,
-                self.tr("Load Build"),
-                f"{self.tr('An error occurred to trying load')}:\n{filename}",
-                self.tr("Close"),
-            )
-        else:
-            # How do we want to deal with corrupt builds
-            self.filename = filename
-            self.new(_build_pob)
-            self.name = Path(Path(filename).name).stem
 
     def import_passive_tree_jewels_ggg_json(self, json_tree, json_character):
         """
@@ -632,7 +716,6 @@ class Build:
     def import_passive_tree_jewels_poep_json(self, json_tree, json_stats):
         """
         Import the tree (and later the jewels)
-
         :param json_tree: json import of character, tree and jewel data
         :param json_stats: json import of stats
         :return: N/A

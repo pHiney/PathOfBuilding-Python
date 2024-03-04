@@ -5,7 +5,9 @@ Abyssal sockets are precreated and are made visble or hidden based on what is in
 """
 
 from pathlib import Path
-import re, enum, time
+import enum
+import re
+import time
 import xml.etree.ElementTree as ET
 
 from PySide6.QtCore import Qt, Slot
@@ -134,6 +136,7 @@ class ItemsUI:
 
     @property
     def activeItemSet(self):
+        # return: int
         # Use a property to ensure the correct +/- 1
         return max(int(self.xml_items.get("activeItemSet", 1)) - 1, 0)
 
@@ -153,8 +156,8 @@ class ItemsUI:
         self.win.btn_WeaponSwap.clicked.connect(self.weapon_swap2)
         self.win.combo_ItemSet.currentIndexChanged.connect(self.change_itemset)
         self.win.list_ImportItems.itemDoubleClicked.connect(self.import_items_list_double_clicked)
-        self.win.list_Items.currentItemChanged.connect(self.on_row_changed)
-        self.win.list_Items.itemClicked.connect(self.on_row_changed)
+        self.win.list_Items.currentItemChanged.connect(self.item_list_on_row_changed)
+        self.win.list_Items.itemClicked.connect(self.item_list_on_row_changed)
         self.win.list_Items.itemDoubleClicked.connect(self.item_list_double_clicked)
 
     def disconnect_item_triggers(self):
@@ -170,8 +173,8 @@ class ItemsUI:
             self.win.btn_WeaponSwap.clicked.disconnect(self.weapon_swap2)
             self.win.combo_ItemSet.currentIndexChanged.disconnect(self.change_itemset)
             self.win.list_ImportItems.itemDoubleClicked.disconnect(self.import_items_list_double_clicked)
-            self.win.list_Items.currentItemChanged.disconnect(self.on_row_changed)
-            self.win.list_Items.itemClicked.disconnect(self.on_row_changed)
+            self.win.list_Items.currentItemChanged.disconnect(self.item_list_on_row_changed)
+            self.win.list_Items.itemClicked.disconnect(self.item_list_on_row_changed)
             self.win.list_Items.itemDoubleClicked.disconnect(self.item_list_double_clicked)
         except RuntimeError:
             pass
@@ -243,6 +246,8 @@ class ItemsUI:
         slot_ui = self.item_slot_ui_list.get(slot_name, None)
         if slot_ui is not None:
             slot_ui.setHidden(hidden)
+            if slot_ui.current_item:
+                slot_ui.current_item.active = not hidden
 
     def add_item_to_item_slot_ui(self, item):
         """
@@ -268,6 +273,7 @@ class ItemsUI:
                     except KeyError:
                         print(f"KeyError: slot_name: '{slot_name}'")
                         pass
+        self.weapon_swap2(self.win.btn_WeaponSwap.isChecked())
 
     def delete_item_from_item_slot_ui(self, item):
         """
@@ -431,6 +437,7 @@ class ItemsUI:
         self.hide_equipped_items_slot_ui("Weapon 2", checked)
         self.hide_equipped_items_slot_ui("Weapon 1 Swap", not checked)
         self.hide_equipped_items_slot_ui("Weapon 2 Swap", not checked)
+        self.win.do_calcs()
 
     @Slot()
     def define_item_labels(self):
@@ -446,7 +453,7 @@ class ItemsUI:
         #     # Do more here based on itemsets, etc
 
     @Slot()
-    def on_row_changed(self, item):
+    def item_list_on_row_changed(self, item):
         """Are there actions we want to take when the user selects a new item"""
         # lwi = self.win.list_Items.currentItem()
         # if lwi:
@@ -498,6 +505,14 @@ class ItemsUI:
             print(f"Discarded: {dlg.item.name}")
             self.itemlist_by_id[dlg.original_item.id] = dlg.original_item
             lwi.setData(Qt.UserRole, dlg.original_item)
+
+    def item_list_active_items(self):
+        """
+        Return a list() of Item() for items that are currently selected
+        :return: list:
+        """
+        results = [i for i in self.itemlist_by_id.values() if i.active]
+        return results
 
     @Slot()
     def import_items_list_double_clicked(self, item: QListWidgetItem):

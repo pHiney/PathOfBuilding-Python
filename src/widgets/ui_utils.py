@@ -7,6 +7,7 @@ import datetime
 import glob
 import itertools
 import operator
+import re
 import traceback
 import zlib
 import xml.etree.ElementTree as ET
@@ -15,7 +16,7 @@ from PySide6.QtCore import Qt, QMargins, QPoint, QRect, QSize
 from PySide6.QtGui import QAbstractTextDocumentLayout, QPalette, QTextDocument
 from PySide6.QtWidgets import QApplication, QComboBox, QProxyStyle, QStyle, QStyleOptionViewItem, QStyledItemDelegate
 
-from PoB.constants import ColourCodes, pob_debug
+from PoB.constants import ColourCodes, pob_debug, locale
 
 
 def str_to_bool(in_str):
@@ -35,6 +36,18 @@ def bool_to_str(in_bool):
     :returns: String: true or false
     """
     return in_bool and "true" or "false"
+
+
+is_str_a_boolean = str_to_bool
+
+
+def is_str_a_number(in_str):
+    """
+    Check if this string is a number
+    :param: in_str: String: The setting to be evaluated
+    :returns: True if it looks like it could be afloat or integer
+    """
+    return in_str.startswith("-") and in_str[1:].isdigit() or in_str.isdigit()
 
 
 def index_exists(_list_or_dict, index):
@@ -129,11 +142,11 @@ def html_colour_text(colour, text):
     """
     Put text into html span tags.
 
-    :param colour: string: the #colour to be used or ColourCodes name, can also be rgba( n, n, n, n.nnn )
-    :param text: the text to be coloured
-    :return: str:
+    :param colour: string: the #xxxxxx colour to be used or ColourCodes name.
+    :param text: the text to be coloured.
+    :return: str: html colour coded text.
     """
-    if colour[0] == "#" or "rgb" in colour:
+    if colour[0] == "#":
         c = colour
     else:
         c = ColourCodes[colour.upper()].value
@@ -177,6 +190,57 @@ def set_combo_index_by_text(_combo: QComboBox, _text):
     return -1
 
 
+def format_number(the_number, format_str, settings, pos_neg_colour=False):
+    """
+    Locale aware number formatting
+    :param the_number: int or float.
+    :param format_str: str: A format string : like '%10.2f' or '%d'
+    :param settings: Settings(). So we can access the colours and show_thousands_separators
+    :param pos_neg_colour: bool. Whether to colour the return value
+    :return: str: String represntation of the number, formatted as needed.
+    """
+    # if format is an int, force the value to be an int.
+    if "d" in format_str:
+        the_number = round(the_number)  # locale.format_string will round 99.5 or 99.6 to 99 using a %d format_str (truncates).
+    show_thousands_separators = settings is None and False or settings.show_thousands_separators
+    return_str = locale.format_string(format_str, the_number, grouping=show_thousands_separators)
+    if pos_neg_colour:
+        colour = the_number < 0 and settings.colour_negative or settings.colour_positive
+        return_str = html_colour_text(colour, return_str)
+    return return_str
+
+
+def search_list_for_regex(_list, regex, debug=False) -> list:
+    """
+    Standardise the regex searching of stats.
+    :param _list: list of stats that should match the regex.
+    :param regex: the regex.
+    :param debug: bool: Ease of printing facts for a given specification.
+    :return: list: the list of values that match the regex.
+    """
+    return [line for line in _list if re.search(regex, line)]
+
+
+def search_stats_list_for_regex(stat_list, regex, default_value, debug=False) -> list:
+    """
+    Standardise the regex searching of stats
+    :param stat_list: list of stats that should match the regex.
+    :param regex: the regex.
+    :param default_value: int: A value that suits the calculation if no stats found (EG: 1 for multiplication, 0 for addition).
+    :param debug: bool: Ease of printing facts for a given specification.
+    :return: list: the list of values of the digits. Some results need to be sum'd and others product'd.
+    """
+    value = []
+    for stat in stat_list:
+        m = re.search(regex, stat)
+        # print(f"{stat=}, {regex=}")
+        if m:
+            if debug:
+                print(f"{stat=}, {regex=}, {value=}, {m=}")
+            value.append(int(m.group(1)))
+    return value == [] and [int(default_value)] or value
+
+
 # https://stackoverflow.com/questions/1956542/how-to-make-item-view-render-rich-html-text-in-qt
 class HTMLDelegate(QStyledItemDelegate):
     def __init__(self) -> None:
@@ -208,7 +272,7 @@ class HTMLDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         """Inherited function to return the max width of all text items"""
-        if type(index) == int:
+        if type(index) is int:
             # print("HTMLDelegate.sizeHint", self._list.objectName(), index)
             self.doc.setHtml(self._list.item(index).text())
         else:

@@ -9,6 +9,7 @@ A Tree instance is tied to a Version of the Tree as released by GGG and thus old
 need to be supported for backwards compatibility reason.
 
 """
+
 from PySide6.QtCore import QLineF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter, QPixmap
 from PySide6.QtWidgets import QFrame, QGraphicsEllipseItem, QGraphicsScene, QGraphicsView, QDialogButtonBox
@@ -19,7 +20,7 @@ from PoB.settings import Settings
 from PoB.build import Build
 from dialogs.popup_dialogs import MasteryPopup
 from widgets.tree_graphics_item import TreeGraphicsItem
-from widgets.ui_utils import _debug, print_call_stack
+from widgets.ui_utils import _debug, html_colour_text, print_call_stack
 
 
 class TreeView(QGraphicsView):
@@ -48,7 +49,7 @@ class TreeView(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.NoFrame)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        # set a background of black as this stops the tree looking ugly when 'light' theme is selected.
+        # set a background of black as this stops the tree looking ugly when a non-dark theme is selected.
         # ascendancy-background-3.jpg also has a hard coded black background.
         self.setBackgroundBrush(QBrush(Qt.black, Qt.SolidPattern))
 
@@ -129,7 +130,7 @@ class TreeView(QGraphicsView):
         g_item = next((i for i in graphic_items if isinstance(i, TreeGraphicsItem)), None)
         if (
             g_item
-            and type(g_item) == TreeGraphicsItem
+            and type(g_item) is TreeGraphicsItem
             and g_item.node_id != 0
             and not g_item.node_isAscendancyStart
             and g_item.node_classStartIndex < 0
@@ -332,9 +333,7 @@ class TreeView(QGraphicsView):
 
         # leave the print in till we have everything working.
         # It is what tells us how often the assets are being redrawn.
-        _debug(
-            f"add_tree_images, full_clear={full_clear}",
-        )
+        # _debug(f"add_tree_images, full_clear={full_clear}")
         if self.build.current_tree is None:
             return
 

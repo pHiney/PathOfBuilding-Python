@@ -4,17 +4,19 @@ Functions for reading and writing xml and json
 This is a base PoB class. It doesn't import any other PoB classes
 """
 
-from pathlib import Path
+from pathlib import Path, WindowsPath
 import xml.etree.ElementTree as ET
 import xmltodict
 import json
 import os
+import re
 import xml
 
 from PoB.constants import ColourCodes
+from widgets.ui_utils import html_colour_text
 
 
-def get_file_info(settings, filename, max_length, max_filename_width=40, html=True):
+def get_file_info(settings, filename, max_length, max_filename_width=40, html=True, menu=False):
     """
     Open the xml and get the class information, level and version. Format a line for display on the listbox.
     Take into account the maximum width of the listbox and trim names as needed.
@@ -24,36 +26,52 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
     :param max_length: int: of the longest name.
     :param max_filename_width: int: Maximum number of characters of the filename to be shown.
     :param html: bool: If True return the text as html formatted.
+    :param menu: bool: Menu entry text is covered by QSS
     :return: str, str: "", "" if invalid xml, or colourized name and class name.
     """
-    try:
-        xml_file = read_xml_as_dict(filename)
-    except xml.parsers.expat.ExpatError:  # Corrupt file
-        return "", ""
+    if type(filename) is Path or type(filename) is WindowsPath:
+        filename = filename.name
+    if "json" in filename:
+        try:
+            _file = read_json(filename)
+            pre = ""
+        except (json.JSONDecodeError, json.decoder.JSONDecodeError):  # Corrupt file
+            return "", ""
+    else:
+        try:
+            _file = read_xml_as_dict(filename)
+            pre = "@"
+        except xml.parsers.expat.ExpatError:  # Corrupt file
+            return "", ""
 
-    xml_build = xml_file.get("PathOfBuilding", {}).get("Build", {})
-    if xml_build != {}:
+    build = _file.get("PathOfBuilding", {}).get("Build", {})
+    if build != {}:
         name = os.path.splitext(filename)[0]
         # Get the maximum length of a name, trimming it if need be
         name = len(name) > max_filename_width and (name[:max_filename_width] + "..") or name
         # Create a spacer string of the correct length to right justify the class info
         spacer = (min(max_length, max_filename_width) - len(name) + 4) * " "
 
-        # The information on the right
-        version = xml_build.get("@version", "1")
-        level = xml_build.get("@level", "1")
-        class_name = xml_build.get("@className", "Scion")
-        ascend_class_name = xml_build.get("@ascendClassName", "None")
+        # The information on the right. pre is @ for xml's ("@level") and "level" for json's
+        version = build.get(f"{pre}version", "1")
+        level = build.get(f"{pre}level", "1")
+        class_name = build.get(f"{pre}className", "Scion")
+        ascend_class_name = build.get(f"{pre}ascendClassName", "None")
         _class = ascend_class_name == "None" and class_name or ascend_class_name
         info_text = f" Level {level} {_class} (v{version})"
 
         colour = ColourCodes[class_name.upper()].value
-        normal = settings.qss_default_text  # Default text's colour
         if html:
-            return (
-                f'<pre style="color:{normal};">{name}{spacer}<span style="color:{colour};">{info_text}</span></pre>',
-                class_name,
-            )
+            if menu:
+                return (
+                    f'<pre>{name}{spacer}<span style="color:{colour};">{info_text}</span></pre>',
+                    class_name,
+                )
+            else:
+                return (
+                    f'<pre style="color:{settings.qss_default_text};">{name}{spacer}<span style="color:{colour};">{info_text}</span></pre>',
+                    class_name,
+                )
         else:
             return f"{name}{spacer}{info_text}", class_name
     else:
@@ -79,17 +97,45 @@ def read_xml_as_dict(filename):
     return None
 
 
+def read_v1_custom_mods(filename):
+    """
+    Read the v1 xml customMods. These are line separated and will be lost when read from XML
+    :param filename: Name of xml to be read
+    :return: str: with \n encoded in it.
+    """
+    custom_mods = []
+    _fn = Path(filename)
+    if _fn.exists():
+        try:
+            with _fn.open("r") as xml_file:
+                string = xml_file.read()
+                m = re.findall(r'<Input (.*?)"/>', string, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+                if m:
+                    inputs = [element for element in m if "customMods" in element]
+                    # 'inputs' will be a list of one line or an empty list
+                    if inputs:
+                        # EG:
+                        #   ['name="customMods" string="+1 to Maximum Endurance Charges\n+14% increased maximum Life\n']
+                        # Get rid of unwanted bits
+                        return inputs[0].replace('string="', "").replace('name="customMods"', "").strip()
+
+        except (EnvironmentError, FileNotFoundError, ET.ParseError):
+            print(f"Unable to open {_fn}")
+    return ""
+
+
 def read_xml(filename):
     """
     Reads a XML file
     :param filename: Name of xml to be read
     :returns: A xml tree of the contents of the file
     """
+
     _fn = Path(filename)
     if _fn.exists():
         try:
             with _fn.open("r") as xml_file:
-                tree = ET.parse(_fn)
+                tree = ET.parse(xml_file)
                 return tree
         # parent of IOError, OSError *and* WindowsError where available
         except (EnvironmentError, FileNotFoundError, ET.ParseError):
@@ -153,7 +199,8 @@ def read_json(filename):
             with _fn.open("r") as json_file:
                 _dict = json.load(json_file)
                 return _dict
-        except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
+        # parent of IOError, OSError *and* WindowsError where available
+        except EnvironmentError:
             print(f"Unable to open {_fn}")
     return None
 
@@ -185,7 +232,7 @@ def write_json(filename, _dict):
     _fn = Path(filename)
     try:
         with _fn.open("w") as json_file:
-            json.dump(_dict, json_file)
+            json.dump(_dict, json_file, indent=2)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
         print(f"Unable to write to {_fn}")
 

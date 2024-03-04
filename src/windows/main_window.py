@@ -1,4 +1,12 @@
-import atexit, datetime, glob, os, platform, pyperclip, re, sys, tempfile
+import atexit
+import datetime
+import glob
+import os
+import platform
+import pyperclip
+import re
+import sys
+import tempfile
 
 from typing import Union
 import xml.etree.ElementTree as ET
@@ -6,13 +14,14 @@ from pathlib import Path
 import psutil
 
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtGui import QAction, QFont
+from PySide6.QtGui import QAction, QColor, QFont, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
     QLabel,
     QMainWindow,
+    QPushButton,
     QSpinBox,
     QToolButton,
     QWidget,
@@ -22,18 +31,23 @@ from PySide6.QtWidgets import (
 from PoB.constants import (
     PlayerClasses,
     bandits,
+    bad_text,
     def_theme,
     empty_build,
+    empty_build_xml,
     pantheon_major_gods,
     pantheon_minor_gods,
+    player_stats_list,
     pob_debug,
     program_title,
+    qss_template,
     resistance_penalty,
 )
 
 from PoB.build import Build
 from PoB.settings import Settings
 from PoB.pob_file import get_file_info
+from PoB.player import Player
 from dialogs.browse_file_dialog import BrowseFileDlg
 from dialogs.export_dialog import ExportDlg
 from dialogs.import_dialog import ImportDlg
@@ -47,7 +61,7 @@ from widgets.player_stats import PlayerStats
 from widgets.skills_ui import SkillsUI
 from widgets.tree_ui import TreeUI
 from widgets.tree_view import TreeView
-from widgets.ui_utils import html_colour_text, set_combo_index_by_data
+from widgets.ui_utils import html_colour_text, format_number, set_combo_index_by_data, print_call_stack, _debug
 
 from ui.PoB_Main_Window import Ui_MainWindow
 
@@ -67,7 +81,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.triggers_connected = False
 
         # The QAction representing the current theme (to turn off the menu's check mark)
-        self.curr_theme: QAction = None
+        self.curr_theme = None
 
         # Flag to stop some actions happening in triggers during loading or changing tree Specs
         self.alerting = True
@@ -84,9 +98,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Start with an empty build
         self.build = Build(self.settings, self)
         self.current_filename = self.settings.build_path
+        self.player = Player(self.settings, self.build, self)
 
         # Setup UI Classes()
-        self.stats = PlayerStats(self.settings, self)
+        # self.stats = PlayerStats(self.settings, self)
         self.calcs_ui = CalcsUI(self.settings, self.build, self)
         self.config_ui = ConfigUI(self.settings, self.build, self)
         self.notes_ui = NotesUI(self.settings, self)
@@ -139,12 +154,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for idx in PlayerClasses:
             self.combo_classes.addItem(idx.name.title(), idx)
         self.toolbar_MainWindow.addWidget(self.combo_classes)
+        widget_spacer = QWidget()
+        widget_spacer.setMinimumSize(10, widget_height)
+        self.toolbar_MainWindow.addWidget(widget_spacer)
         self.combo_ascendancy = QComboBox()
         self.combo_ascendancy.setMinimumSize(125, widget_height)
         self.combo_ascendancy.setDuplicatesEnabled(False)
         self.combo_ascendancy.addItem("None", 0)
         self.combo_ascendancy.addItem("Ascendant", 1)
         self.toolbar_MainWindow.addWidget(self.combo_ascendancy)
+
+        widget_spacer = QWidget()
+        widget_spacer.setMinimumSize(100, widget_height)
+        self.toolbar_MainWindow.addWidget(widget_spacer)
+
+        btn_calc = QPushButton("Do Calcs")
+        btn_calc.clicked.connect(self.do_calcs)
+        self.toolbar_MainWindow.addWidget(btn_calc)
+
         # end add widgets to the Toolbar
 
         # Dump the placeholder Graphics View and add our own
@@ -165,7 +192,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.layout_config.addItem(self.grpbox_SkillOptions)
         self.layout_config.addItem(self.grpbox_EffectiveDPS)
         self.layout_config.addItem(self.grpbox_5)
-        self.layout_config.addItem(self.grpbox_6)
+        self.layout_config.addItem(self.grpbox_CustomModifiers)
+        print()
+
+        # Configure basic Configuration setup
+        self.config_ui.initial_startup_setup()
 
         # set the ComboBox dropdown width.
         self.combo_Bandits.view().setMinimumWidth(self.combo_Bandits.minimumSizeHint().width())
@@ -173,6 +204,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
             End: Do what the QT Designer cannot yet do 
         """
+
+        self.toolbar_buttons = {}
+        for widget in self.toolbar_MainWindow.children():
+            # QActions are joined to the toolbar using QToolButtons.
+            if type(widget) is QToolButton:
+                self.toolbar_buttons[widget.toolTip()] = widget
+
+        # Theme loading has to happen before creating more UI elements that use html_colour_text()
+        self.setup_theme_actions()
+        self.switch_theme(self.settings.theme, self.curr_theme)
 
         self.combo_ResPenalty.clear()
         for penalty in resistance_penalty.keys():
@@ -196,25 +237,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             god_info = pantheon_minor_gods[god_name]
             self.combo_MinorPantheon.addItem(god_info.get("name"), god_name)
             self.combo_MinorPantheon.setItemData(idx, html_colour_text("TANGLE", god_info.get("tooltip")), Qt.ToolTipRole)
+        self.combo_EHPUnluckyWorstOf.addItem("Average", 1)
+        self.combo_EHPUnluckyWorstOf.addItem("Unlucky", 2)
+        self.combo_EHPUnluckyWorstOf.addItem("Very Unlucky", 4)
+        self.combo_igniteMode.addItem("Average", "AVERAGE")
+        self.combo_igniteMode.addItem("Crits Only", "CRIT")
 
         self.menu_Builds.addSeparator()
         self.set_recent_builds_menu_items(self.settings)
 
         # Collect original tooltip text for Actions (for managing the text color thru qss - switch_theme)
         # Must be before the first call to switch_theme
-        self.toolbar_buttons = {}
-        for widget in self.toolbar_MainWindow.children():
-            # QActions are joined to the toolbar using QToolButtons.
-            if type(widget) == QToolButton:
-                self.toolbar_buttons[widget.toolTip()] = widget
-
         # file = "c:/git/PathOfBuilding-Python.sus/src/data/qss/material-blue.qss"
         # file = "c:/git/PathOfBuilding-Python.sus/src/data/qss/test_dark.qss"
         # with open(file, "r") as fh:
         #     QApplication.instance().setStyleSheet(fh.read())
-        self.setup_theme_actions()
-        self.switch_theme(self.settings.theme, self.curr_theme)
-
         # Connect our Actions / triggers
         self.tab_main.currentChanged.connect(self.set_tab_focus)
         self.action_New.triggered.connect(self.build_new)
@@ -242,8 +279,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # setup Scion by default, and this will trigger it's correct ascendancy to appear in combo_ascendancy
         # and other ui's to display properly
-        # ToDo: check to see if there is a previous build to load and load it here
+        open_build = self.settings.open_build  # this will get wiped by the next command so keep it
         self.build_loader("Default")
+        # Check to see if there is a previous build to load and load it here
+        if open_build:
+            self.build_loader(open_build)
 
         # Remove splash screen if we are an executable
         if "NUITKA_ONEFILE_PARENT" in os.environ:
@@ -285,7 +325,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     else:
                         # Assume it is going to come from outside the application, ingame or trade site
                         data = pyperclip.paste()
-                        if data is not None and type(data) == str and "Item Class:" in data:
+                        if data is not None and type(data) is str and "Item Class:" in data:
                             if "Skill Gems" in data:
                                 success = self.skills_ui.get_item_from_clipboard(data)
                             else:
@@ -347,7 +387,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for idx, full_path in enumerate(recent_builds):
             if full_path is not None and full_path != "":
                 filename = Path(full_path).relative_to(self.settings.build_path)
-                text, class_name = get_file_info(self.settings, filename, max_length, 70)
+                text, class_name = get_file_info(self.settings, filename, max_length, 70, menu=True)
                 ql = QLabel(text)
                 _action = QWidgetAction(self.menu_Builds)
                 _action.setDefaultWidget(ql)
@@ -361,7 +401,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         self.settings.add_recent_build(self.build.filename)
         for entry in self.menu_Builds.children():
-            if type(entry) == QWidgetAction:
+            if type(entry) is QWidgetAction:
                 self.menu_Builds.removeAction(entry)
         self.set_recent_builds_menu_items(self.settings)
 
@@ -402,7 +442,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         def make_connection(name, _action):
             """
-            Connect the menu item to _open_previous_build passing in extra information.
+            Connect the menu item to switch_theme passing in extra information.
             Lambdas in python share the variable scope they're created in
             so make a function containing just the lambda
             :param name: str; the name of the file but no extension.
@@ -459,7 +499,56 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         :return: N/A
         """
-        # print("switch_theme, new_theme, self.curr_theme : ", new_theme, self.curr_theme)
+
+        def set_colors(window_colour, text_colour):
+            # colours = window_colour, text_colour
+            # Setup the window Palette
+            pal = self.window().palette()
+            pal.setColor(QPalette.Window, QColor(f"#{window_colour}"))
+            pal.setColor(QPalette.WindowText, QColor(text_colour))
+            self.window().setPalette(pal)
+            #
+            # # Put in a small QSS
+            # print(window_colour[0:2], int(window_colour[0:2], 16))
+            # if int(f"0x{window_colour[0:2]}", 16) >= 128:
+            #     print(window_colour, f"{int(window_colour, 16) - int(0x202020):x}")
+            #     alt_colour = f"#{int(window_colour, 16) - int(0x101010):x}"
+            #     hover_colour = f"#{int(text_colour, 16) - int(0x202020):x}"
+            # else:
+            #     print(window_colour, f"{int(window_colour, 16) + int(0x202020):x}")
+            #     alt_colour = f"#{int(window_colour, 16) + int(0x101010):x}"
+            #     hover_colour = f"#{int(text_colour, 16) + int(0x202020):x}"
+            #
+            # # put the # back on so the qss_template.format() doesn't error: KeyError: '404044'
+            # window_colour = f"#{window_colour}"
+            # text_colour = f"#{text_colour}"
+            #
+            # self.settings.qss_default_text = text_colour
+            # qss = qss_template.format(**locals())
+            # # print(qss)
+            # QApplication.instance().setStyleSheet(qss)
+
+        # set_colors
+
+        # print(f"switch_theme, {new_theme=}, {self.curr_theme.text()=}")
+        # if new_theme == "dark":
+        #     set_colors("121218", "d6d6d6")
+        # elif new_theme == "light":
+        #     set_colors("f0f0f0", "404044")
+        # elif new_theme == "blue":
+        #     set_colors("cee7f0", "404044")
+        # elif new_theme == "brown":
+        #     set_colors("9e8965", "404044")
+        # elif new_theme == "orange":
+        #     set_colors("cc8800", "181818")
+        # if self.curr_theme is not None:
+        #     self.curr_theme.setChecked(False)
+        # self.settings.theme = new_theme
+        # self.curr_theme = selected_action
+        # if self.curr_theme is not None:
+        #     #     self.curr_theme.setChecked(False)
+        #     self.curr_theme.setChecked(True)
+        # return
         file = Path(self.settings.data_dir, "qss", f"{new_theme}.colours")
         new_theme = Path.exists(file) and new_theme or def_theme
         try:
@@ -468,15 +557,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             with open(Path(self.settings.data_dir, "qss", f"{new_theme}.colours"), "r") as colour_file:
                 colours = colour_file.read().splitlines()
                 for line in colours:
-                    m = re.search(r"^(qss_\w+)~~(.*)$", line)
-                    if m:
-                        if m.group(1) == "qss_default_text":
-                            self.settings.qss_default_text = f"rgba( {m.group(2)} )"
+                    line = line.split("~~")
+                    if len(line) == 2:
+                        if line[0] == "qss_background":
+                            self.settings.qss_background = line[1]
+                        if line[0] == "qss_default_text":
+                            self.settings.qss_default_text = line[1]
                             for tooltip_text in self.toolbar_buttons.keys():
                                 self.toolbar_buttons[tooltip_text].setToolTip(
                                     html_colour_text(self.settings.qss_default_text, tooltip_text)
                                 )
-                        template = re.sub(r"\b" + m.group(1) + r"\b", m.group(2), template)
+                        template = re.sub(r"\b" + line[0] + r"\b", line[1], template)
 
             QApplication.instance().setStyleSheet(template)
             # Uncheck old entry. First time through, this could be None.
@@ -485,7 +576,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings.theme = new_theme
             self.curr_theme = selected_action
             if self.curr_theme is not None:
-                #     self.curr_theme.setChecked(False)
                 self.curr_theme.setChecked(True)
         # parent of IOError, OSError *and* WindowsError where available
         except (EnvironmentError, FileNotFoundError):
@@ -560,6 +650,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: N/A
         """
         self.alerting = False
+        self.player.clear()
+        self.config_ui.initial_startup_setup()
         new = True
         self.build.filename = ""
         if type(filename_or_xml) is ET.ElementTree:
@@ -570,30 +662,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # open the file
                 self.build.load_from_file(filename_or_xml)
                 self.build.filename = filename_or_xml
+                self.settings.open_build = self.build.filename
             else:
-                self.build.new(ET.ElementTree(ET.fromstring(empty_build)))
+                self.build.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
+                self.settings.open_build = ""
 
         # if everything worked, lets update the UI
-        if self.build.build is not None:
+        if self.build.xml_build is not None:
             # _debug("build_loader")
             if not new:
                 self.add_recent_build_menu_item()
             # Config_UI needs to be set before the tree, as the change_tree function uses/sets it also.
-            self.config_ui.load(self.build.config)
+            self.config_ui.load(self.build.xml_config)
             self.set_current_tab()
             self.tree_ui.fill_current_tree_combo()
-            self.skills_ui.load(self.build.skills)
-            self.items_ui.load_from_xml(self.build.items)
-            self.notes_ui.load(self.build.notes_html.text, self.build.notes.text)
-            self.stats.load(self.build.build)
+            self.skills_ui.load(self.build.xml_skills)
+            self.items_ui.load_from_xml(self.build.xml_items)
+            self.notes_ui.load(self.build.xml_notes_html.text, self.build.xml_notes.text)
             self.spin_level.setValue(self.build.level)
             self.combo_classes.setCurrentText(self.build.className)
             self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
             self.update_status_bar(f"Loaded: {self.build.name}", 10)
+            # self.stats.load(self.build.build)
+            self.player.load(self.build.xml_build)
 
         # This is needed to make the jewels show. Without it, you need to select or deselect a node.
         self.gview_Tree.add_tree_images(True)
+        # Make sure the Main and Alt weapons are active and shown as appropriate
+        self.items_ui.weapon_swap2(self.btn_WeaponSwap.isChecked())
+        # Do calcs. Needs to be near last n this function
         self.alerting = True
+        self.do_calcs()
 
     @Slot()
     def build_save(self):
@@ -602,11 +701,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return: N/A
         """
+        version = self.build.version
         if self.build.filename == "":
-            self.build_save_as()
+            self.build_save_as()  # this will then call build_save() again
         else:
-            print(f"Saving to v{self.build.version} file: {self.build.filename}")
-            self.build.save_to_xml(self.build.version)
+            print(f"Saving to v{version} file: {self.build.filename}")
+            self.build.save_to_xml(version)
+            match version:
+                case "1":
+                    self.build.xml_notes.text, dummy_var = self.notes_ui.save(version)
+                case "2":
+                    self.build.xml_notes.text, self.build.xml_notes_html.text = self.notes_ui.save(version)
+            # self.win.stats.save(self.build)
+            self.player.save(self.build)
+            self.skills_ui.save()
+            self.items_ui.save(version)
+            self.config_ui.save()
             # write the file
             self.build.save_build_to_file(self.build.filename)
 
@@ -635,6 +745,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.build.filename = filename
                 self.build_save()
                 self.add_recent_build_menu_item()
+                self.settings.open_build = self.build.filename
 
     @Slot()
     def combo_item_manage_tree_changed(self, tree_label):
@@ -695,6 +806,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.refresh_tree = True
         self.gview_Tree.add_tree_images(full_clear)
         self.items_ui.fill_jewel_slot_uis()
+        self.do_calcs()
 
     @Slot()
     def class_changed(self, selected_class):
@@ -736,6 +848,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.build.current_class = new_class
             self.build.reset_tree()
             self.gview_Tree.add_tree_images(True)
+
+        self.do_calcs()
 
     @Slot()
     def ascendancy_changed(self, selected_ascendancy):
@@ -785,6 +899,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.build.current_spec.ascendClassId = self.combo_ascendancy.currentData()
             self.build.ascendClassName = selected_ascendancy
             self.gview_Tree.add_tree_images()
+        self.do_calcs()
 
     @Slot()
     def display_number_node_points(self, bandit_id):
@@ -941,7 +1056,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         :return: N/A
         """
-        pass
+        self.do_calcs()
 
     def load_main_skill_combo(self, _list):
         """
@@ -1026,3 +1141,59 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             process = psutil.Process(os.getpid())
             message = f"RAM: {'{:.2f}'.format(process.memory_info().rss / 1048576)}MB used:"
             self.statusbar_MainWindow.showMessage(message, timeout * 1000)
+
+    @Slot()
+    def do_calcs(self, test_item=None, test_node=None):
+        """
+        Do and Display Calculations
+        :param: test_item: Item() - future comparison
+        :param: test_node: Node() - future comparison
+        :return: N/A
+        """
+
+        def get_resist_overcap_value(res_type):
+            """
+            Get a resists over cap value andreturn it if it's not 0
+            :param res_type: str: Fire|Cold|Lightning
+            :return: str: formate string for adding to the main Res value
+            """
+            _value = self.player.stats.get(f"{res_type}ResistOverCap", 0)
+            if _value > 0:
+                _value_str = format_number(_value, " (%d%%)", self.settings)
+                return html_colour_text("DARKGRAY", _value_str)
+            else:
+                return ""
+
+        if not self.alerting:
+            # Don't keep calculating as a build is loaded
+            return
+        self.config_ui.save()
+        self.player.calc_stats(self.items_ui.item_list_active_items())
+        self.textedit_Statistics.clear()
+        just_added_blank = False  # Prevent duplicate blank lines. Faster than investigating the last line added of a QLineEdit.
+        for stat_name in player_stats_list:
+            stat = player_stats_list[stat_name]
+            # print(f"{stat_name=}, {type(stat)=}, {stat.values()=}")
+            if "blank" in stat_name:
+                if not just_added_blank:
+                    self.textedit_Statistics.append("")
+                    just_added_blank = True
+            elif stat.get("label", 0) == 0:
+                # ToDo: Need to use the flag attribute to separate
+                stat = list(stat.values())[0]
+            else:
+                # Do we have this stat in our stats dict
+                stat_value = self.player.stats.get(stat_name, bad_text)
+                if stat_value != bad_text and self.player.stat_conditions(stat_name, stat_value):
+                    _colour = stat.get("colour", self.settings.qss_default_text)
+                    _fmt = stat.get("fmt", "%d")
+                    _str_value = format_number(stat_value, _fmt, self.settings, True)
+                    match stat_name:
+                        case "FireResist" | "ColdResist" | "LightningResist":
+                            _extra_value = get_resist_overcap_value(stat_name.replace("Resist", ""))
+                        case _:
+                            _extra_value = ""
+                    self.textedit_Statistics.append(
+                        f'<span style="white-space: pre; color:{_colour};">{stat["label"]:>24}:</span> {_str_value} {_extra_value}'
+                    )
+                    just_added_blank = False

@@ -3,12 +3,21 @@ A class to encapsulate one item
 """
 
 import xml.etree.ElementTree as ET
+import math
 import re
 
 from PoB.constants import bad_text, pob_debug, slot_map, slot_names, ColourCodes
 from PoB.settings import Settings
 from PoB.mod import Mod
-from widgets.ui_utils import _debug, html_colour_text, index_exists, str_to_bool, bool_to_str, print_a_xml_element
+from widgets.ui_utils import (
+    _debug,
+    html_colour_text,
+    index_exists,
+    str_to_bool,
+    bool_to_str,
+    print_a_xml_element,
+    search_stats_list_for_regex,
+)
 
 influence_colours = {
     "Shaper Item": ColourCodes.SHAPER.value,
@@ -44,6 +53,7 @@ class Item:
         self._base_name = ""
         self._type = ""  # or item_class - eg weapon
         self.sub_type = ""  # or item_class - eg claw
+        self.active = False  # is this the item that is currently chosen/shown in the dropdown ?
 
         # this is not always available from the json character download
         self.level_req = 0
@@ -53,7 +63,7 @@ class Item:
         self.ilevel = 0
         # needs to be a string as there are entries like "Limited to: 1 Survival"
         self.limited_to = ""
-        self.quality = 0
+        self._quality = 0
         self.unique_id = ""
         self.requires = {}
         self.influences = []
@@ -73,6 +83,9 @@ class Item:
         self.enchantMods = []
         self.fracturedMods = []
         self.crucibleMods = []
+        self.active_mods = []
+        self.all_stats = []
+        self.slots = []
 
         # variants are numbered from 1, so 0 is no selection.
         self.curr_variant = 0
@@ -86,11 +99,14 @@ class Item:
         # I think i need to store the variants separately, for crafting. Dict of string lists, var number is index
         self.variantMods = {}
 
-        self.evasion = 0
+        self._armour = 0
+        self.base_armour = 0  # value without quality and +nn additions/multipliers
+        self._evasion = 0
         self.evasion_base_percentile = 0.0
-        self.energy_shield = 0
+        self.base_evasion = 0  # value without quality and +nn additions/multipliers
+        self._energy_shield = 0
         self.energy_shield_base_percentile = 0.0
-        self.armour = 0
+        self.base_energy_shield = 0  # value without quality and +nn additions/multipliers
         self.armour_base_percentile = 0.0
         self.league = ""
         self.source = ""
@@ -135,17 +151,17 @@ class Item:
 
         # Mods
         for mod in _json.get("explicitMods", []):
-            self.full_explicitMods_list.append(Mod(mod))
+            self.full_explicitMods_list.append(Mod(self.settings, mod))
         # for mod in _json.get("craftedMods", []):
         #     self.full_explicitMods_list.append(Mod(f"{{crafted}}{mod}"))
         self.explicitMods = self.full_explicitMods_list
 
         for mod in _json.get("enchantMods", []):
-            self.implicitMods.append(Mod(f"{{crafted}}{mod}"))
+            self.implicitMods.append(Mod(self.settings, f"{{crafted}}{mod}"))
         for mod in _json.get("scourgeMods", []):
-            self.implicitMods.append(Mod(f"{{crafted}}{mod}"))
+            self.implicitMods.append(Mod(self.settings, f"{{crafted}}{mod}"))
         for mod in _json.get("implicitMods", []):
-            self.implicitMods.append(Mod(mod))
+            self.implicitMods.append(Mod(self.settings, mod))
 
         self.properties = _json.get("properties", {})
         if self.properties:
@@ -184,6 +200,9 @@ class Item:
                 key = f'{influence.split("=")[0].title()} Item'
                 if key in influence_colours.keys():
                     self.influences.append(key)
+        self.all_stats = [
+            mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods if mod.line_with_range
+        ]
         self.tooltip()
         # load_from_ggg_json
 
@@ -215,16 +234,19 @@ class Item:
 
         # Mods
         for mod in _json.get("explicits", []):
-            self.full_explicitMods_list.append(Mod(mod))
+            self.full_explicitMods_list.append(Mod(self.settings, mod))
         self.explicitMods = self.full_explicitMods_list
 
         for mod in _json.get("enchants", []):
-            self.implicitMods.append(Mod(f"{{crafted}}{mod}"))
+            self.implicitMods.append(Mod(self.settings, f"{{crafted}}{mod}"))
         for mod in _json.get("scourgeMods", []):
-            self.implicitMods.append(Mod(f"{{crafted}}{mod}"))
+            self.implicitMods.append(Mod(self.settings, f"{{crafted}}{mod}"))
         for mod in _json.get("implicits", []):
-            self.implicitMods.append(Mod(mod))
+            self.implicitMods.append(Mod(self.settings, mod))
 
+        self.all_stats = [
+            mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods if mod.line_with_range
+        ]
         self.tooltip()
         # load_from_ggg_json
 
@@ -336,9 +358,9 @@ class Item:
                             r = re.search(r"(\w+) (\w+)", f"{req}")
                             self.requires["Class"] = r.group(2)
                         else:
-                            # nnn Str, etc
-                            r = re.search(r"(\d+) (\w+)", f"{req}")
-                            self.requires[r.group(2)] = int(r.group(1))
+                            # Str nnn, etc
+                            r = re.search(r"(\w+) (\d+)", f"{req}")
+                            self.requires[r.group(1)] = int(r.group(2))
                     lines.pop(line_idx)
                 else:
                     # skip this line
@@ -349,23 +371,23 @@ class Item:
                     case "Unique ID":
                         self.unique_id = m.group(2)
                     case "Item Level":
-                        self.ilevel = m.group(2)
+                        self.ilevel = int(m.group(2))
                     case "Quality":
-                        self.quality = m.group(2)
+                        self.quality = int(m.group(2))
                     case "Sockets":
                         self.sockets = m.group(2)
                     case "Armour":
                         self.armour = m.group(2)
                     case "ArmourBasePercentile":
-                        self.armour_base_percentile = m.group(2)
+                        self.armour_base_percentile = float(m.group(2))
                     case "Energy Shield":
                         self.energy_shield = m.group(2)
                     case "EnergyShieldBasePercentile":
-                        self.energy_shield_base_percentile = m.group(2)
+                        self.energy_shield_base_percentile = float(m.group(2))
                     case "Evasion":
                         self.evasion = m.group(2)
                     case "EvasionBasePercentile":
-                        self.evasion_base_percentile = m.group(2)
+                        self.evasion_base_percentile = float(m.group(2))
                     case "LevelReq":
                         self.level_req = int(m.group(2))
                     case "League":
@@ -400,7 +422,7 @@ class Item:
                             if debug_lines:
                                 _debug("I", len(lines), lines)
                             line = lines.pop(line_idx)
-                            mod = Mod(line)
+                            mod = Mod(self.settings, line)
                             self.full_implicitMods_list.append(mod)
                             # check for variants and if it's our variant, add it to the smaller implicit mod list
                             # EG: <Mod>{variant:2,3,4}{tags:life}(34-48) Life gained when you Block</Mod>
@@ -440,7 +462,7 @@ class Item:
         # every thing that is left, from explicits_idx, is explicits, and some other stuff
         for idx in range(explicits_idx, len(lines)):
             line = lines.pop(explicits_idx)
-            mod = Mod(line)
+            mod = Mod(self.settings, line)
             # Corrupted is not a mod, but will get caught in explicits due to crap data design.
             if "Corrupted" in line:
                 self.corrupted = True
@@ -457,7 +479,7 @@ class Item:
                     self.full_explicitMods_list.append(mod)
                     # check for variants and if it's our variant, add it to the smaller explicit mod list
                     if "variant" in line:
-                        v = re.search(r"{variant:([\d,]+)}(.*)", line)
+                        v = re.search(r"{variant: ?([\d,]+)}(.*)", line)
                         variant_numbers = v.group(1).split(",")
                         for var in variant_numbers:
                             self.variant_entries.setdefault(var, []).append(v.group(2))
@@ -469,7 +491,7 @@ class Item:
             # if "Corrupted" in line:
             #     self.corrupted = True
             #     continue
-            # mod = Mod(line)
+            # mod = Mod(self.settings, line)
             # self.full_explicitMods_list.append(mod)
             # # check for variants and if it's our variant, add it to the smaller explicit mod list
             # if "variant" in line:
@@ -502,6 +524,9 @@ class Item:
         if debug_lines:
             _debug("end", len(lines), lines)
             print()
+        self.all_stats = [mod.line_with_range for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods]
+        self.active_mods.clear()
+        self.get_active_mods()
         self.tooltip()
         return True
         # load_from_xml
@@ -574,18 +599,19 @@ class Item:
         self.corrupted = str_to_bool(xml.get("corrupted", "False"))
         attribs = xml.find("Attribs")
         if attribs is not None:
-            self.evasion = int(attribs.get("evasion", "0"))
-            self.evasion_base_percentile = float(attribs.get("evasion_base_percentile", "0.0"))
-            self.energy_shield = int(attribs.get("energy_shield", "0"))
-            self.energy_shield_base_percentile = float(attribs.get("energy_shield_base_percentile", "0.0"))
-            self.armour = int(attribs.get("armour", "0"))
+            self.armour = attribs.get("armour", "0")
             self.armour_base_percentile = float(attribs.get("armour_base_percentile", "0.0"))
+            self.evasion = attribs.get("evasion", "0")
+            self.evasion_base_percentile = float(attribs.get("evasion_base_percentile", "0.0"))
+            self.energy_shield = attribs.get("energy_shield", "0")
+            self.energy_shield_base_percentile = float(attribs.get("energy_shield_base_percentile", "0.0"))
             self.limited_to = attribs.get("limited_to", "")
             self.ilevel = int(attribs.get("ilevel", "0"))
             self.level_req = int(attribs.get("level_req", "0"))
             self.quality = int(attribs.get("quality", "0"))
             self.radius = attribs.get("radius", "")
             self.talisman_tier = int(attribs.get("talisman_tier", "0"))
+
         # this is for crafted items
         crafted_xml = xml.find("Crafted")
         if crafted_xml is not None:
@@ -603,23 +629,23 @@ class Item:
         # crafted_xml = xml.find("Crafted")
         # if crafted_xml is not None:
         #     for mod_xml in crafted_xml.findall("Mod"):
-        #         mod = Mod(mod_xml.text)
+        #         mod = Mod(self.settings, mod_xml.text)
         #         self.craftedMods.append(mod)
         fracture_xml = xml.find("Fractured")
         if fracture_xml is not None:
             for mod_xml in fracture_xml.findall("Mod"):
-                mod = Mod(mod_xml.text)
+                mod = Mod(self.settings, mod_xml.text)
                 self.fracturedMods.append(mod)
         crucible_xml = xml.find("Crucible")
         if crucible_xml is not None:
             for mod_xml in crucible_xml.findall("Mod"):
-                mod = Mod(mod_xml.text)
+                mod = Mod(self.settings, mod_xml.text)
                 self.crucibleMods.append(mod)
 
         imp = xml.find("Implicits")
         for mod_xml in imp.findall("Mod"):
             line = mod_xml.text
-            mod = Mod(mod_xml.text)
+            mod = Mod(self.settings, mod_xml.text)
             self.full_implicitMods_list.append(mod)
             # check for variants and if it's our variant, add it to the smaller implicit mod list
             if "variant" in line:
@@ -631,11 +657,11 @@ class Item:
         exp = xml.find("Explicits")
         for mod_xml in exp.findall("Mod"):
             line = mod_xml.text
-            mod = Mod(mod_xml.text)
+            mod = Mod(self.settings, mod_xml.text)
             self.full_explicitMods_list.append(mod)
             # check for variants and if it's our variant, add it to the smaller explicit mod list
             if "variant" in line:
-                m = re.search(r"{variant:([\d,]+)}(.*)", line)
+                m = re.search(r"{variant: ?([\d,]+)}(.*)", line)
                 if str(self.curr_variant) in m.group(1).split(","):
                     self.explicitMods.append(mod)
             else:
@@ -646,6 +672,9 @@ class Item:
             for req in requires_xml:
                 self.requires[req.tag] = req.text
 
+        self.all_stats = [
+            mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods if mod.line_with_range
+        ]
         self.tooltip()
         return True
         # load_from_xml_v2
@@ -668,7 +697,7 @@ class Item:
             text += f"{influence}\n"
         for requirement in self.requires.keys():
             text += f"Requires {requirement} {self.requires[requirement]}\n"
-        if type(self.properties) == dict:
+        if type(self.properties) is dict:
             for prop in self.properties.keys():
                 text += f"{prop}: {self.properties[prop]}\n"
         text += f"Implicits: {len(self.implicitMods)}\n"
@@ -704,10 +733,10 @@ class Item:
             :param value:
             :return: N/A
             """
-            if type(value) == str:
+            if type(value) is str:
                 if value:
                     _xml.set(tag, value)
-            elif type(value) == bool:
+            elif type(value) is bool:
                 if value:
                     _xml.set(tag, bool_to_str(value))
             else:
@@ -751,12 +780,12 @@ class Item:
 
         # there is always an Attribs element, even if it is empty, which almost never happens
         attribs = ET.fromstring(f"<Attribs />")
-        add_attrib_if_not_null(attribs, "evasion", self.evasion)
-        add_attrib_if_not_null(attribs, "evasion_base_percentile", self.evasion_base_percentile)
-        add_attrib_if_not_null(attribs, "energy_shield", self.energy_shield)
-        add_attrib_if_not_null(attribs, "energy_shield_base_percentile", self.energy_shield_base_percentile)
-        add_attrib_if_not_null(attribs, "armour", self.armour)
+        add_attrib_if_not_null(attribs, "armour", self._armour)  # No quality
         add_attrib_if_not_null(attribs, "armour_base_percentile", self.armour_base_percentile)
+        add_attrib_if_not_null(attribs, "evasion", self._evasion)  # No quality
+        add_attrib_if_not_null(attribs, "evasion_base_percentile", self.evasion_base_percentile)
+        add_attrib_if_not_null(attribs, "energy_shield", self._energy_shield)  # No quality
+        add_attrib_if_not_null(attribs, "energy_shield_base_percentile", self.energy_shield_base_percentile)
         add_attrib_if_not_null(attribs, "limited_to", self.limited_to)
         add_attrib_if_not_null(attribs, "ilevel", self.ilevel)
         add_attrib_if_not_null(attribs, "level_req", self.level_req)
@@ -829,6 +858,76 @@ class Item:
 
         return xml
 
+    def find_base_stats(self):
+        """
+        Find base_armour, etc by removing any additions, quality or multipliers
+        :return: N/A
+        """
+        self.all_stats = [
+            mod.line_with_range for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods  # if mod
+        ]
+        if self.quality:
+            if self._armour:
+                self.base_armour = int(self._armour * (1 - (self.quality / 100)))
+                # print(f"{self.base_armour=}")
+
+            if self._evasion:
+                # adds, multiples, more = self.get_stat(0, "Evasion", 0)
+                # value = float(self._evasion) * ((100 - multiples + more + self.quality) / 100)
+                # multiples = 100 + (multiples + more + self.quality)
+                # self.base_evasion = int(self._evasion / multiples * 100) - adds
+                self.base_evasion = int(self._evasion / (1 - (self.quality / 100)) * 100)
+                # print(f"{self.base_evasion=}")
+
+            if self._energy_shield:
+                # adds, multiples, more = self.get_stat(0, "Energy Shield", 0)
+                # value = float(self._energy_shield) * (1 - ((multiples + more + self.quality) / 100))
+                # multiples = 100 + (multiples + more + self.quality)
+                # self.base_energy_shield = int(self._energy_shield / multiples * 100) - adds
+                self.base_energy_shield = int(self._energy_shield / (1 - (self.quality / 100)) * 100)
+                # print(f"{self.base_energy_shield=}")
+        else:
+            self.base_armour = self._armour
+            self.base_evasion = self._evasion
+            self.base_energy_shield = self._energy_shield
+
+    def get_stat(self, start_value, search_str, default_value=0, debug=False):
+        """
+        Get a simple "+nn to 'stat'" or "nn% incresed 'stat'". See examples in 'calc_stat'.
+        Can't do minion stats as they look similar to regular stats
+              'Minions have 10% increased maximum Life' vs '8% increased maximum Life' (they can use search_stats_list_for_regex)
+        :param start_value: int / float.
+        :param search_str: EG: 'Life', 'Strength'
+        :param default_value: int / float: A value that suits the calculation if no stats found.
+        :param debug: bool: Ease of printing facts for a given specification.
+        :return: int: The updated value.
+        """
+        # find increases and additions. Some objects have things like '+21 to Dexterity and Intelligence', so use .* in regex.
+        adds = sum(search_stats_list_for_regex(self.all_stats, rf"(?!Minions)([-+]?\d+) to .*{search_str}", default_value, debug))
+        value = start_value + adds
+        if debug:
+            print(f"get_simple_stat: {search_str}: {value=}, {start_value=}, {adds=}")
+
+        multiples = sum(
+            search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% increased {search_str}", default_value, debug)
+        )
+        multiples -= sum(
+            search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% reduced {search_str}", default_value, debug)
+        )
+        value += multiples / 100 * value
+        if debug:
+            print(f"get_simple_stat: {value=}, {multiples=}")
+
+        more = math.prod(search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% more {search_str}", 0, debug))
+        more -= math.prod(search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% less {search_str}", 0, debug))
+        if debug:
+            print(f"get_simple_stat: {value=}, {more=}, {((more  / 100 ) + 1 )=}")
+        if more:
+            value = ((more / 100) + 1) * int(value)
+        if debug:
+            print(f"get_simple_stat: {value=}")
+        return adds, multiples, more
+
     def tooltip(self, force=False):
         """
         Create a tooltip. Hand crafted html anyone ?
@@ -855,6 +954,12 @@ class Item:
 
         # stats
         stats = ""
+        if self._armour:
+            stats += f"Armour: {self.armour}<br/>"
+        if self._evasion:
+            stats += f"Evasion Rating: {self.evasion}<br/>"
+        if self._energy_shield:
+            stats += f"Energy Shield: {self.energy_shield}<br/>"
         if self.type == "Weapon":
             stats += f"{self.sub_type}<br/>"
         if self.quality != 0:
@@ -918,6 +1023,59 @@ class Item:
         tip += f"</table>"
         # self.base_tooltip_text = tip
         return tip
+
+    def get_active_mods(self) -> None:
+        """
+        Account for mods that have updated the implicit values of items (like dmg, ES, armour, etc)
+        Also find base stat value (EG base_armour = armour - quality) to enable quality to be edited.
+        This is mainly used for calcs.
+        Updates self.active_mods: dict: List of all mods that can be used for calcs
+        :return: N/A
+        """
+        if self.active_mods:
+            return
+
+        # https://regex101.com/r/YRTdJY/1
+        # Exclude stats for equipment that has innate mods (eg ES, Armour, Damage)
+        debug = False
+        if debug:
+            print(f"{self.name}=")
+        for stat in self.all_stats:
+            if debug:
+                print(f"{stat}")
+                print("Armour", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Armour", stat))
+                print("Evasion", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Evasion", stat))
+                print("Energy Shield", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Energy Shield", stat))
+            if self._armour and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Armour", stat):
+                pass
+            elif self._evasion and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Evasion", stat):
+                pass
+            elif self._energy_shield and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Energy Shield", stat):
+                pass
+            else:
+                # self.active_mods[stat] = {"id": f"{self.id}", "name": f"{self.name}"}
+                self.active_mods.append(stat)
+        if debug:
+            print(self.active_mods)
+
+        if self.quality:
+            # print(f"{self.name}, {self._armour}, {((100+self.quality) / 100)=}")
+            qual_ratio = (100 + self.quality) / 100  # for 20% this is 1.2
+            if self._armour:
+                self.base_armour = round(self._armour / qual_ratio)
+                # print(f"{self.base_armour=}")
+
+            if self._evasion:
+                self.base_evasion = round(self._evasion / qual_ratio)
+                # print(f"{self.base_evasion=}")
+
+            if self._energy_shield:
+                self.base_energy_shield = round(self._energy_shield / qual_ratio)
+                # print(f"{self.base_energy_shield=}")
+        else:
+            self.base_armour = self._armour
+            self.base_evasion = self._evasion
+            self.base_energy_shield = self._energy_shield
 
     @property
     def abyssal_sockets(self):
@@ -1011,6 +1169,38 @@ class Item:
     @slot.setter
     def slot(self, new_slot):
         self._slot = new_slot
+
+    @property
+    def quality(self):
+        return self._quality
+
+    @quality.setter
+    def quality(self, new_quality):
+        self._quality = int(new_quality)
+
+    @property
+    def armour(self):
+        return self._armour
+
+    @armour.setter
+    def armour(self, new_armour):
+        self._armour = int(new_armour)
+
+    @property
+    def evasion(self):
+        return self._evasion
+
+    @evasion.setter
+    def evasion(self, new_evasion):
+        self._evasion = int(new_evasion)
+
+    @property
+    def energy_shield(self):
+        return self._energy_shield
+
+    @energy_shield.setter
+    def energy_shield(self, new_energy_shield):
+        self._energy_shield = int(new_energy_shield)
 
     @property
     def shaper(self):
