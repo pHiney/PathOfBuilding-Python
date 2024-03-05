@@ -69,7 +69,7 @@ class Build:
         self.compare_spec = None
 
         # variables from the xml
-        self.json = True
+        self.json = False
         self.xml_PoB = None
         self.xml_root = None
         self.xml_build = None
@@ -94,7 +94,7 @@ class Build:
         self.sockets_assigned = 0
 
         """Now fill out everything above out with a new build
-           This stops the creation of other classes() erroring out because variables are setup
+           This stops the creation of other classes() erroring out because variables are not setup
            So yes, build variables are filled out twice on start up
            Once from here, and the 2nd from MainWindow.init.build_loader("Default")
            """
@@ -118,6 +118,7 @@ class Build:
 
     @property
     def current_class(self):
+        # return self.current_spec and self.current_spec.classId or PlayerClasses(0)
         return self.current_spec.classId
 
     @current_class.setter
@@ -366,8 +367,10 @@ class Build:
         """
 
         if self.json:
+            print("build.new: json")
             self.json_build = empty_build
         else:
+            print("build.new: xml")
             self.name = "Default"
             self.xml_PoB = _xml
             self.xml_root = _xml.getroot()
