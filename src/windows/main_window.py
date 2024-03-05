@@ -602,7 +602,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Logic for checking we need to save and save if needed, goes here...
         # if build.needs_saving:
         #     if yes_no_dialog(self.app.tr("Save build"), self.app.tr("build name goes here"))
-        if self.build.build is not None:
+        if self.build.xml_build is not None:
             if not self.build.ask_for_save_if_modified():
                 return
         self.build_loader("Default")
@@ -683,7 +683,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.combo_classes.setCurrentText(self.build.className)
             self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
             self.update_status_bar(f"Loaded: {self.build.name}", 10)
-            # self.stats.load(self.build.build)
+            # self.stats.load(self.build.xml_build)
             self.player.load(self.build.xml_build)
 
         # This is needed to make the jewels show. Without it, you need to select or deselect a node.
