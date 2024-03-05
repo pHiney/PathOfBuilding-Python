@@ -22,6 +22,7 @@ from PoB.constants import (
     _VERSION,
     _VERSION_str,
     bandits,
+    default_view_mode,
     empty_build,
     empty_build_xml,
     empty_gem,
@@ -69,7 +70,6 @@ class Build:
         self.compare_spec = None
 
         # variables from the xml
-        self.json = False
         self.xml_PoB = None
         self.xml_root = None
         self.xml_build = None
@@ -82,12 +82,24 @@ class Build:
         self.xml_tree_view = None
         self.xml_items = None
         self.xml_config = None
+
+        self.json = False
+        self.json_PoB = empty_build["PathOfBuilding"]
+        self.json_build = self.json_PoB["Build"]
+        self.json_import_field = self.json_PoB["Import"]
+        self.json_items = self.json_PoB["Items"]
+        self.json_skills = self.json_PoB["Skills"]
+        self.json_tree = self.json_PoB["Tree"]
+        self.json_config = self.json_PoB["Config"]
+        self.json_calcs = self.json_PoB["Calcs"]
+        self.json_tree_view = self.json_PoB["TreeView"]
+        self.json_notes = self.json_PoB["Notes"]
+        self.json_notes_html = None
+
         self.last_account_hash = ""
         self.last_character_hash = ""
         self.last_realm = ""
         self.last_league = ""
-
-        self.json_build = None
 
         self.nodes_assigned = 0
         self.ascnodes_assigned = 0
@@ -98,6 +110,7 @@ class Build:
            So yes, build variables are filled out twice on start up
            Once from here, and the 2nd from MainWindow.init.build_loader("Default")
            """
+        # ToDo: xml. Remove. json intializes correctly
         self.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
 
     def __repr__(self) -> str:
@@ -134,55 +147,69 @@ class Build:
 
     @property
     def className(self):
-        return self.xml_build.get("className", "Scion")
+        # return self.xml_build.get("className", "Scion")
+        return self.json_build.get("className", "Scion")
 
     @className.setter
     def className(self, new_name):
         self.xml_build.set("className", new_name)
+        self.json_build.set("className", new_name)
 
     @property
     def ascendClassName(self):
-        return self.xml_build.get("ascendClassName", "None")
+        # return self.xml_build.get("ascendClassName", "None")
+        return self.json_build.get("ascendClassName", "None")
 
     @ascendClassName.setter
     def ascendClassName(self, new_name):
         self.xml_build.set("ascendClassName", new_name)
+        self.json_build.set("ascendClassName", new_name)
 
     @property
     def level(self):
-        return int(self.xml_build.get("level"))
+        # return int(self.xml_build.get("level"))
+        return self.json_build.get("level", 1)
 
     @level.setter
     def level(self, new_level):
         self.xml_build.set("level", f"{new_level}")
+        self.json_build.set("level", new_level)
         self.win.spin_level.setValue(new_level)
 
     @property
     def mainSocketGroup(self):
-        # Use a property to ensure the correct +/- 1
-        return max(int(self.xml_build.get("mainSocketGroup", 1)) - 1, 0)
+        # Use a property to ensure the correct +/- 1. XML is 1 based.
+        # return max(int(self.xml_build.get("mainSocketGroup", 1)) - 1, 0)
+        # JSON is 0 based
+        return self.json_build.get("mainSocketGroup", 0)
 
     @mainSocketGroup.setter
     def mainSocketGroup(self, new_group):
-        # Use a property to ensure the correct +/- 1
+        # Use a property to ensure the correct +/- 1. XML is 1 based.
         self.xml_build.set("mainSocketGroup", f"{new_group + 1}")
+        # JSON is 0 based
+        self.json_build.set("mainSocketGroup", new_group)
 
     @property
     def resistancePenalty(self):
-        return self.get_config_tag_item("Input", "resistancePenalty", -60)
+        # return self.get_config_tag_item("Input", "resistancePenalty", -60)
+        return str(self.json_config["Input"].get("resistancePenalty", -60))
 
     @resistancePenalty.setter
     def resistancePenalty(self, new_value):
         self.set_config_tag_item("Input", "resistancePenalty", new_value)
+        self.json_config["Input"].set("resistancePenalty", int(new_value))
 
     @property
     def bandit(self):
-        return self.get_config_tag_item("Input", "bandit", "None")
+        # return self.get_config_tag_item("Input", "bandit", "None")
+        return self.json_config["Input"].get("bandit", "None")
 
     @bandit.setter
     def bandit(self, new_bandit):
         self.xml_build.set("bandit", new_bandit)
         self.set_config_tag_item("Input", "bandit", new_bandit)
+        self.json_config["Input"].set("bandit", new_bandit)
         set_combo_index_by_data(self.win.combo_Bandits, self.bandit)
 
     def set_bandit_by_number(self, new_int):
@@ -191,49 +218,60 @@ class Build:
 
     @property
     def pantheonMajorGod(self):
-        return self.get_config_tag_item("Input", "pantheonMajorGod", "None")
+        # return self.get_config_tag_item("Input", "pantheonMajorGod", "None")
+        return self.json_config["Input"].get("pantheonMajorGod", "None")
 
     @pantheonMajorGod.setter
-    def pantheonMajorGod(self, new_name):
-        self.xml_build.set("pantheonMajorGod", new_name)
-        self.set_config_tag_item("Input", "pantheonMajorGod", new_name)
+    def pantheonMajorGod(self, new_god):
+        self.xml_build.set("pantheonMajorGod", new_god)
+        self.set_config_tag_item("Input", "pantheonMajorGod", new_god)
+        self.json_config["Input"].set("pantheonMajorGod", new_god)
 
     @property
     def pantheonMinorGod(self):
-        return self.get_config_tag_item("Input", "pantheonMinorGod", "None")
+        # return self.get_config_tag_item("Input", "pantheonMinorGod", "None")
+        return self.json_config["Input"].get("pantheonMinorGod", "None")
 
     @pantheonMinorGod.setter
-    def pantheonMinorGod(self, new_name):
-        self.xml_build.set("pantheonMinorGod", new_name)
-        self.set_config_tag_item("Input", "pantheonMinorGod", new_name)
+    def pantheonMinorGod(self, new_god):
+        self.xml_build.set("pantheonMinorGod", new_god)
+        self.set_config_tag_item("Input", "pantheonMinorGod", new_god)
+        self.json_config["Input"].set("pantheonMinorGod", new_god)
 
     @property
     def targetVersion(self):
-        return self.xml_build.get("targetVersion")
+        # return self.xml_build.get("targetVersion")
+        return self.json_build.get("targetVersion")
 
     @targetVersion.setter
-    def targetVersion(self, new_name):
-        self.xml_build.set("targetVersion", new_name)
+    def targetVersion(self, new_version):
+        self.xml_build.set("targetVersion", new_version)
+        self.json_build.set("targetVersion", new_version)
 
     @property
     def version_int(self):
-        return int(self.xml_build.get("version", "1"))
+        # return int(self.xml_build.get("version", "1"))
+        return self.json_build.get("version", 2)
 
     @property
     def version(self):
-        return self.xml_build.get("version", "1")
+        # return self.xml_build.get("version", "1")
+        return str(self.json_build.get("version", 2))
 
     @version.setter
     def version(self, curr_ver):
         self.xml_build.set("version", curr_ver)
+        self.json_build.set("version", int(curr_ver))
 
     @property
     def viewMode(self):
-        return self.xml_build.get("viewMode")
+        # return self.xml_build.get("viewMode", default_view_mode)
+        return str(self.json_build.get("viewMode", default_view_mode))
 
     @viewMode.setter
     def viewMode(self, curr_mode):
         self.xml_build.set("viewMode", curr_mode.upper())
+        self.json_build.set("version", curr_mode.upper())
 
     @property
     def current_spec(self):
@@ -358,22 +396,37 @@ class Build:
         for _input in self.xml_config.findall(key):
             del _input
 
-    def new(self, _xml):
+    def new(self, build_obj):
         """
         common function to load internal variables from the ET
 
-        :param _xml: xml tree object from loading the source XML or the default one
+        :param build_obj: xml tree object from loading the source XML or the default one
         :return: N/A
         """
-
-        if self.json:
-            print("build.new: json")
-            self.json_build = empty_build
+        print(f"build.new: {type(build_obj)}")
+        if type(build_obj) is dict:
+            print("build.new: json", build_obj)
+            if build_obj is None:
+                build_obj = empty_build
+                self.json = False
+            self.json_PoB = build_obj["PathOfBuilding"]
+            self.json_build = self.json_PoB["Build"]
+            self.json_import_field = self.json_PoB["Import"]
+            self.json_items = self.json_PoB["Items"]
+            self.json_skills = self.json_PoB["Skills"]
+            self.json_tree = self.json_PoB["Tree"]
+            self.json_config = self.json_PoB["Config"]
+            self.json_calcs = self.json_PoB["Calcs"]
+            self.json_tree_view = self.json_PoB["TreeView"]
+            self.json_notes = self.json_PoB["Notes"]
+            self.json_notes_html = None
         else:
             print("build.new: xml")
-            self.name = "Default"
-            self.xml_PoB = _xml
-            self.xml_root = _xml.getroot()
+            if build_obj is None:
+                build_obj = empty_build_xml
+                self.name = "Default"
+            self.xml_PoB = build_obj
+            self.xml_root = build_obj.getroot()
             self.xml_build = self.xml_root.find("Build")
             self.xml_import_field = self.xml_root.find("Import")
             if self.xml_import_field is not None:
