@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import math
 import re
 
-from PoB.constants import bad_text, pob_debug, ColourCodes, empty_gem
+from PoB.constants import bad_text, pob_debug, ColourCodes, empty_gem_xml
 from PoB.settings import Settings
 from PoB.mod import Mod
 from widgets.ui_utils import (
@@ -44,7 +44,7 @@ class Gem:
         self.sub_type = ""  # or item_class - eg claw
         self.active = False  # is this the item that is currently chosen/shown in the dropdown ?
 
-        self.xml_gem = ET.fromstring(empty_gem)
+        self.xml_gem = ET.fromstring(empty_gem_xml)
 
         # this is not always available from the json character download
         self.level_req = 0

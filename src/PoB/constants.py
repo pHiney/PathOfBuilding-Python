@@ -33,6 +33,7 @@ default_max_charges = 3
 
 # Default config incase the settings file doesn't exist
 def_theme = "dark"
+starting_scion_node = "58833"
 default_settings = f"""<PathOfBuilding>
 <Misc theme="{def_theme}" slotOnlyTooltips="true" showTitlebarName="true" showWarnings="true" defaultCharLevel="1" 
 nodePowerTheme="0" connectionProtocol="0" thousandsSeparator="n" decimalSeparator="_" 
@@ -43,11 +44,17 @@ proxyURL="" buildPath="" open_build=""/>
    <size width="800" height="600"/>
 </PathOfBuilding>"""
 
-default_spec_xml = f"""<Spec title="Default" classId="0" ascendClassId="0" masteryEffects="" nodes="58833" 
+default_spec_xml = f"""<Spec title="Default" classId="0" ascendClassId="0" masteryEffects="" nodes="{starting_scion_node}" 
 treeVersion="{_VERSION_str}"></Spec>"""
 default_skill_set_xml = """<SkillSet id="1" title="Default">
   <Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label="" enabled="true" slot="" mainActiveSkill="1"></Skill>
 </SkillSet>"""
+
+empty_socket_group_xml = """<Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label=""
+enabled="true" slot="" mainActiveSkill="1"/>"""
+
+empty_gem_xml = """<Gem enableGlobal2="false" level="1" enableGlobal1="true" skillId="" qualityId="Default"
+gemId="" enabled="true" quality="0" count="1" nameSpec=""/>"""
 
 empty_build_xml = f"""
 <PathOfBuilding>
@@ -80,37 +87,63 @@ empty_build_xml = f"""
     </Config>
 </PathOfBuilding>"""
 
+default_spec_dict = {
+    "treeVersion": _VERSION_str,
+    "classId": 0,
+    "ascendClassId": 0,
+    "nodes": "",
+    "masteryEffects": "",
+    "URL": "https://www.pathofexile.com/passive-skill-tree/AAAABgAAAAAA",
+    "Sockets": "",
+    "Overrides": "",
+}
+empty_socket_group_dict = {
+    "mainActiveSkillCalcs": 0,
+    "includeInFullDPS": "false",
+    "label": "",
+    "enabled": "true",
+    "slot": "",
+    "mainActiveSkill": 0,
+}
+default_skillset_dict = {
+    "Default": {
+        "SkillSet id": 0,
+        "title": "Default",
+        # "Skill0": {empty_socket_group_dict},
+        "Skills": [empty_socket_group_dict],
+    }
+}
+
 empty_build = {
     "PathOfBuilding": {
         "Build": {
             "level": 1,
             "version": 2,
             "targetVersion": "3_0",
-            "pantheonMajorGod": "None",
-            "bandit": "None",
             "className": "Scion",
             "ascendClassName": "None",
             "characterLevelAutoMode": True,
-            "mainSocketGroup": 1,
+            "mainSocketGroup": 0,
             "viewMode": default_view_mode,
-            "pantheonMinorGod": "None",
         },
-        "Calcs": {"Input": {"misc_buffMode": "EFFECTIVE", "skill_number": 1}, "Section": {}},
         "Import": {"exportParty": False, "lastAccountHash": "", "lastCharacterHash": "", "lastRealm": "", "lastLeague": ""},
-        "Items": {"activeItemSet": 1, "useSecondWeaponSet": False, "ItemSet": {}},
-        "Party": {"destination": "All", "ShowAdvanceTools": False, "append": False},
-        "Notes": None,
+        "Items": {"activeItemSet": 0, "useSecondWeaponSet": False, "ItemSet": {}},
         "Skills": {
+            "activeSkillSet": 0,
             "sortGemsByDPSField": "CombinedDPS",
-            "activeSkillSet": 1,
             "sortGemsByDPS": True,
             "defaultGemQuality": 0,
             "defaultGemLevel": "normalMaximum",
             "showSupportGemTypes": "ALL",
             "showAltQualityGems": False,
-            "SkillSet": {},
+            "SkillSet": [default_skillset_dict],
         },
-        "TreeView": {"searchStr": "", "zoomY": 0, "zoomLevel": 3, "showStatDifferences": True, "zoomX": 0},
+        "Tree": {
+            "activeSpec": 0,
+            "Specs": {
+                "Default": default_spec_dict,
+            },
+        },
         "Config": {
             "Input": {
                 "useEnduranceCharges": True,
@@ -139,15 +172,64 @@ empty_build = {
                 "enemyPhysicalDamage": 1294,
             },
         },
+        "Calcs": {
+            "Input": {"misc_buffMode": "EFFECTIVE", "skill_number": 1},
+            "Section": {
+                "ViewSkillDetails": {"collapsed": False, "id": "SkillSelect"},
+                "SkillHitDamage": {"collapsed": False, "id": "HitDamage"},
+                "ExertingWarcries": {"collapsed": False, "id": "Warcries"},
+                "SkillDamageoverTime": {"collapsed": False, "id": "Dot"},
+                "AttackCastRate": {"collapsed": False, "id": "Speed"},
+                "Crits": {"collapsed": False, "id": "Crit"},
+                "Impale": {"collapsed": False, "id": "Impale"},
+                "SkilltypespecificStats": {"collapsed": False, "id": "SkillTypeStats"},
+                "Accuracy": {"collapsed": False, "id": "HitChance"},
+                "Bleed": {"collapsed": False, "id": "Bleed"},
+                "Poison": {"collapsed": False, "id": "Poison"},
+                "Ignite": {"collapsed": False, "id": "Ignite"},
+                "Decay": {"collapsed": False, "id": "Decay"},
+                "LeechGainonHit": {"collapsed": False, "id": "LeechGain"},
+                "NonDamagingAilments": {"collapsed": False, "id": "EleAilments"},
+                "OtherEffects": {"collapsed": False, "id": "MiscEffects"},
+                "Attributes": {"collapsed": False, "id": "Attributes"},
+                "Life": {"collapsed": False, "id": "Life"},
+                "Mana": {"collapsed": False, "id": "Mana"},
+                "EnergyShield": {"collapsed": False, "id": "EnergyShield"},
+                "Ward": {"collapsed": False, "id": "Ward"},
+                "Resists": {"collapsed": False, "id": "Resists"},
+                "Armour": {"collapsed": False, "id": "Armour"},
+                "Evasion": {"collapsed": False, "id": "Evasion"},
+                "DamageAvoidance": {"collapsed": False, "id": "DamageAvoidance"},
+                "Block": {"collapsed": False, "id": "DamageAvoidance"},
+                "Dodge": {"collapsed": False, "id": "DamageAvoidance"},
+                "SpellSuppression": {"collapsed": False, "id": "DamageAvoidance"},
+                "Flasks": {"collapsed": False, "id": "Flasks"},
+                "UtilityFlasks": {"collapsed": False, "id": "Flasks"},
+                "LifeFlasks": {"collapsed": False, "id": "Flasks"},
+                "ManaFlasks": {"collapsed": False, "id": "Flasks"},
+                "Rage": {"collapsed": False, "id": "Rage"},
+                "Charges": {"collapsed": False, "id": "Charges"},
+                "Frenzy": {"collapsed": False, "id": "Charges"},
+                "Endurance": {"collapsed": False, "id": "Charges"},
+                "Power": {"collapsed": False, "id": "Charges"},
+                "OtherDefences": {"collapsed": False, "id": "MiscDefences"},
+                "StunDuration": {"collapsed": False, "id": "MiscDefences"},
+                "OtherAvoidance": {"collapsed": False, "id": "MiscDefences"},
+                "OtherAilmentDefences": {"collapsed": False, "id": "MiscDefences"},
+                "DamageTaken": {"collapsed": False, "id": "DamageTaken"},
+                "DamagingHits": {"collapsed": False, "id": "DamageTaken"},
+                "EffectiveHealthPool": {"collapsed": False, "id": "DamageTaken"},
+                "MaximumHitTaken": {"collapsed": False, "id": "DamageTaken"},
+                "DotsandDegens": {"collapsed": False, "id": "DamageTaken"},
+                "RecoupandHitTakenOverTime": {"collapsed": False, "id": "DamageTaken"},
+            },
+        },
+        "Party": {"destination": "All", "ShowAdvanceTools": False, "append": False},
+        "TreeView": {"searchStr": "", "zoomY": 0, "zoomLevel": 3, "showStatDifferences": True, "zoomX": 0},
+        "Notes": "",
         "NotesHTML": None,
     },
 }
-
-empty_socket_group = """<Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label="" 
-enabled="true" slot="" mainActiveSkill="1"/>"""
-
-empty_gem = """<Gem enableGlobal2="false" level="1" enableGlobal1="true" skillId="" qualityId="Default" 
-gemId="" enabled="true" quality="0" count="1" nameSpec=""/>"""
 
 resistance_penalty = {
     0: "None",
@@ -765,7 +847,7 @@ qss_template = """
     QAbstractItemView {{
         alternate-background-color: {alt_colour};
     }}
-    
+
     /* Put a box around control */
     ListBox:hover,
     QListWidget:hover,

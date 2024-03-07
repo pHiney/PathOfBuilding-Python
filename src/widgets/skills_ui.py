@@ -9,7 +9,7 @@ import re
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QListWidgetItem
 
-from PoB.constants import ColourCodes, default_skill_set_xml, empty_socket_group, empty_gem, slot_map, bad_text
+from PoB.constants import ColourCodes, default_skill_set_xml, empty_socket_group_xml, empty_gem_xml, slot_map, bad_text
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import read_json
@@ -701,7 +701,7 @@ class SkillsUI:
         """Create a new socket group. Actions for when the new socket group button is pressed."""
         # print("new_socket_group")
         # Add new group to xml and Socket Group list, and then show the update
-        new_socket_group = ET.fromstring(empty_socket_group)
+        new_socket_group = ET.fromstring(empty_socket_group_xml)
         if self.xml_current_skill_set is None:
             self.xml_current_skill_set = self.new_skill_set()
         self.xml_current_skill_set.append(new_socket_group)
@@ -1084,7 +1084,7 @@ class SkillsUI:
                         current_socket_group_number = this_group
                         current_socket_group = self.new_socket_group()
                         current_socket_group.set("slot", slot_map[item["inventoryId"]])
-                    xml_gem = ET.fromstring(empty_gem)
+                    xml_gem = ET.fromstring(empty_gem_xml)
                     current_socket_group.append(xml_gem)
                     xml_gem.set("level", get_property(json_gem, "Level", "1"))
                     xml_gem.set("quality", get_property(json_gem, "Quality", "0"))
@@ -1123,7 +1123,7 @@ class SkillsUI:
             if _slot != "":
                 current_socket_group.set("slot", slot_map[_slot.title()])
             for idx, json_gem in enumerate(json_group.get("skillGems")):
-                xml_gem = ET.fromstring(empty_gem)
+                xml_gem = ET.fromstring(empty_gem_xml)
                 current_socket_group.append(xml_gem)
                 xml_gem.set("level", str(json_gem.get("level", 1)))
                 xml_gem.set("quality", str(json_gem.get("quality", 0)))

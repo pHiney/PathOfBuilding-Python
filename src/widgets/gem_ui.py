@@ -8,7 +8,7 @@ from PySide6.QtCore import QRect, Slot, QSize, Qt
 from PySide6.QtGui import QColor, QBrush, QIcon
 from PySide6.QtWidgets import QCheckBox, QComboBox, QPushButton, QSpinBox, QWidget
 
-from PoB.constants import ColourCodes, empty_gem
+from PoB.constants import ColourCodes, empty_gem_xml
 from PoB.gem import Gem
 from widgets.ui_utils import (
     _debug,
@@ -43,7 +43,7 @@ class GemUI(QWidget):
         # reference to the loaded json so we can get data for the selected gem
         self.gem_list = json_gems
         if gem is None:
-            gem = ET.fromstring(empty_gem)
+            gem = ET.fromstring(empty_gem_xml)
         self.xml_gem = gem
         self.parent_notify = parent_notify
 
@@ -196,7 +196,7 @@ class GemUI(QWidget):
         if self.skill_id == "":
             return
         if self.xml_gem is None:
-            self.xml_gem = ET.fromstring(empty_gem)
+            self.xml_gem = ET.fromstring(empty_gem_xml)
         self.level = self.spin_gem_level.value()
         self.xml_gem.set("level", str(self.level))
         self.quality = self.spin_gem_quality.value()

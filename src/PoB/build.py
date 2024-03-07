@@ -25,8 +25,6 @@ from PoB.constants import (
     default_view_mode,
     empty_build,
     empty_build_xml,
-    empty_gem,
-    empty_socket_group,
     program_title,
     tree_versions,
 )
@@ -111,7 +109,8 @@ class Build:
            Once from here, and the 2nd from MainWindow.init.build_loader("Default")
            """
         # ToDo: xml. Remove. json intializes correctly
-        self.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
+        # self.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
+        self.new(empty_build)
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}', {self.current_tree.version}"
@@ -153,7 +152,7 @@ class Build:
     @className.setter
     def className(self, new_name):
         self.xml_build.set("className", new_name)
-        self.json_build.set("className", new_name)
+        self.json_build["className"] = new_name
 
     @property
     def ascendClassName(self):
@@ -163,7 +162,7 @@ class Build:
     @ascendClassName.setter
     def ascendClassName(self, new_name):
         self.xml_build.set("ascendClassName", new_name)
-        self.json_build.set("ascendClassName", new_name)
+        self.json_build["ascendClassName"] = new_name
 
     @property
     def level(self):
@@ -173,7 +172,7 @@ class Build:
     @level.setter
     def level(self, new_level):
         self.xml_build.set("level", f"{new_level}")
-        self.json_build.set("level", new_level)
+        self.json_build["level"] = new_level
         self.win.spin_level.setValue(new_level)
 
     @property
@@ -188,7 +187,7 @@ class Build:
         # Use a property to ensure the correct +/- 1. XML is 1 based.
         self.xml_build.set("mainSocketGroup", f"{new_group + 1}")
         # JSON is 0 based
-        self.json_build.set("mainSocketGroup", new_group)
+        self.json_build["mainSocketGroup"] = new_group
 
     @property
     def resistancePenalty(self):
@@ -209,7 +208,7 @@ class Build:
     def bandit(self, new_bandit):
         self.xml_build.set("bandit", new_bandit)
         self.set_config_tag_item("Input", "bandit", new_bandit)
-        self.json_config["Input"].set("bandit", new_bandit)
+        self.json_config["Input"]["bandit"] = new_bandit
         set_combo_index_by_data(self.win.combo_Bandits, self.bandit)
 
     def set_bandit_by_number(self, new_int):
@@ -246,7 +245,7 @@ class Build:
     @targetVersion.setter
     def targetVersion(self, new_version):
         self.xml_build.set("targetVersion", new_version)
-        self.json_build.set("targetVersion", new_version)
+        self.json_build["targetVersion"] = new_version
 
     @property
     def version_int(self):
@@ -261,7 +260,7 @@ class Build:
     @version.setter
     def version(self, curr_ver):
         self.xml_build.set("version", curr_ver)
-        self.json_build.set("version", int(curr_ver))
+        self.json_build["version"] = int(curr_ver)
 
     @property
     def viewMode(self):
@@ -271,7 +270,7 @@ class Build:
     @viewMode.setter
     def viewMode(self, curr_mode):
         self.xml_build.set("viewMode", curr_mode.upper())
-        self.json_build.set("version", curr_mode.upper())
+        self.json_build["version"] = curr_mode.upper()
 
     @property
     def current_spec(self):
@@ -420,6 +419,11 @@ class Build:
             self.json_tree_view = self.json_PoB["TreeView"]
             self.json_notes = self.json_PoB["Notes"]
             self.json_notes_html = None
+
+            for json_spec in self.json_tree["Specs"]:
+                self.specs.append(Spec(self, json_spec))
+            self.current_spec = self.specs[0]
+
         else:
             print("build.new: xml")
             if build_obj is None:
@@ -515,6 +519,23 @@ class Build:
             if custom_mods:
                 # add in a str of custom mods
                 self.set_config_tag_item("Input", "customMods", custom_mods)
+
+    def save_to_json(self):
+        """
+        Save the build to the filename recorded in the build Class
+        :return: N/A
+        """
+        self.version = 2
+        self.json_import_field.set("lastAccountHash", self.last_account_hash)
+        self.json_import_field.set("lastCharacterHash", self.last_character_hash)
+        self.json_import_field.set("lastRealm", self.last_realm)
+        self.json_import_field.set("lastLeague", self.last_league)
+        for spec in self.specs:
+            spec.save_json()
+
+        # ensure these get updated to match last tree shown (these are properties and will trigger their own save to the dict)
+        self.className = self.current_spec.classId_str()
+        self.ascendClassName = self.current_spec.ascendClassId_str()
 
     def save_to_xml(self, version="2"):
         """

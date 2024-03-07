@@ -2,93 +2,92 @@
 Represents and manages one Spec in the XML. It has a list of active nodes.
 """
 
-import xml.etree.ElementTree as ET
 import base64
 import re
-from pathlib import Path
+import xml.etree.ElementTree as ET
 
 from PoB.constants import (
-    bandits,
+    bad_text,
     default_spec_xml,
+    default_spec_dict,
+    starting_scion_node,
     tree_versions,
     PlayerClasses,
     _VERSION,
     _VERSION_str,
 )
-from PoB.settings import Settings
-from widgets.ui_utils import print_call_stack, print_a_xml_element
 from dialogs.popup_dialogs import ok_dialog
 
 
 class Spec:
-    def __init__(self, build, _spec=None, version=_VERSION_str) -> None:  # Circular reference on Build()
+    def __init__(self, build, title, new_spec=None, version=_VERSION_str) -> None:  # Circular reference on Build()
         """
-        Represents one Spec in the XML. Most simple settings are properties.
+        Represents one Spec in the build. Most simple settings are properties.
 
-        :param _spec: the spec from the XML, or None for a new Spec (probably should never happen)
+        :param new_spec: the spec from the XML, dict from json, or None for a new Spec (probably should never happen)
         """
         self.internal_version = 6
         self.build = build
         self.tr = self.build.settings.app.tr
 
-        self.def_spec = ET.fromstring(default_spec_xml)
-        if _spec is None:
-            _spec = self.def_spec
-            _spec.set("treeVersion", version)
-        self.xml_spec = _spec
-
-        # remove editedNodes if found
-        ed = self.xml_spec.find("EditedNodes", None)
-        if ed is not None:
-            self.xml_spec.remove(ed)
-
-        self.masteryEffects = {}
-        self.set_mastery_effects_from_string(self.xml_spec.get("masteryEffects", ""))
-
-        # self.nodes = []
+        print(f"spec.new: {type(new_spec)}")
+        self.spec = new_spec is None and default_spec_dict or new_spec
+        self.title = title
         self.nodes = set()
         self.ascendancy_nodes = []
         self.extended_hashes = []
-        self.set_nodes_from_string(self.xml_spec.get("nodes", "0"))
-
+        self.masteryEffects = {}
         # Table of jewels equipped in this tree
         # Keys are node IDs, values are items
         self.sockets = {}
 
-        # if there are no sockets there, we don't mind. We'll create an empty one when saving
-        sockets = _spec.find("Sockets")
-        if sockets is not None:
-            for socket in sockets.findall("Socket"):
-                node_id = int(socket.get("nodeId", 0))
-                item_id = int(socket.get("itemId", 0))
-                # There are files which have been saved poorly and have empty jewel sockets saved as sockets ...
-                # with itemId zero. This check filters them out to prevent dozens of invalid jewels
-                # if item_id > 0 and node_id in self.nodes:
-                if item_id > 0:
-                    self.sockets[node_id] = item_id
+        if type(new_spec) is ET:  # xml
+            self.title = new_spec["@title"]
+            self.treeVersion = new_spec["@treeVersion"]
+            self.classId = new_spec["@classId"]
+            self.ascendClassId = new_spec["@ascendClassId"]
+            self.spec["nodes"] = new_spec.get("@nodes", f"{starting_scion_node}")
+            self.spec["masteryEffects"] = new_spec["@masteryEffects"]
+            self.spec["URL"] = new_spec["URL"]
 
-    @property
-    def title(self):
-        return self.xml_spec.get("title", "Default")
+            # if there are no sockets there, we don't mind. We'll create an empty one when saving
+            sockets = new_spec.find("Sockets")
+            if sockets is not None:
+                for socket in sockets.findall("Socket"):
+                    node_id = int(socket.get("nodeId", "0"))
+                    item_id = int(socket.get("itemId", "0"))
+                    # There are files which have been saved poorly and have empty jewel sockets saved as sockets ...
+                    # with itemId zero. This check filters them out to prevent dozens of invalid jewels
+                    # if item_id > 0 and node_id in self.nodes:
+                    if item_id > 0:
+                        self.sockets[node_id] = item_id
+        else:
+            self.set_sockets_from_string(self.spec.get("Sockets", ""))
 
-    @title.setter
-    def title(self, new_title):
-        self.xml_spec.set("title", new_title)
+        self.set_nodes_from_string(self.spec.get("nodes", f"{starting_scion_node}"))
+        self.set_mastery_effects_from_string(self.spec["masteryEffects"])
+
+    # @property
+    # def title(self):
+    #     return self.spec.get("title", "Default")
+    #
+    # @title.setter
+    # def title(self, new_title):
+    #     self.spec["title"] = new_title
 
     @property
     def classId(self) -> int:
-        return PlayerClasses(int(self.xml_spec.get("classId", PlayerClasses.SCION.value)))
+        return PlayerClasses(int(self.spec.get("classId", PlayerClasses.SCION.value)))
 
     @classId.setter
     def classId(self, new_class_id):
         """
-        :param new_class_id: PlayerClasses or int: importing from json sets using an int
+        :param new_class_id: PlayerClasses or int or str if sourced from xml
         :return: N/A
         """
-        if type(new_class_id) is int:
-            self.xml_spec.set("classId", f"{new_class_id}")
-        else:
-            self.xml_spec.set("classId", f"{new_class_id.value}")
+        if type(new_class_id) is PlayerClasses:
+            new_class_id = PlayerClasses(new_class_id).value
+        self.spec["classId"] = int(new_class_id)
 
     def classId_str(self) -> str:
         """Return a string of the current Class"""
@@ -96,15 +95,15 @@ class Spec:
 
     @property
     def ascendClassId(self) -> int:
-        return int(self.xml_spec.get("ascendClassId", 0))
+        return int(self.spec.get("ascendClassId", 0))
 
     @ascendClassId.setter
     def ascendClassId(self, new_ascend_class_id):
         """
-        :param new_ascend_class_id: int
+        :param new_ascend_class_id: int or str if sourced from xml
         :return: N/A
         """
-        self.xml_spec.set("ascendClassId", f"{new_ascend_class_id}")
+        self.spec["ascendClassId"] = int(new_ascend_class_id)
 
     def ascendClassId_str(self):
         """Return a string of the current Ascendancy"""
@@ -118,7 +117,7 @@ class Spec:
 
     @property
     def treeVersion(self):
-        return self.xml_spec.get("treeVersion", _VERSION_str)
+        return self.spec.get("treeVersion", _VERSION_str)
 
     @treeVersion.setter
     def treeVersion(self, new_version):
@@ -129,15 +128,13 @@ class Spec:
         """
         # ensure it is formatted correctly (n_nn). Remove dots and a trailing sub-version
         # Do not remove the leading \. despite what python grammar checkers might say.
-        tmp_list = re.split(r"\.|_|/", new_version)
-        self.xml_spec.set("treeVersion", f"{tmp_list[0]}_{tmp_list[1]}")
+        tmp_list = re.split(r".|_|/", new_version)
+        self.spec["treeVersion"] = f"{tmp_list[0]}_{tmp_list[1]}"
 
     @property
     def URL(self):
-        xml_url = self.xml_spec.find("URL")
-        if xml_url is None:
-            return None
-        return xml_url.text.strip()
+        url = self.spec.get("URL", bad_text)
+        return url == bad_text and "" or url
 
     @URL.setter
     def URL(self, new_url):
@@ -145,16 +142,17 @@ class Spec:
         :param new_url: str
         :return: N/A
         """
-        if new_url == "":
-            return
-        xml_url = self.xml_spec.find("URL")
-        if xml_url is None:
-            xml_url = ET.Element("URL")
-            self.xml_spec.append(xml_url)
-        xml_url.text = new_url
+        self.spec["URL"] = new_url
 
-    def b_to_i(self, byte_array, begin, end, endian, length=0):
-        """Grabs end->begin bytes and returns an int"""
+    def b_to_i(self, byte_array, begin, end, endian, length=0) -> int:
+        """Grabs end->begin bytes and returns an int
+        :param byte_array: byte_array:
+        :param begin: int:
+        :param end: int:
+        :param endian: int:
+        :param length: int:
+        :return: int:
+        """
         if length == 0:
             return int.from_bytes(byte_array[begin:end], endian)
         else:
@@ -164,7 +162,7 @@ class Spec:
         """
         Import all the regular nodes from an URl
         :param decoded_data:
-        :param start:
+        :param start: int:
         :param count: This needs to be passed in as it's one byte in ggg url and two in poeplanner
         :param endian: big (ggg) or little (poeplanner)
         :return: new index
@@ -180,6 +178,8 @@ class Spec:
         for i in range(0, len(decoded_nodes), 2):
             print(i, int.from_bytes(decoded_nodes[i : i + 2], endian))
             self.nodes.add(int.from_bytes(decoded_nodes[i : i + 2], endian))
+        if len(self.nodes) == 0:
+            self.nodes.add(starting_scion_node)
         return end
 
     def import_cluster_nodes(self, decoded_data, start, count, endian):
@@ -268,6 +268,8 @@ class Spec:
             self.set_nodes_from_ggg_url(new_url)
         if poep is not None:
             self.set_nodes_from_poeplanner_url(new_url)
+        if len(self.nodes) == 0:
+            self.nodes.add(starting_scion_node)
 
     def set_nodes_from_ggg_url(self, ggg_url):
         """
@@ -463,6 +465,19 @@ class Spec:
             for effect in effects:
                 self.masteryEffects[int(effect[0])] = int(effect[1])
 
+    def set_sockets_from_string(self, new_sockets):
+        """
+        masteryEffects is a string of {paired numbers}. Turn it into a dictionary [int1] = int2
+
+        :param new_sockets: str
+        :return:
+        """
+        if new_sockets != "":
+            # get a list of matches
+            sockets = re.findall(r"{(\d+),(\d+)}", new_sockets)
+            for socket in sockets:
+                self.masteryEffects[int(socket[0])] = int(socket[1])
+
     def get_mastery_effect(self, node_id):
         """return one node id from mastery effects"""
         return self.masteryEffects.get(node_id, -1)
@@ -496,7 +511,6 @@ class Spec:
         """
         if new_nodes:
             self.nodes = set([int(node) for node in new_nodes.split(",")])
-            # self.nodes = new_nodes.split(",")
 
     def set_extended_hashes_from_string(self, new_nodes):
         """
@@ -504,33 +518,49 @@ class Spec:
         :param new_nodes: str
         :return: N/A
         """
-        print("set_extended_hashes_from_string")
+        print("set_extended_hashes_from_string", new_nodes)
         if new_nodes:
             self.nodes = set(new_nodes.split(","))
 
-    def save(self):
+    def save(self, xml=False):
         """
         Save anything that can't be a property, like Nodes, sockets
-
-        :return:
+        :param xml: bool: Return a XML snippet
+        :return: Title,dict or Title,xml snippet
         """
         if len(self.nodes) > 0:
-            self.xml_spec.set("nodes", ",".join(f"{node}" for node in self.nodes))
+            self.spec["nodes"] = ",".join(f"{node}" for node in sorted(self.nodes))
+        self.export_nodes_to_url()
 
         # put masteryEffects back into a string of {number,number},{number,number}
         str_mastery_effects = ""
         for effect in self.masteryEffects.keys():
             str_mastery_effects += f"{{{effect},{self.masteryEffects[effect]}}},"
-        self.xml_spec.set("masteryEffects", str_mastery_effects.rstrip(","))
+        self.spec["masteryEffects"] = str_mastery_effects.rstrip(",")
 
-        sockets = self.xml_spec.find("Sockets")
-        if sockets is not None:
-            self.xml_spec.remove(sockets)
-        sockets = ET.Element("Sockets")
-        self.xml_spec.append(sockets)
-        if len(self.sockets) > 0:
-            for node_id in self.sockets.keys():
-                sockets.append(ET.fromstring(f'<Socket nodeId="{node_id}" itemId="{self.sockets[node_id]}"/>'))
+        str_sockets = ""
+        for socket in self.sockets.keys():
+            str_sockets += f"{{{socket},{self.sockets[socket]}}},"
+        self.spec["Sockets"] = str_sockets.rstrip(",")
+        if xml:
+            xml_spec = ET.fromstring(default_spec_xml)
+            xml_spec["@title"] = self.title
+            xml_spec["@classId"] = self.spec["classId"]
+            xml_spec["@ascendClassId"] = self.spec["ascendClassId"]
+            xml_spec["@nodes"] = self.spec["nodes"]
+            xml_spec["@masteryEffects"] = self.spec["masteryEffects"]
+            xml_spec["URL"] = self.spec["URL"]
+            xml_sockets = xml_spec.find("Sockets")
+            if xml_sockets is not None:
+                xml_spec.remove(xml_sockets)
+            xml_sockets = ET.Element("Sockets")
+            xml_spec.append(xml_sockets)
+            if len(self.sockets) > 0:
+                for node_id in self.sockets.keys():
+                    xml_sockets.append(ET.fromstring(f'<Socket nodeId="{node_id}" itemId="{self.sockets[node_id]}"/>'))
+            return self.title, xml_spec
+        else:
+            return self.title, self.spec
 
     def load_from_ggg_json(self, json_tree, json_character):
         """
