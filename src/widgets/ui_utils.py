@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt, QMargins, QPoint, QRect, QSize
 from PySide6.QtGui import QAbstractTextDocumentLayout, QPalette, QTextDocument
 from PySide6.QtWidgets import QApplication, QComboBox, QProxyStyle, QStyle, QStyleOptionViewItem, QStyledItemDelegate
 
-from PoB.constants import ColourCodes, pob_debug, locale
+from PoB.constants import ColourCodes, pob_debug, locale, empty_build, empty_build_xml
 
 
 def str_to_bool(in_str):
@@ -154,40 +154,46 @@ def html_colour_text(colour, text):
     return f'<span style="color:{c};">{text.replace(newline,"<BR>")}</span>'
 
 
-def set_combo_index_by_data(_combo: QComboBox, _data):
+def set_combo_index_by_data(_combo: QComboBox, _data, debug=False) -> int:
     """
     Set a combo box current index based on it's data field.
 
     :param _combo: the combo box.
     :param _data: the data. There is no type to this, so the passed in type should match what the combo has.
+    :param debug: bool. Show more info
     :return: int: the index of the combobox or -1 if not found.
     """
     if _data is None:
         _data = "None"
     # print_call_stack()
-    for i in range(_combo.count()):
-        if _combo.itemData(i) == _data:
-            _combo.setCurrentIndex(i)
-            return i
-    return -1
+    if debug:
+        print(f"{_combo.objectName()}: {_data=}, {type(_data)=}")
+    index = _combo.findData(_data)
+    if index >= 0:
+        if debug:
+            print(f"Found: {_data=}, {index=}")
+        _combo.setCurrentIndex(index)
+    return index
 
 
-def set_combo_index_by_text(_combo: QComboBox, _text):
+def set_combo_index_by_text(_combo: QComboBox, _text, debug=False) -> int:
     """
     Set a combo box current index based on it's text field.
 
     :param _combo: the combo box.
     :param _text: string: the text.
+    :param debug: bool. Show more info
     :return: int: the index of the combobox or -1 if not found.
     """
     if _text is None:
         _text = "None"
     # print_call_stack()
-    for i in range(_combo.count()):
-        if _combo.itemText(i) == _text:
-            _combo.setCurrentIndex(i)
-            return i
-    return -1
+    index = _combo.findText(_text)
+    if index >= 0:
+        if debug:
+            print(f"Found: {_text=}, {index=}")
+        _combo.setCurrentIndex(index)
+    return index
 
 
 def format_number(the_number, format_str, settings, pos_neg_colour=False):
@@ -243,18 +249,18 @@ def search_stats_list_for_regex(stat_list, regex, default_value, debug=False) ->
 
 # https://stackoverflow.com/questions/1956542/how-to-make-item-view-render-rich-html-text-in-qt
 class HTMLDelegate(QStyledItemDelegate):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
         # the list of WidgetItems from a QListView
         self._list = None
         self.doc = QTextDocument()
 
     def paint(self, painter, option, index):
-        options = QStyleOptionViewItem(option)
+        options = QStyleOptionViewItem()
         self.initStyleOption(options, index)
         style = QApplication.style() if options.widget is None else options.widget.style()
 
-        doc = QTextDocument()
+        doc = QTextDocument(self.parent())
         doc.setHtml(options.text)
 
         options.text = ""
@@ -278,4 +284,49 @@ class HTMLDelegate(QStyledItemDelegate):
         else:
             # print("HTMLDelegate.sizeHint", self._list.objectName(), index.row())
             self.doc.setHtml(self._list.item(index.row()).text())
-        return QSize(self.doc.idealWidth() + 20, self.doc.size().height())
+        # Doing it this way to shut pyCharm's warnings up
+        q = QSize()
+        q.setWidth(self.doc.idealWidth() + 20)
+        q.setHeight(self.doc.size().height())
+        return q
+
+
+def load_from_xml(filename):
+    """
+    Everything to convert a xml to internal dict
+    :param filename: str:
+    :return: dict
+    """
+    # ToDo: Complete
+    build = empty_build
+    return build
+
+
+def save_to_xml(filename, build):
+    """
+    Everything needed to convert internal dict to xml
+    :param filename:
+    :param build: Build() class
+    :return: N/A
+    """
+    # ToDo: Complete
+    xml_build = empty_build_xml
+    xml_root = xml_build.getroot()
+    xml_import_field = xml_root.find("Import")
+    if xml_import_field is not None:
+        last_account_hash = xml_import_field.get("lastAccountHash", "")
+        last_character_hash = xml_import_field.get("lastCharacterHash", "")
+        last_realm = xml_import_field.get("lastRealm", "")
+        last_league = xml_import_field.get("lastLeague", "")
+    xml_calcs = xml_root.find("Calcs")
+    xml_skills = xml_root.find("Skills")
+    xml_tree = xml_root.find("Tree")
+    xml_notes = xml_root.find("Notes")
+    xml_notes_html = xml_root.find("NotesHTML")
+    # lua version doesn't have NotesHTML, expect it to be missing
+    if xml_notes_html is None:
+        xml_notes_html = ET.Element("NotesHTML")
+        xml_root.append(xml_notes_html)
+    xml_tree_view = xml_root.find("TreeView")
+    xml_items = xml_root.find("Items")
+    xml_config = xml_root.find("Config")

@@ -20,18 +20,18 @@ from dialogs.popup_dialogs import ok_dialog
 
 
 class Spec:
-    def __init__(self, build, title, new_spec=None, version=_VERSION_str) -> None:  # Circular reference on Build()
+    def __init__(self, build, title=bad_text, new_spec=None, version=_VERSION_str) -> None:  # Circular reference on Build()
         """
         Represents one Spec in the build. Most simple settings are properties.
 
-        :param new_spec: the spec from the XML, dict from json, or None for a new Spec (probably should never happen)
+        :param new_spec: the spec from the XML, dict from json, or None for a new Spec
         """
         self.internal_version = 6
         self.build = build
         self.tr = self.build.settings.app.tr
 
         print(f"spec.new: {type(new_spec)}")
-        self.spec = new_spec is None and default_spec_dict or new_spec
+        self.spec = type(new_spec) is dict and new_spec or default_spec_dict
         self.title = title
         self.nodes = set()
         self.ascendancy_nodes = []
@@ -39,10 +39,10 @@ class Spec:
         self.masteryEffects = {}
         # Table of jewels equipped in this tree
         # Keys are node IDs, values are items
-        self.sockets = {}
+        self.sockets = self.spec["Sockets"]
 
-        if type(new_spec) is ET:  # xml
-            self.title = new_spec["@title"]
+        self.title = title
+        if type(new_spec) is ET:
             self.treeVersion = new_spec["@treeVersion"]
             self.classId = new_spec["@classId"]
             self.ascendClassId = new_spec["@ascendClassId"]
@@ -95,7 +95,7 @@ class Spec:
 
     @property
     def ascendClassId(self) -> int:
-        return int(self.spec.get("ascendClassId", 0))
+        return self.spec.get("ascendClassId", 0)
 
     @ascendClassId.setter
     def ascendClassId(self, new_ascend_class_id):
@@ -522,6 +522,19 @@ class Spec:
         if new_nodes:
             self.nodes = set(new_nodes.split(","))
 
+    def set_item_to_socket(self, node_id, item_id):
+        """
+        Add or delete an entry to self.sockets
+        :param node_id: a node on the tree (currently assuming this has been checked to be a socket)
+        :param item_id: an Item's id, or 0 to'empty' a socket
+        :return: N/A
+        """
+        if node_id in self.nodes:
+            if node_id == 0:
+                self.sockets.pop(node_id, None)
+            else:
+                self.sockets[node_id] = item_id
+
     def save(self, xml=False):
         """
         Save anything that can't be a property, like Nodes, sockets
@@ -542,6 +555,7 @@ class Spec:
         for socket in self.sockets.keys():
             str_sockets += f"{{{socket},{self.sockets[socket]}}},"
         self.spec["Sockets"] = str_sockets.rstrip(",")
+
         if xml:
             xml_spec = ET.fromstring(default_spec_xml)
             xml_spec["@title"] = self.title
@@ -561,6 +575,19 @@ class Spec:
             return self.title, xml_spec
         else:
             return self.title, self.spec
+
+    # def save(self):
+    #     """Save things to the internal dict() and return it"""
+    #     if len(self.nodes) > 0:
+    #         self.spec["nodes"] = ",".join(f"{node}" for node in sorted(self.nodes))
+    #     self.export_nodes_to_url()
+    #
+    #     str_mastery_effects = ""
+    #     for effect in self.masteryEffects.keys():
+    #         str_mastery_effects += f"{{{effect},{self.masteryEffects[effect]}}},"
+    #     self.spec["masteryEffects"] = str_mastery_effects.rstrip(",")
+    #
+    #     return self.spec
 
     def load_from_ggg_json(self, json_tree, json_character):
         """

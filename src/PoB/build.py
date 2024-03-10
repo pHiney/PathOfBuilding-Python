@@ -31,7 +31,7 @@ from PoB.constants import (
 from PoB.settings import Settings
 from PoB.tree import Tree
 from PoB.spec import Spec
-from PoB.pob_file import read_v1_custom_mods, read_json, read_xml, write_xml
+from PoB.pob_file import read_v1_custom_mods, read_json, read_xml, write_json, write_xml
 from dialogs.popup_dialogs import critical_dialog, yes_no_dialog
 from widgets.ui_utils import (
     _debug,
@@ -53,19 +53,18 @@ class Build:
         self.win = _win
         self.tr = self.settings.app.tr
         self._name = "Default"
-        # self.player = player.Player()
         self.filename = ""
         self.search_text = ""
         self.need_saving = True
-        # self.current_tab = "TREE"
         # An dict of tree versions used in the build. Load the default tree first.
         self.trees = {_VERSION_str: Tree(self.settings, _VERSION_str)}
         self.current_tree = self.trees.get(_VERSION_str)
         # list of xml specs in this build
         self.specs = []
-        self.activeSpec = 0
-        self._current_spec = None
-        self.compare_spec = None
+        # Currently chosen Spec() class
+        self._current_spec: Spec = None
+        # Spec() class to compare against
+        self.compare_spec: Spec = None
 
         # variables from the xml
         self.xml_PoB = None
@@ -114,11 +113,10 @@ class Build:
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}', {self.current_tree.version}"
-        # ret_str += f"{self.player}"
         return ret_str
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
@@ -129,7 +127,7 @@ class Build:
             self.filename = new_name
 
     @property
-    def current_class(self):
+    def current_class(self) -> int:
         # return self.current_spec and self.current_spec.classId or PlayerClasses(0)
         return self.current_spec.classId
 
@@ -145,38 +143,38 @@ class Build:
         self.className = PlayerClasses(new_class).name.title()
 
     @property
-    def className(self):
+    def className(self) -> str:
         # return self.xml_build.get("className", "Scion")
         return self.json_build.get("className", "Scion")
 
     @className.setter
     def className(self, new_name):
-        self.xml_build.set("className", new_name)
+        # self.xml_build.set("className", new_name)
         self.json_build["className"] = new_name
 
     @property
-    def ascendClassName(self):
+    def ascendClassName(self) -> str:
         # return self.xml_build.get("ascendClassName", "None")
         return self.json_build.get("ascendClassName", "None")
 
     @ascendClassName.setter
     def ascendClassName(self, new_name):
-        self.xml_build.set("ascendClassName", new_name)
+        # self.xml_build.set("ascendClassName", new_name)
         self.json_build["ascendClassName"] = new_name
 
     @property
-    def level(self):
+    def level(self) -> int:
         # return int(self.xml_build.get("level"))
         return self.json_build.get("level", 1)
 
     @level.setter
     def level(self, new_level):
-        self.xml_build.set("level", f"{new_level}")
+        # self.xml_build.set("level", f"{new_level}")
         self.json_build["level"] = new_level
         self.win.spin_level.setValue(new_level)
 
     @property
-    def mainSocketGroup(self):
+    def mainSocketGroup(self) -> int:
         # Use a property to ensure the correct +/- 1. XML is 1 based.
         # return max(int(self.xml_build.get("mainSocketGroup", 1)) - 1, 0)
         # JSON is 0 based
@@ -185,29 +183,29 @@ class Build:
     @mainSocketGroup.setter
     def mainSocketGroup(self, new_group):
         # Use a property to ensure the correct +/- 1. XML is 1 based.
-        self.xml_build.set("mainSocketGroup", f"{new_group + 1}")
+        # self.xml_build.set("mainSocketGroup", f"{new_group + 1}")
         # JSON is 0 based
         self.json_build["mainSocketGroup"] = new_group
 
     @property
-    def resistancePenalty(self):
+    def resistancePenalty(self) -> int:
         # return self.get_config_tag_item("Input", "resistancePenalty", -60)
-        return str(self.json_config["Input"].get("resistancePenalty", -60))
+        return self.json_config["Input"].get("resistancePenalty", -60)
 
     @resistancePenalty.setter
     def resistancePenalty(self, new_value):
-        self.set_config_tag_item("Input", "resistancePenalty", new_value)
+        # self.set_config_tag_item("Input", "resistancePenalty", new_value)
         self.json_config["Input"].set("resistancePenalty", int(new_value))
 
     @property
-    def bandit(self):
+    def bandit(self) -> str:
         # return self.get_config_tag_item("Input", "bandit", "None")
         return self.json_config["Input"].get("bandit", "None")
 
     @bandit.setter
     def bandit(self, new_bandit):
-        self.xml_build.set("bandit", new_bandit)
-        self.set_config_tag_item("Input", "bandit", new_bandit)
+        # self.xml_build.set("bandit", new_bandit)
+        # self.set_config_tag_item("Input", "bandit", new_bandit)
         self.json_config["Input"]["bandit"] = new_bandit
         set_combo_index_by_data(self.win.combo_Bandits, self.bandit)
 
@@ -216,70 +214,79 @@ class Build:
         self.bandit = list(bandits.keys())[new_int]
 
     @property
-    def pantheonMajorGod(self):
+    def pantheonMajorGod(self) -> str:
         # return self.get_config_tag_item("Input", "pantheonMajorGod", "None")
         return self.json_config["Input"].get("pantheonMajorGod", "None")
 
     @pantheonMajorGod.setter
     def pantheonMajorGod(self, new_god):
-        self.xml_build.set("pantheonMajorGod", new_god)
-        self.set_config_tag_item("Input", "pantheonMajorGod", new_god)
+        # self.xml_build.set("pantheonMajorGod", new_god)
+        # self.set_config_tag_item("Input", "pantheonMajorGod", new_god)
         self.json_config["Input"].set("pantheonMajorGod", new_god)
 
     @property
-    def pantheonMinorGod(self):
+    def pantheonMinorGod(self) -> str:
         # return self.get_config_tag_item("Input", "pantheonMinorGod", "None")
         return self.json_config["Input"].get("pantheonMinorGod", "None")
 
     @pantheonMinorGod.setter
     def pantheonMinorGod(self, new_god):
-        self.xml_build.set("pantheonMinorGod", new_god)
-        self.set_config_tag_item("Input", "pantheonMinorGod", new_god)
+        # self.xml_build.set("pantheonMinorGod", new_god)
+        # self.set_config_tag_item("Input", "pantheonMinorGod", new_god)
         self.json_config["Input"].set("pantheonMinorGod", new_god)
 
     @property
-    def targetVersion(self):
+    def targetVersion(self) -> str:
         # return self.xml_build.get("targetVersion")
         return self.json_build.get("targetVersion")
 
     @targetVersion.setter
     def targetVersion(self, new_version):
-        self.xml_build.set("targetVersion", new_version)
+        # self.xml_build.set("targetVersion", new_version)
         self.json_build["targetVersion"] = new_version
 
     @property
-    def version_int(self):
+    def version_int(self) -> int:
         # return int(self.xml_build.get("version", "1"))
         return self.json_build.get("version", 2)
 
     @property
-    def version(self):
+    def version(self) -> int:
         # return self.xml_build.get("version", "1")
-        return str(self.json_build.get("version", 2))
+        return self.json_build.get("version", 2)
 
     @version.setter
     def version(self, curr_ver):
-        self.xml_build.set("version", curr_ver)
+        # self.xml_build.set("version", curr_ver)
         self.json_build["version"] = int(curr_ver)
 
     @property
-    def viewMode(self):
+    def viewMode(self) -> str:
         # return self.xml_build.get("viewMode", default_view_mode)
         return str(self.json_build.get("viewMode", default_view_mode))
 
     @viewMode.setter
     def viewMode(self, curr_mode):
-        self.xml_build.set("viewMode", curr_mode.upper())
+        # self.xml_build.set("viewMode", curr_mode.upper())
         self.json_build["version"] = curr_mode.upper()
 
     @property
-    def current_spec(self):
+    def current_spec(self) -> Spec:
         """Manage the currently chosen spec in the config class so it can be used by many other classes"""
         return self._current_spec
 
     @current_spec.setter
     def current_spec(self, new_spec):
         self._current_spec = new_spec
+
+    @property
+    def activeSpec(self) -> int:
+        """Manage the currently chosen spec in the config class so it can be used by many other classes"""
+        return self.json_tree["activeSpec"]
+
+    @activeSpec.setter
+    def activeSpec(self, new_spec):
+        self.json_tree["activeSpec"] = new_spec
 
     # @property
     # def (self):
@@ -293,7 +300,7 @@ class Build:
         """
         Get an item from the <Config> ... </Config> tag set
 
-        :param key: string: the key: Input or Placeholder for example
+        :param key: string: the key name: Input or Placeholder for example
         :param name: string: the value of the 'name' property
         :param default: Union[str, int, bool]): a default value in case the item is not in the xml
         :return: The appropriate value from xml or the default
@@ -395,94 +402,105 @@ class Build:
         for _input in self.xml_config.findall(key):
             del _input
 
+    def load_from_xml(self, xml_obj):
+        """Load from v1 XML"""
+        pass
+
     def new(self, build_obj):
         """
-        common function to load internal variables from the ET
+        Common function to load functions. Fill internal variables from the xml or json.
 
-        :param build_obj: xml tree object from loading the source XML or the default one
+        :param build_obj: xml tree object from loading the source XML or the default one.
         :return: N/A
         """
         print(f"build.new: {type(build_obj)}")
-        if type(build_obj) is dict:
-            print("build.new: json", build_obj)
-            if build_obj is None:
-                build_obj = empty_build
-                self.json = False
+        if build_obj is None:
+            build_obj = empty_build
             self.json_PoB = build_obj["PathOfBuilding"]
-            self.json_build = self.json_PoB["Build"]
-            self.json_import_field = self.json_PoB["Import"]
-            self.json_items = self.json_PoB["Items"]
-            self.json_skills = self.json_PoB["Skills"]
-            self.json_tree = self.json_PoB["Tree"]
-            self.json_config = self.json_PoB["Config"]
-            self.json_calcs = self.json_PoB["Calcs"]
-            self.json_tree_view = self.json_PoB["TreeView"]
-            self.json_notes = self.json_PoB["Notes"]
-            self.json_notes_html = None
-
-            for json_spec in self.json_tree["Specs"]:
-                self.specs.append(Spec(self, json_spec))
-            self.current_spec = self.specs[0]
-
+        elif type(build_obj) is ET:
+            self.load_from_xml(build_obj)
+        elif type(build_obj) is dict:
+            self.json_PoB = build_obj["PathOfBuilding"]
         else:
-            print("build.new: xml")
-            if build_obj is None:
-                build_obj = empty_build_xml
-                self.name = "Default"
-            self.xml_PoB = build_obj
-            self.xml_root = build_obj.getroot()
-            self.xml_build = self.xml_root.find("Build")
-            self.xml_import_field = self.xml_root.find("Import")
-            if self.xml_import_field is not None:
-                self.last_account_hash = self.xml_import_field.get("lastAccountHash", "")
-                self.last_character_hash = self.xml_import_field.get("lastCharacterHash", "")
-                self.last_realm = self.xml_import_field.get("lastRealm", "")
-                self.last_league = self.xml_import_field.get("lastLeague", "")
-            self.xml_calcs = self.xml_root.find("Calcs")
-            self.xml_skills = self.xml_root.find("Skills")
-            self.xml_tree = self.xml_root.find("Tree")
-            self.xml_notes = self.xml_root.find("Notes")
-            self.xml_notes_html = self.xml_root.find("NotesHTML")
-            # lua version doesn't have NotesHTML, expect it to be missing
-            if self.xml_notes_html is None:
-                self.xml_notes_html = ET.Element("NotesHTML")
-                self.xml_root.append(self.xml_notes_html)
-            self.xml_tree_view = self.xml_root.find("TreeView")
-            self.xml_items = self.xml_root.find("Items")
-            self.xml_config = self.xml_root.find("Config")
-            # print("build.new", print_a_xml_element(self.config))
+            # Some other bullsh*t thing, we are going to ignore.
+            return
+        # So now self.json_PoB is valid
+        # print("build.new: json", build_obj)
+        self.json_build = self.json_PoB["Build"]
+        self.json_import_field = self.json_PoB["Import"]
+        self.json_items = self.json_PoB["Items"]
+        self.json_skills = self.json_PoB["Skills"]
+        self.json_tree = self.json_PoB["Tree"]
+        print(f"build.new: {self.json_skills}")
+        self.json_config = self.json_PoB["Config"]
+        self.json_calcs = self.json_PoB["Calcs"]
+        self.json_tree_view = self.json_PoB["TreeView"]
+        self.json_notes = self.json_PoB["Notes"]
+        self.json_notes_html = None
 
-            self.specs.clear()
-            # Find invalid trees, alert and convert to latest
-            invalid_spec_versions = set()
-            for xml_spec in self.xml_tree.findall("Spec"):
-                vers = xml_spec.get("treeVersion", _VERSION_str)
-                if vers not in tree_versions.keys():
-                    v = re.sub("_", ".", vers)
-                    invalid_spec_versions.add(v)
-                    xml_spec.set("treeVersion", _VERSION_str)
-                    title = xml_spec.get("title", "Default")
-                    xml_spec.set("title", f"{title} ({self.tr('was')} v{v})")
-            if invalid_spec_versions:
-                critical_dialog(
-                    self.win,
-                    f"{self.tr('Load build')}: v{self.version}",
-                    f"{self.tr('The build contains the following unsupported Tree versions')}:\n"
-                    f"{str(invalid_spec_versions)[1:-1]}\n\n"
-                    + self.tr(f"These will be converted to {_VERSION} and renamed to indicate this.\n"),
-                    self.tr("Close"),
-                )
+        self.specs.clear()
+        for spec in self.json_tree["Specs"]:
+            self.specs.append(Spec(self, spec["title"], spec))
+        self.current_spec = self.specs[0]
 
-            # Do not use self.new_spec() as this will duplicate the xml information
-            for xml_spec in self.xml_tree.findall("Spec"):
-                self.specs.append(Spec(self, xml_spec))
-            self.current_spec = self.specs[0]
-
-            # In the xml, activeSpec is 1 based, but python indexes are 0 based, so we subtract 1
-            self.activeSpec = int(self.xml_tree.get("activeSpec", 1)) - 1
-            self.current_spec = self.specs[self.activeSpec]
-            self.className = self.current_spec.classId_str()
-            self.ascendClassName = self.current_spec.ascendClassId_str()
+        #     print("build.new: xml")
+        #     if build_obj is None:
+        #         build_obj = empty_build_xml
+        #         self.name = "Default"
+        #     self.xml_PoB = build_obj
+        #     self.xml_root = build_obj.getroot()
+        #     self.xml_build = self.xml_root.find("Build")
+        #     self.xml_import_field = self.xml_root.find("Import")
+        #     if self.xml_import_field is not None:
+        #         self.last_account_hash = self.xml_import_field.get("lastAccountHash", "")
+        #         self.last_character_hash = self.xml_import_field.get("lastCharacterHash", "")
+        #         self.last_realm = self.xml_import_field.get("lastRealm", "")
+        #         self.last_league = self.xml_import_field.get("lastLeague", "")
+        #     self.xml_calcs = self.xml_root.find("Calcs")
+        #     self.xml_skills = self.xml_root.find("Skills")
+        #     self.xml_tree = self.xml_root.find("Tree")
+        #     self.xml_notes = self.xml_root.find("Notes")
+        #     self.xml_notes_html = self.xml_root.find("NotesHTML")
+        #     # lua version doesn't have NotesHTML, expect it to be missing
+        #     if self.xml_notes_html is None:
+        #         self.xml_notes_html = ET.Element("NotesHTML")
+        #         self.xml_root.append(self.xml_notes_html)
+        #     self.xml_tree_view = self.xml_root.find("TreeView")
+        #     self.xml_items = self.xml_root.find("Items")
+        #     self.xml_config = self.xml_root.find("Config")
+        #     # print("build.new", print_a_xml_element(self.config))
+        #
+        #     self.specs.clear()
+        #     # Find invalid trees, alert and convert to latest
+        #     invalid_spec_versions = set()
+        #     for xml_spec in self.xml_tree.findall("Spec"):
+        #         vers = xml_spec.get("treeVersion", _VERSION_str)
+        #         if vers not in tree_versions.keys():
+        #             v = re.sub("_", ".", vers)
+        #             invalid_spec_versions.add(v)
+        #             xml_spec.set("treeVersion", _VERSION_str)
+        #             title = xml_spec.get("title", "Default")
+        #             xml_spec.set("title", f"{title} ({self.tr('was')} v{v})")
+        #     if invalid_spec_versions:
+        #         critical_dialog(
+        #             self.win,
+        #             f"{self.tr('Load build')}: v{self.version}",
+        #             f"{self.tr('The build contains the following unsupported Tree versions')}:\n"
+        #             f"{str(invalid_spec_versions)[1:-1]}\n\n"
+        #             + self.tr(f"These will be converted to {_VERSION} and renamed to indicate this.\n"),
+        #             self.tr("Close"),
+        #         )
+        #
+        #     # Do not use self.new_spec() as this will duplicate the xml information
+        #     for xml_spec in self.xml_tree.findall("Spec"):
+        #         self.specs.append(Spec(self, xml_spec))
+        #     self.current_spec = self.specs[0]
+        #
+        #     # In the xml, activeSpec is 1 based, but python indexes are 0 based, so we subtract 1
+        #     self.activeSpec = int(self.xml_tree.get("activeSpec", 1)) - 1
+        #     self.current_spec = self.specs[self.activeSpec]
+        #     self.className = self.current_spec.classId_str()
+        #     self.ascendClassName = self.current_spec.ascendClassId_str()
         # new
 
     def load_from_file(self, filename):
@@ -510,7 +528,7 @@ class Build:
                     self.tr("Close"),
                 )
             self.new(_build_pob)
-        # else:
+
         self.filename = filename
         self.name = Path(Path(filename).name).stem
         if self.version_int == 1:
@@ -530,26 +548,29 @@ class Build:
         self.json_import_field.set("lastCharacterHash", self.last_character_hash)
         self.json_import_field.set("lastRealm", self.last_realm)
         self.json_import_field.set("lastLeague", self.last_league)
-        for spec in self.specs:
-            spec.save_json()
 
-        # ensure these get updated to match last tree shown (these are properties and will trigger their own save to the dict)
+        specs = self.json_tree["Specs"]
+        specs.clear()
+        for spec in self.specs:
+            specs.append(spec.spec)
+
+        # ensure these get updated to match the last tree shown (these are properties and will trigger their own save to the dict)
         self.className = self.current_spec.classId_str()
         self.ascendClassName = self.current_spec.ascendClassId_str()
 
-    def save_to_xml(self, version="2"):
+    def save_to_xml(self):
         """
         Save the build to the filename recorded in the build Class
         :param:version: str. 1 for version 1 xml data,  2 for updated.
         :return: N/A
         """
-        self.version = version
         self.xml_import_field.set("lastAccountHash", self.last_account_hash)
         self.xml_import_field.set("lastCharacterHash", self.last_character_hash)
         self.xml_import_field.set("lastRealm", self.last_realm)
         self.xml_import_field.set("lastLeague", self.last_league)
         for spec in self.specs:
-            spec.save()
+            # ToDo: Need to find sockets parent, clear it and append save's output
+            spec.save(True)
         # ensure these get updated to match last tree shown.
         self.className = self.current_spec.classId_str()
         self.ascendClassName = self.current_spec.ascendClassId_str()
@@ -581,10 +602,14 @@ class Build:
         """
         Save the build to file. Separated from the save routine above so export can use the above save routine.
 
-        :param filename:
-        :return:
+        :param filename: str:
+        :return: N/A
         """
-        write_xml(filename, self.xml_PoB)
+        if "json" in filename:
+            write_json(filename, self.json_PoB)
+        elif "xml" in filename:
+            write_xml(filename, self.xml_PoB)
+        # Do nothing if something wierd
         self.name = Path(Path(filename).name).stem
 
     def ask_for_save_if_modified(self):
@@ -642,7 +667,7 @@ class Build:
             self.trees[new_spec.treeVersion] = Tree(self.settings, new_spec.treeVersion)
         self.current_tree = self.trees[new_spec.treeVersion]
 
-        self.activeSpec = tree_id
+        self.activeSpec: int = tree_id
         self.current_spec = new_spec
         self.count_allocated_nodes()
         return different_version

@@ -2,9 +2,8 @@
 Tree Class
 
 This class represents an instance of the GGG Passive Tree for **ONE** tree version (eg: 3.18).
+    A Tree() instance is tied to a Version of the Tree as released by GGG (eg: 3.18).
 Multiple versions of Trees can exist in a single Build, so there could be multiple instantiations of this class.
-
-A Tree() instance is tied to a Version of the Tree as released by GGG (eg: 3.18).
 
 This holds, in memory, a copy of the tree data and doesn't know about any actively selected nodes.
   That's the Spec class' job.

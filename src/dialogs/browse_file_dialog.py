@@ -255,7 +255,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
                 return
             extension = os.path.splitext(save_name)[1]
             if extension == "":
-                extension = self.rBtn_v2.isChecked() and "xml2" or "xml"
+                extension = self.radioBtn_v2.isChecked() and "xml2" or "xml"
                 save_name = f"{save_name}.{extension}"
             if os.path.exists(save_name):
                 if not yes_no_dialog(self, "Overwrite file", f"{save_name} exists. Overwrite"):

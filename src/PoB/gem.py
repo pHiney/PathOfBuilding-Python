@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import math
 import re
 
-from PoB.constants import bad_text, pob_debug, ColourCodes, empty_gem_xml
+from PoB.constants import bad_text, pob_debug, ColourCodes, empty_gem_dict, empty_gem_xml, quality_id
 from PoB.settings import Settings
 from PoB.mod import Mod
 from widgets.ui_utils import (
@@ -33,8 +33,6 @@ class Gem:
         """
         Initialise defaults
         :param _settings: A pointer to the settings
-        :param _base_items: dict: the loaded base_items.json
-        :param _slot: where this item is worn/carried.
         """
         self.settings = _settings
         # This gem's entry from gems.json
@@ -44,7 +42,7 @@ class Gem:
         self.sub_type = ""  # or item_class - eg claw
         self.active = False  # is this the item that is currently chosen/shown in the dropdown ?
 
-        self.xml_gem = ET.fromstring(empty_gem_xml)
+        self.gem = empty_gem_dict
 
         # this is not always available from the json character download
         self.level_req = 0
@@ -74,6 +72,7 @@ class Gem:
         self.reqInt = 0
         self.reqStr = 0
         self.naturalMaxLevel = 20
+        self.stats_per_level = {}
 
         # needs to be a string as there are entries like "Limited to: 1 Survival"
         self.limited_to = ""
@@ -114,18 +113,12 @@ class Gem:
                     return value
             return _default
 
-        self.xml_gem.set("level", get_property(json_gem, "Level", "1"))
-        self.xml_gem.set("quality", get_property(json_gem, "Quality", "0"))
+        self.gem.set("level", get_property(json_gem, "Level", "1"))
+        self.gem.set("quality", get_property(json_gem, "Quality", "0"))
+        q = json_gem.get("typeLine", "Anomalous")
+        self.gem.set("qualityId", quality_id[q])
 
-        match json_gem["typeLine"]:
-            case "Anomalous":
-                self.xml_gem.set("qualityId", "Alternate1")
-            case "Divergent":
-                self.xml_gem.set("qualityId", "Alternate2")
-            case "Phantasmal":
-                self.xml_gem.set("qualityId", "Alternate3")
-
-        return self.xml_gem
+        return self.gem
 
     def load_from_gems_json(self, json_gem):
         """
@@ -143,41 +136,44 @@ class Gem:
         self.max_reqStr = json_gem.get("reqStr", 0)
         self.naturalMaxLevel = json_gem.get("naturalMaxLevel", 20)
 
-        self.xml_gem.set("gemId", json_gem.get("id", ""))
-        self.xml_gem.set("skillId", json_gem["grantedEffectId"])
+        self.gem.set("gemId", json_gem.get("id", ""))
+        self.gem.set("skillId", json_gem["grantedEffectId"])
 
-        return self.xml_gem
+        return self.gem
 
-    def load(self, xml_gem):
+    def load(self, gem):
         """
-        Load gem from build.xml. This should be called after load_from_gems_json so it can load the defaults.
+        Load gem from build. This should be called after load_from_gems_json so it can load the defaults.
         :param: xml_gem
         :return: N/A
         """
-        self.level = int(xml_gem.get("level"))
-        self.enabled = str_to_bool(xml_gem.get("enabled"))
-        self.quality = int(xml_gem.set("quality"))
-        self.count = int(xml_gem.get("count"))
-        self.qualityVariant = xml_gem.get("qualityId")
+        self.level = gem.get("level")
+        self.enabled = gem.get("enabled")
+        self.quality = gem.set("quality")
+        self.count = gem.get("count")
+        self.qualityVariant = gem.get("qualityId")
         if self.minion:
-            self.skillMinionSkillCalcs = int(xml_gem.get("skillMinionSkillCalcs"))  # 1
-            self.skillMinionCalcs = xml_gem.get("skillMinionCalcs")  # "GuardianRelicAll"
-            self.skillMinionSkill = int(xml_gem.get("skillMinionSkill"))  # 1
-            self.skillMinion = xml_gem.get("skillMinion")  # "GuardianRelicAll"
+            self.skillMinionSkillCalcs = gem.get("skillMinionSkillCalcs")  # 1
+            self.skillMinionCalcs = gem.get("skillMinionCalcs")  # "GuardianRelicAll"
+            self.skillMinionSkill = gem.get("skillMinionSkill")  # 1
+            self.skillMinion = gem.get("skillMinion")  # "GuardianRelicAll"
 
-    def save(self):
+    def save(self, xml=False):
         """Save"""
-        self.xml_gem.set("level", f"{self.level}")
-        self.xml_gem.set("enabled", f"{self.enabled}")
-        self.xml_gem.set("quality", f"{self.quality}")
-        self.xml_gem.set("count", f"{self.count}")
-        self.xml_gem.set("nameSpec", self.name)
-        self.xml_gem.set("qualityId", self.qualityVariant)
-        if self.minion:
-            self.xml_gem.set("skillMinionSkillCalcs", f"{self.skillMinionSkillCalcs}")  # 1
-            self.xml_gem.set("skillMinionCalcs", self.skillMinionCalcs)  # "GuardianRelicAll"
-            self.xml_gem.set("skillMinionSkill", f"{self.skillMinionSkill}")  # 1
-            self.xml_gem.set("skillMinion", self.skillMinion)  # "GuardianRelicAll"
+        gem = empty_gem_xml
+        if xml:
+            gem.set("level", f"{self.level}")
+            gem.set("enabled", f"{self.enabled}")
+            gem.set("quality", f"{self.quality}")
+            gem.set("count", f"{self.count}")
+            gem.set("nameSpec", self.name)
+            gem.set("qualityId", self.qualityVariant)
+            if self.minion:
+                gem.set("skillMinionSkillCalcs", f"{self.skillMinionSkillCalcs}")  # 1
+                gem.set("skillMinionCalcs", self.skillMinionCalcs)  # "GuardianRelicAll"
+                gem.set("skillMinionSkill", f"{self.skillMinionSkill}")  # 1
+                gem.set("skillMinion", self.skillMinion)  # "GuardianRelicAll"
+        return xml and gem or self.gem
 
     def gem_stat_requirement(self, gem_level, required_stat):
         """
@@ -235,4 +231,4 @@ class Gem:
             self.reqInt = self.gem_stat_requirement(new_level, self.max_reqInt)
         if self.max_reqStr:
             self.reqStr = self.gem_stat_requirement(new_level, self.max_reqStr)
-        stats = self.levels[new_level]
+        self.stats_per_level = self.levels[new_level]

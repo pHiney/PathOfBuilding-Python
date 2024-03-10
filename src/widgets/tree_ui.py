@@ -2,6 +2,7 @@
 This Class manages all the elements and owns some elements of the "TREE" tab
 
 """
+
 import re
 
 from PySide6.QtCore import Qt, Slot, QSize
@@ -9,6 +10,7 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QLineEdit, QPushButt
 
 from PoB.constants import tree_versions, PlayerClasses, _VERSION_str
 from PoB.settings import Settings
+from PoB.spec import Spec
 from dialogs.manage_tree_dialog import ManageTreeDlg
 from dialogs.popup_dialogs import yes_no_dialog, ImportTreePopup, ExportTreePopup
 from widgets.flow_layout import FlowLayout
@@ -33,6 +35,7 @@ class TreeUI:
         self.build = _build
         self._curr_class = PlayerClasses.SCION
         self.dlg = None  # Is a dialog active
+        self.json_tree = None
 
         self.win.action_ManageTrees.triggered.connect(self.open_manage_trees)
 
@@ -109,9 +112,14 @@ class TreeUI:
         self.lineEdit_Search.textChanged.connect(self.search_text_changed)
         self.lineEdit_Search.returnPressed.connect(self.search_text_return_pressed)
 
-    def load(self):
-        """Load internal structures from the build object."""
-        pass
+    def load(self, _config: dict):
+        """
+        Load UI Widgets from the build object
+        :param: _config: dict. The build's copy of json_config
+        """
+        # print("config.load", self.build.version, self.build.className, print_a_xml_element(_config))
+        self.json_tree = _config
+        self.fill_current_tree_combo()
 
     def save(self):
         """Save internal structures back to the build object."""
@@ -130,6 +138,15 @@ class TreeUI:
         """
         # get the dictionary associated with this class
         _class = self.build.current_tree.classes[new_class.value]
+
+    @property
+    def current_spec(self) -> Spec:
+        """Manage the currently chosen spec in the config class so it can be used by many other classes"""
+        return self.build.current_spec
+
+    @current_spec.setter
+    def current_spec(self, new_spec):
+        self.build.current_spec = new_spec
 
     @Slot()
     def set_combo_compare_visibility(self, checked_state):
@@ -185,12 +202,14 @@ class TreeUI:
         for combo in (self.combo_manage_tree, self.win.combo_ItemsManageTree, self.combo_compare):
             combo.clear()
         for idx, spec in enumerate(self.build.specs):
+            print(f"fill_current_tree_combo: {type(spec), spec.title}")
             if spec is not None:
                 if spec.treeVersion != _VERSION_str:
                     title = f"[{tree_versions[spec.treeVersion]}] {spec.title}"
                 else:
                     title = spec.title
                 for combo in (self.combo_manage_tree, self.win.combo_ItemsManageTree, self.combo_compare):
+                    print("fill_current_tree_combo", title, idx)
                     combo.addItem(title, idx)
                     combo.view().setMinimumWidth(combo.minimumSizeHint().width())
 

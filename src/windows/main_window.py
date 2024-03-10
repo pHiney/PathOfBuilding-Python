@@ -664,35 +664,42 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.build.filename = filename_or_xml
                 self.settings.open_build = self.build.filename
             else:
-                self.build.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
+                self.build.new(empty_build)
+                # self.build.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
                 self.settings.open_build = ""
 
         # if everything worked, lets update the UI
-        if self.build.xml_build is not None:
+        if self.build.json_PoB is not None:
             # _debug("build_loader")
             if not new:
                 self.add_recent_build_menu_item()
-            # Config_UI needs to be set before the tree, as the change_tree function uses/sets it also.
-            self.config_ui.load(self.build.xml_config)
-            self.set_current_tab()
-            self.tree_ui.fill_current_tree_combo()
-            self.skills_ui.load(self.build.xml_skills)
-            self.items_ui.load_from_xml(self.build.xml_items)
-            self.notes_ui.load(self.build.xml_notes_html.text, self.build.xml_notes.text)
-            self.spin_level.setValue(self.build.level)
-            self.combo_classes.setCurrentText(self.build.className)
-            self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
-            self.update_status_bar(f"Loaded: {self.build.name}", 10)
-            # self.stats.load(self.build.xml_build)
-            self.player.load(self.build.xml_build)
+            self.config_ui.load(self.build.json_config)
+            self.tree_ui.load(self.build.json_tree)
+            self.skills_ui.load_from_json(self.build.json_skills)
 
-        # This is needed to make the jewels show. Without it, you need to select or deselect a node.
-        self.gview_Tree.add_tree_images(True)
-        # Make sure the Main and Alt weapons are active and shown as appropriate
-        self.items_ui.weapon_swap2(self.btn_WeaponSwap.isChecked())
+            self.set_current_tab()
+
+        #     # Config_UI needs to be set before the tree, as the change_tree function uses/sets it also.
+        #     self.config_ui.load(self.build.xml_config)
+        #     self.set_current_tab()
+        #     self.tree_ui.fill_current_tree_combo()
+        #     self.skills_ui.load(self.build.xml_skills)
+        #     self.items_ui.load_from_xml(self.build.xml_items)
+        #     self.notes_ui.load(self.build.xml_notes_html.text, self.build.xml_notes.text)
+        #     self.spin_level.setValue(self.build.level)
+        #     self.combo_classes.setCurrentText(self.build.className)
+        #     self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
+        #     self.update_status_bar(f"Loaded: {self.build.name}", 10)
+        #     # self.stats.load(self.build.xml_build)
+        #     self.player.load(self.build.xml_build)
+        #
+        # # This is needed to make the jewels show. Without it, you need to select or deselect a node.
+        # self.gview_Tree.add_tree_images(True)
+        # # Make sure the Main and Alt weapons are active and shown as appropriate
+        # self.items_ui.weapon_swap2(self.btn_WeaponSwap.isChecked())
         # Do calcs. Needs to be near last n this function
         self.alerting = True
-        self.do_calcs()
+        # self.do_calcs()
 
     @Slot()
     def build_save(self):
@@ -703,14 +710,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         version = self.build.version
         if self.build.filename == "":
-            self.build_save_as()  # this will then call build_save() again
+            self.build_save_as()  # this will then call build_save()
         else:
             print(f"Saving to v{version} file: {self.build.filename}")
-            self.build.save_to_xml(version)
             match version:
                 case "1":
+                    self.build.save_to_xml()
                     self.build.xml_notes.text, dummy_var = self.notes_ui.save(version)
                 case "2":
+                    self.build.save_to_json()
                     self.build.xml_notes.text, self.build.xml_notes_html.text = self.notes_ui.save(version)
             # self.win.stats.save(self.build)
             self.player.save(self.build)
@@ -741,7 +749,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             filename = dlg.selected_file
             print("build_save_as, file_chosen", filename)
             if filename != "":
-                self.build.version = dlg.rBtn_v2.isChecked() and "2" or "1"
+                self.build.version = dlg.radioBtn_v2.isChecked() and 2 or 1
                 self.build.filename = filename
                 self.build_save()
                 self.add_recent_build_menu_item()
@@ -763,7 +771,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def change_tree(self, tree_label):
         """
-        Actions required when either combo_manage_tree widget changes (Tree_UI or Items_UI).
+        Actions required when either combo_manage_tree widget changes (Tree_UI and Items_UI).
+        This is here (instead of TreeUI) as the correct owner of Tree_UI and Items_UI is this class.
 
         :param tree_label: the name of the item just selected
                 "" will occur during a combobox clear

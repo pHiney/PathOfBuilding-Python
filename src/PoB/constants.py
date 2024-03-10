@@ -88,6 +88,7 @@ empty_build_xml = f"""
 </PathOfBuilding>"""
 
 default_spec_dict = {
+    "title": "",
     "treeVersion": _VERSION_str,
     "classId": 0,
     "ascendClassId": 0,
@@ -105,14 +106,110 @@ empty_socket_group_dict = {
     "slot": "",
     "mainActiveSkill": 0,
 }
-default_skillset_dict = {
-    "Default": {
-        "SkillSet id": 0,
-        "title": "Default",
-        # "Skill0": {empty_socket_group_dict},
-        "Skills": [empty_socket_group_dict],
-    }
+
+empty_gem_dict = {
+    "enabled": True,
+    "name": "",
+    "skillId": "ThrownWeapon",
+    "level": 20,
+    "qualityId": "Default",
+    "quality": 0,
+    "count": 1,
+    "enableGlobal1": True,
+    "enableGlobal2": True,
+    "gemId": "Metadata/Items/Gems/SkillGemThrownWeapon",
 }
+
+empty_sgroup_dict = {
+    "mainActiveSkillCalcs": 1,
+    "includeInFullDPS": False,
+    "label": "",
+    "enabled": True,
+    "mainActiveSkill": 1,
+    "Gems": [empty_gem_dict],
+}
+
+default_skillset_dict = {
+    "id": 0,
+    "title": "Default",
+    "SGroups": [empty_sgroup_dict],
+}
+
+default_skill_dict = {
+    "activeSkillSet": 0,
+    "sortGemsByDPSField": "CombinedDPS",
+    "sortGemsByDPS": True,
+    "defaultGemQuality": 0,
+    "defaultGemLevel": "normalMaximum",
+    "showSupportGemTypes": "ALL",
+    "showAltQualityGems": False,
+    "SkillSets": [default_skillset_dict],
+}
+
+empty_item_slots_dict = {
+    "Weapon 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap": {"itemId": 0, "itemPbURL": ""},
+    "Helmet": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour": {"itemId": 0, "itemPbURL": ""},
+    "Gloves": {"itemId": 0, "itemPbURL": ""},
+    "Boots": {"itemId": 2, "itemPbURL": ""},
+    "Amulet": {"itemId": 0, "itemPbURL": ""},
+    "Ring 1": {"itemId": 0, "itemPbURL": ""},
+    "Ring 2": {"itemId": 0, "itemPbURL": ""},
+    "Belt": {"itemId": 5, "itemPbURL": ""},
+    "Flask 1": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 2": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 3": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 4": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 5": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Belt Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Belt Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+}
+empty_itemset_dict = {"useSecondWeaponSet": False, "id": 1, "Slot": empty_item_slots_dict}
 
 empty_build = {
     "PathOfBuilding": {
@@ -127,29 +224,17 @@ empty_build = {
             "viewMode": default_view_mode,
         },
         "Import": {"exportParty": False, "lastAccountHash": "", "lastCharacterHash": "", "lastRealm": "", "lastLeague": ""},
-        "Items": {"activeItemSet": 0, "useSecondWeaponSet": False, "ItemSet": {}},
-        "Skills": {
-            "activeSkillSet": 0,
-            "sortGemsByDPSField": "CombinedDPS",
-            "sortGemsByDPS": True,
-            "defaultGemQuality": 0,
-            "defaultGemLevel": "normalMaximum",
-            "showSupportGemTypes": "ALL",
-            "showAltQualityGems": False,
-            "SkillSet": [default_skillset_dict],
-        },
+        "Items": {"activeItemSet": 0, "ItemSet": empty_itemset_dict},
+        "Skills": default_skill_dict,
         "Tree": {
             "activeSpec": 0,
-            "Specs": {
-                "Default": default_spec_dict,
-            },
+            "Specs": [default_spec_dict],
         },
         "Config": {
             "Input": {
-                "useEnduranceCharges": True,
                 "customMods": "+1 to Maximum Endurance Charges\n+14% increased maximum Life",
                 "bandit": "None",
-                "resistancePenalty": -60,
+                "resistancePenalty": -30,
                 "pantheonMajorGod": "None",
                 "pantheonMinorGod": "None",
                 "igniteMode": "AVERAGE",
@@ -158,6 +243,7 @@ empty_build = {
                 "overridePowerCharges": 3,
                 "useFrenzyCharges": False,
                 "overrideFrenzyCharges": 3,
+                "useEnduranceCharges": True,
                 "overrideEnduranceCharges": 5,
             },
             "Placeholder": {
@@ -295,6 +381,8 @@ pantheon_minor_gods = {
         "tooltip": "50% less Duration of Poisons on you\n" "You cannot be Poisoned while there are at least 3 Poisons on you",
     },
 }
+
+quality_id = {"Anomalous": "Alternate1", "Divergent": "Alternate2", "Phantasmal": "Alternate3"}
 
 
 class Layers(enum.IntEnum):

@@ -23,95 +23,108 @@ class ConfigUI:
         self.settings = _settings
         self.build = _build
         self.win = _win
+        self.json_config = {}
 
-    def load(self, _config):
+    def load(self, _config: dict):
         """
-        Load internal structures from the build object
-        :param _config: Reference to the xml <Config> tag set
+        Load UI Widgets from the build object
+        :param: _config: dict. The build's copy of json_config
         """
         # print("config.load", self.build.version, self.build.className, print_a_xml_element(_config))
+        self.json_config = _config
+        _input = self.json_config["Input"]
+
         # General
         set_combo_index_by_data(self.win.combo_ResPenalty, self.build.resistancePenalty)
         set_combo_index_by_data(self.win.combo_Bandits, self.build.bandit)
         set_combo_index_by_data(self.win.combo_MajorPantheon, self.build.pantheonMajorGod)
         set_combo_index_by_data(self.win.combo_MinorPantheon, self.build.pantheonMinorGod)
-        set_combo_index_by_data(self.win.combo_igniteMode, self.build.get_config_tag_item("Input", "igniteMode", "AVERAGE"))
-        set_combo_index_by_data(self.win.combo_EHPUnluckyWorstOf, self.build.get_config_tag_item("Input", "EHPUnluckyWorstOf", 1))
+        set_combo_index_by_data(self.win.combo_igniteMode, _input.get("igniteMode", "AVERAGE"))
+        set_combo_index_by_data(self.win.combo_EHPUnluckyWorstOf, _input.get("EHPUnluckyWorstOf", 1))
 
         # Combat
-        self.win.check_PowerCharges.setChecked(self.build.get_config_tag_item("Input", "usePowerCharges", False))
-        self.win.spin_NumPowerCharges.setValue(self.build.get_config_tag_item("Input", "overridePowerCharges", default_max_charges))
-        self.win.check_FrenzyCharges.setChecked(self.build.get_config_tag_item("Input", "useFrenzyCharges", False))
-        self.win.spin_NumFrenzyCharges.setValue(self.build.get_config_tag_item("Input", "overrideFrenzyCharges", default_max_charges))
-        self.win.check_EnduranceCharges.setChecked(self.build.get_config_tag_item("Input", "useEnduranceCharges", False))
-        self.win.spin_NumEnduranceCharges.setValue(self.build.get_config_tag_item("Input", "overrideEnduranceCharges", default_max_charges))
-        self.win.check_SiphoningCharges.setChecked(self.build.get_config_tag_item("Input", "useSiphoningCharges", False))
-        self.win.spin_NumSiphoningCharges.setValue(self.build.get_config_tag_item("Input", "overrideSiphoningCharges", default_max_charges))
-        self.win.check_ChallengerCharges.setChecked(self.build.get_config_tag_item("Input", "useChallengerCharges", False))
-        self.win.spin_NumChallengerCharges.setValue(
-            self.build.get_config_tag_item("Input", "overrideChallengerCharges", default_max_charges)
-        )
-        self.win.check_BlitzCharges.setChecked(self.build.get_config_tag_item("Input", "useBlitzCharges", False))
-        self.win.spin_NumBlitzCharges.setValue(self.build.get_config_tag_item("Input", "overrideBlitzCharges", default_max_charges))
-        # self.win.check_multiplierGaleForce.setChecked(self.build.get_config_tag_item("Input", "multiplierGaleForce", False))
-        # self.win.spin_NumInspirationCharges.setValue(self.build.get_config_tag_item("Input", "overrideInspirationCharges", 3))
-        self.win.check_GhostCharges.setChecked(self.build.get_config_tag_item("Input", "useGhostCharges", False))
-        self.win.spin_NumGhostCharges.setValue(self.build.get_config_tag_item("Input", "overrideGhostCharges", default_max_charges))
+        self.win.check_PowerCharges.setChecked(_input.get("usePowerCharges", False))
+        self.win.spin_NumPowerCharges.setValue(_input.get("overridePowerCharges", default_max_charges))
+        self.win.check_FrenzyCharges.setChecked(_input.get("useFrenzyCharges", False))
+        self.win.spin_NumFrenzyCharges.setValue(_input.get("overrideFrenzyCharges", default_max_charges))
+        self.win.check_EnduranceCharges.setChecked(_input.get("useEnduranceCharges", False))
+        self.win.spin_NumEnduranceCharges.setValue(_input.get("overrideEnduranceCharges", default_max_charges))
+        self.win.check_SiphoningCharges.setChecked(_input.get("useSiphoningCharges", False))
+        self.win.spin_NumSiphoningCharges.setValue(_input.get("overrideSiphoningCharges", default_max_charges))
+        self.win.check_ChallengerCharges.setChecked(_input.get("useChallengerCharges", False))
+        self.win.spin_NumChallengerCharges.setValue(_input.get("overrideChallengerCharges", default_max_charges))
+        self.win.check_BlitzCharges.setChecked(_input.get("useBlitzCharges", False))
+        self.win.spin_NumBlitzCharges.setValue(_input.get("overrideBlitzCharges", default_max_charges))
+        self.win.check_GhostCharges.setChecked(_input.get("useGhostCharges", False))
+        self.win.spin_NumGhostCharges.setValue(_input.get("overrideGhostCharges", default_max_charges))
         # waitForMaxSeals
 
-        if self.build.version_int == 1:
-            custom_mods = self.build.get_config_tag_item("Input", "customMods", "")
-            if custom_mods:
-                self.win.textedit_CustomModifiers.setPlainText(custom_mods)
-        else:
-            custom_mods = self.build.get_config_tag_item("Input", "customMods", "")
-            if custom_mods:
-                self.win.textedit_CustomModifiers.setPlainText(custom_mods.replace("~^", "\n"))
+        _input.get("customMods", "default")
+        custom_mods = _input.get("customMods", "")
+        self.win.textedit_CustomModifiers.setPlainText(custom_mods.replace("~^", "\n"))
+
+    def load_from_xml(self, _config):
+        """
+        Load internal structures from the build object
+        :param _config: Reference to the xml <Config> tag set
+        """
+        # print("config.load_from_xml", self.build.version, self.build.className, print_a_xml_element(_config))
+        _input = {}
+
+        # A list of _config.findall("Input) and create a new dictonary from it and call self.load()
+        for xml_input in _config.findall("Input"):
+            name = xml_input.get("name")
+            _input[name] = self.build.get_config_tag_item("Input", name, "")
+
+        self.json_config["Input"] = _input
+        self.load()
 
     def save(self):
         """
         Save internal structures back to the build object
         """
-        self.build.delete_config_all_tag_item("Input")
+        _input = {}
+
         # General
         self.build.resistancePenalty = self.win.combo_ResPenalty.currentData()
         self.build.bandit = self.win.combo_Bandits.currentData()
         self.build.pantheonMajorGod = self.win.combo_MajorPantheon.currentData()
         self.build.pantheonMinorGod = self.win.combo_MinorPantheon.currentData()
-        self.build.set_config_tag_item("Input", "igniteMode", self.win.combo_igniteMode.currentData())
-        self.build.set_config_tag_item("Input", "EHPUnluckyWorstOf", self.win.combo_EHPUnluckyWorstOf.currentData())
+
+        _input["igniteMode"] = self.win.combo_igniteMode.currentData()
+        _input["EHPUnluckyWorstOf"] = self.win.combo_EHPUnluckyWorstOf.currentData()
         # ignoreJewelLimits
 
         # Combat
-        self.build.set_config_tag_item("Input", "usePowerCharges", self.win.check_PowerCharges.isChecked())
-        self.build.set_config_tag_item("Input", "overridePowerCharges", self.win.spin_NumPowerCharges.value())
-        self.build.set_config_tag_item("Input", "useFrenzyCharges", self.win.check_FrenzyCharges.isChecked())
-        self.build.set_config_tag_item("Input", "overrideFrenzyCharges", self.win.spin_NumFrenzyCharges.value())
-        self.build.set_config_tag_item("Input", "useEnduranceCharges", self.win.check_EnduranceCharges.isChecked())
-        self.build.set_config_tag_item("Input", "overrideEnduranceCharges", self.win.spin_NumEnduranceCharges.value())
+        _input["usePowerCharges"] = self.win.check_PowerCharges.isChecked()
+        _input["overridePowerCharges"] = self.win.spin_NumPowerCharges.value()
+        _input["useFrenzyCharges"] = self.win.check_FrenzyCharges.isChecked()
+        _input["overrideFrenzyCharges"] = self.win.spin_NumFrenzyCharges.value()
+        _input["useEnduranceCharges"] = self.win.check_EnduranceCharges.isChecked()
+        _input["overrideEnduranceCharges"] = self.win.spin_NumEnduranceCharges.value()
+        # ToDo: Thisneedsimporvement to accomodate ItemSets and that the relevant item is active in an ItemSet
         if self.win.check_SiphoningCharges.isVisible():  # from Disintegrator
-            self.build.set_config_tag_item("Input", "useSiphoningCharges", self.win.check_SiphoningCharges.isChecked())
-            self.build.set_config_tag_item("Input", "overrideSiphoningCharges", self.win.spin_NumSiphoningCharges.isChecked())
+            _input["useSiphoningCharges"] = self.win.check_SiphoningCharges.isChecked()
+            _input["overrideSiphoningCharges"] = self.win.spin_NumSiphoningCharges.value()
         if self.win.check_ChallengerCharges.isVisible():
-            self.build.set_config_tag_item("Input", "useChallengerCharges", self.win.check_ChallengerCharges.isChecked())
-            self.build.set_config_tag_item("Input", "overrideChallengerCharges", self.win.spin_NumChallengerCharges.isChecked())
+            _input["useChallengerCharges"] = self.win.check_ChallengerCharges.isChecked()
+            _input["overrideChallengerCharges"] = self.win.spin_NumChallengerCharges.value()
         if self.win.check_BlitzCharges.isVisible():
-            self.build.set_config_tag_item("Input", "useBlitzCharges", self.win.check_BlitzCharges.isChecked())
-            self.build.set_config_tag_item("Input", "overrideBlitzCharges", self.win.spin_NumBlitzCharges.isChecked())
-        # self.build.set_config_tag_item("Input", "multiplierGaleForce", self.win.check_multiplierGaleForce.isChecked())
-        # self.build.set_config_tag_item("Input", "overrideInspirationCharges", self.win.spin_NumInspirationCharges.isChecked())
+            _input["useBlitzCharges"] = self.win.check_BlitzCharges.isChecked()
+            _input["overrideBlitzCharges"] = self.win.spin_NumBlitzCharges.value()
+        # _input["multiplierGaleForce"] = self.win.xxx_xxx.value()
+        # _input["overrideInspirationCharges"] = self.win.xxx_xxx.value()
         if self.win.check_GhostCharges.isVisible():
-            self.build.set_config_tag_item("Input", "useGhostCharges", self.win.check_GhostCharges.isChecked())
-            self.build.set_config_tag_item("Input", "overrideGhostCharges", self.win.spin_NumGhostCharges.isChecked())
+            _input["useGhostCharges"] = self.win.check_GhostCharges.isChecked()
+            _input["overrideGhostCharges"] = self.win.spin_NumGhostCharges.value()
         # waitForMaxSeals
 
-        if self.build.version_int == 2:
-            custom_mods = self.win.textedit_CustomModifiers.toPlainText().splitlines()
-            if custom_mods:
-                self.build.set_config_tag_item("Input", "customMods", "~^".join(custom_mods))
-        # else:
-        #     # Ensure it is removed from the xml
-        #     self.build.delete_config_tag_item("Input", "customMods")
+        # Will this produce "" or "~^" ???
+        custom_mods = self.win.textedit_CustomModifiers.toPlainText().splitlines()
+        if custom_mods:
+            _input["customMods"] = "~^".join(custom_mods)
+
+        self.json_config["Input"] = _input
 
     def initial_startup_setup(self):
         """Configure configuration tab widgets on startup"""
@@ -139,7 +152,7 @@ class ConfigUI:
         self.win.label_NumGhostCharges.setVisible(False)
         self.win.spin_NumGhostCharges.setVisible(False)
 
-        # ToDo: find things that need doing on other layouts that might get destroyed/recreated
+        # ToDo: find things that need doing on other layouts that might get destroyed/recreated and repeat this exercise
         # Programatically set values on this layout as it will be destroyed and recreated in the Designer a lot
         general_layout: QGridLayout = self.win.label_ResPenalty.parent().layout()
         general_layout.setColumnMinimumWidth(0, 100)
