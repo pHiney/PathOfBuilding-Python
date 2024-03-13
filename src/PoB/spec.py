@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from PoB.constants import (
     bad_text,
     default_spec_xml,
-    default_spec_dict,
+    empty_spec_dict,
     starting_scion_node,
     tree_versions,
     PlayerClasses,
@@ -20,7 +20,7 @@ from dialogs.popup_dialogs import ok_dialog
 
 
 class Spec:
-    def __init__(self, build, title=bad_text, new_spec=None, version=_VERSION_str) -> None:  # Circular reference on Build()
+    def __init__(self, build, new_spec=None, version=_VERSION_str) -> None:  # Circular reference on Build()
         """
         Represents one Spec in the build. Most simple settings are properties.
 
@@ -31,8 +31,8 @@ class Spec:
         self.tr = self.build.settings.app.tr
 
         print(f"spec.new: {type(new_spec)}")
-        self.spec = type(new_spec) is dict and new_spec or default_spec_dict
-        self.title = title
+        self.spec = type(new_spec) is dict and new_spec or empty_spec_dict
+        self.title = self.spec["title"]
         self.nodes = set()
         self.ascendancy_nodes = []
         self.extended_hashes = []
@@ -41,7 +41,6 @@ class Spec:
         # Keys are node IDs, values are items
         self.sockets = self.spec["Sockets"]
 
-        self.title = title
         if type(new_spec) is ET:
             self.treeVersion = new_spec["@treeVersion"]
             self.classId = new_spec["@classId"]

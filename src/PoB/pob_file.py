@@ -35,12 +35,14 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
         try:
             _file = read_json(filename)
             pre = ""
+            version = 2
         except (json.JSONDecodeError, json.decoder.JSONDecodeError):  # Corrupt file
             return "", ""
     else:
         try:
             _file = read_xml_as_dict(filename)
             pre = "@"
+            version = 1
         except xml.parsers.expat.ExpatError:  # Corrupt file
             return "", ""
 
@@ -53,7 +55,7 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
         spacer = (min(max_length, max_filename_width) - len(name) + 4) * " "
 
         # The information on the right. pre is @ for xml's ("@level") and "level" for json's
-        version = build.get(f"{pre}version", "1")
+        # version = build.get(f"{pre}version", "1")
         level = build.get(f"{pre}level", "1")
         class_name = build.get(f"{pre}className", "Scion")
         ascend_class_name = build.get(f"{pre}ascendClassName", "None")

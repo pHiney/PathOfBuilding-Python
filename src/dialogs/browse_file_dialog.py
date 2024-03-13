@@ -48,10 +48,12 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         self.btn_Close.clicked.connect(self.close)
         self.btn_CurrDir.clicked.connect(self.change_dir_clicked)
         self.btn_Task.clicked.connect(self.task_button_clicked)
+        self.radioBtn_v2.toggled.connect(self.radio_button_selected)
+        self.radioBtn_v1.toggled.connect(self.radio_button_selected)
         self.btn_Task.setText(f"&{task}")
         # Hide or Show the Save file components depending on the task.
-        for idx in range(0, self.hLayout_SaveAs.count()):
-            self.hLayout_SaveAs.itemAt(idx).widget().setHidden(not self.save)
+        # for idx in range(0, self.hLayout_SaveAs.count()):
+        #     self.hLayout_SaveAs.itemAt(idx).widget().setHidden(not self.save)
 
         self.lineEdit_SaveAs.setText(_build.filename)
         self.list_Files.set_delegate()
@@ -112,7 +114,9 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         for name in dirs:
             self.add_path_to_listbox(f"{name}", f"{name}", "", True)
 
-        files_grabbed = glob.glob("*.xml") + glob.glob("*.xml2") + glob.glob("*.json")
+        # files_grabbed = glob.glob("*.xml") + glob.glob("*.json")
+        extension = self.radioBtn_v2.isChecked() and "json" or "xml"
+        files_grabbed = glob.glob(f"*.{extension}")
         if files_grabbed:
             # Don't use listBox's sort method as it puts the directories at the bottom
             files_grabbed.sort(key=str.casefold)
@@ -170,26 +174,26 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         self.list_Files.setCurrentRow(0)
         self.connect_triggers()
 
-    # @Slot()
+    @Slot()
     def lineedit_currdir_changed(self, new_dir):
         # print(f"current_dir_changed {new_dir}")
         self.change_dir(new_dir)
 
-    # @Slot()
+    @Slot()
     def lineedit_currdir_editing_finished(self):
         """After the directory text box has finished being edited, change directory."""
         # print("editing_finished", self.lineEdit_CurrDir.text())
         # forcibly refill the list box
         self.change_dir(self.lineEdit_CurrDir.text())
 
-    # @Slot()
+    @Slot()
     def change_dir_clicked(self):
         """the change dir button is selecte, open a directory chooser dialog."""
         new_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if new_dir != "":
             self.change_dir(new_dir)
 
-    # @Slot()
+    @Slot()
     def list_file_clicked(self, item: QListWidgetItem):
         """
         Populate the SaveAs text box as files are selected in the list
@@ -203,7 +207,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
             # Clean the toolTip. The toolTip is the only place we can get the cleanest copy of the file name
             self.lineEdit_SaveAs.setText(re.sub("<[^<]+?>", "", item.toolTip()))
 
-    # @Slot()
+    @Slot()
     def list_file_double_clicked(self, item: QListWidgetItem):
         """
         Selecting a file or directory for opening / saving
@@ -218,7 +222,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
             # do something interesting, like return with the information
             self.file_chosen(item)
 
-    # @Slot()
+    @Slot()
     def task_button_clicked(self):
         """
         Selecting a file or directory for opening / saving
@@ -239,6 +243,10 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         # do something interesting, like return with the information
         self.file_chosen(curr_item)
 
+    @Slot()
+    def radio_button_selected(self, checked: bool):
+        self.fill_list_box(self.lineEdit_CurrDir.text())
+
     def file_chosen(self, curr_item: QListWidgetItem):
         """
         Actions to be taken when the task button is pressed, but not changing directories.
@@ -255,7 +263,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
                 return
             extension = os.path.splitext(save_name)[1]
             if extension == "":
-                extension = self.radioBtn_v2.isChecked() and "xml2" or "xml"
+                extension = self.radioBtn_v2.isChecked() and "json" or "xml"
                 save_name = f"{save_name}.{extension}"
             if os.path.exists(save_name):
                 if not yes_no_dialog(self, "Overwrite file", f"{save_name} exists. Overwrite"):

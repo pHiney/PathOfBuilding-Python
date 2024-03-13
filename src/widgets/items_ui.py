@@ -17,7 +17,7 @@ from ui.PoB_Main_Window import Ui_MainWindow
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import read_xml, write_xml, read_json
-from PoB.constants import slot_map, ColourCodes, slot_names
+from PoB.constants import slot_map, ColourCodes, slot_names, empty_item_slots_dict
 from PoB.item import Item
 from dialogs.craft_items_dialog import CraftItemsDlg
 from dialogs.itemsets_dialog import ManageItemsDlg
@@ -56,8 +56,8 @@ class ItemsUI:
         self.win = _win
         # dictionary of Items() indexed by id. This is the same order in the xml
         self.itemlist_by_id = {}
-        self.xml_items = None
-        self.xml_current_itemset = None
+        self.json_items = None
+        self.current_itemset = None
         self.itemsets = None
         self.triggers_connected = False
         self.internal_clipboard = None
@@ -138,12 +138,14 @@ class ItemsUI:
     def activeItemSet(self):
         # return: int
         # Use a property to ensure the correct +/- 1
-        return max(int(self.xml_items.get("activeItemSet", 1)) - 1, 0)
+        # return max(int(self.xml_items.get("activeItemSet", 1)) - 1, 0)
+        return self.json_items.get("activeItemSet", 0)
 
     @activeItemSet.setter
     # Use a property to ensure the correct +/- 1
     def activeItemSet(self, new_set):
-        self.xml_items.set("activeItemSet", f"{new_set + 1}")
+        # self.xml_items.set("activeItemSet", f"{new_set + 1}")
+        self.json_items["activeItemSet"] = new_set
 
     def connect_item_triggers(self):
         """re-connect widget triggers that need to be disconnected during loading and other processing"""
@@ -421,8 +423,7 @@ class ItemsUI:
 
         if not self.alerting:
             return
-
-        # Further functionality that requires a loaded system
+        # Any other functionality that requires a loaded system
 
     @Slot()
     def weapon_swap2(self, checked):
@@ -689,6 +690,39 @@ class ItemsUI:
             print(f"Discarded: {dlg.item.name}")
         return True
 
+    def load_from_json(self, _items):
+        """
+        Load internal structures from the build object.
+
+        :param _items: Reference to build's json_items
+        :return: N/A
+        """
+        print("items_ui.load_from_json")
+        self.disconnect_item_triggers()
+        self.alerting = False
+        self.json_items = _items
+        self.clear_controls(True)
+        self.win.combo_ItemSet.clear()
+        # add the items to the list box
+        for _item in self.json_items["Items"]:
+            new_item = Item(self.settings, self.base_items)
+            new_item.load_from_json(_item)
+            self.add_item_to_itemlist_widget(new_item)
+            self.itemlist_by_id[new_item.id] = new_item
+            if "Jewel" in new_item.base_name:
+                self.jewels[new_item.id] = new_item
+
+        active_set_title = "Default"
+        self.itemsets = self.json_items["ItemSets"]
+        titles = [item["title"] for item in self.itemsets]
+        self.win.combo_ItemSet.addItems(titles)
+        self.fill_item_slot_uis()
+        self.fill_jewel_slot_uis()
+        self.alerting = True
+        self.connect_item_triggers()
+        # Trigger showing the correct itemset
+        self.win.combo_ItemSet.setCurrentIndex(self.activeItemSet)
+
     def load_from_xml(self, _items):
         """
         Load internal structures from the build object.
@@ -812,7 +846,43 @@ class ItemsUI:
         self.alerting = True
         self.connect_item_triggers()
 
-    def save(self, version="2"):
+    def save(self):
+        """
+        Save the *current itemset* back to a object.
+        This is called by import_from_poep_json, the main SaveAs routines and the change itemset,
+        prior to showing the new set.
+
+        :param:version: str. 1 for version 1 xml data,  2 for updated.
+        :return: xml.etree.ElementTree
+        """
+        if self.win.list_Items.count() > 0:
+            # leave this here for a bit to pick out one item
+            # self.itemlist[items[0]].save(0, true)
+            # delete any items present in the xml and readd them with the current data and order
+            json_items = self.json_items["Items"]
+            for child in list(json_items):
+                json_items.remove(child)
+            for _id in self.itemlist_by_id:
+                json_items.append(self.itemlist_by_id[_id].save_v2())
+
+        # As these entries do not overwrite, remove the old entries, and add the new ones.
+        self.current_itemset["Slots"] = empty_item_slots_dict
+
+        # Add current set slot information
+        for slot_ui_name in self.item_slot_ui_list:
+            slot_ui = self.item_slot_ui_list[slot_ui_name]
+            json_self_slot_ui = self.current_itemset["Slots"][slot_ui_name]
+            json_self_slot_ui["itemId"] = slot_ui.current_item_id
+            if "Flask" in slot_ui_name:
+                json_self_slot_ui["active"] = slot_ui.active
+            json_self_slot_ui["itemPbURL"] = slot_ui.itemPbURL
+        self.activeItemSet = self.win.combo_ItemSet.currentIndex()
+        # Renumber skillsets in case they have been moved, created or deleted.
+        for idx, _set in enumerate(self.json_items["ItemSets"]):
+            _set["id"] = idx
+        return self.json_items
+
+    def save_to_xml(self):
         """
         Save the *current itemset* back to a xml object.
         This is called by import_from_poep_json, the main SaveAs routines and the change itemset,
@@ -828,11 +898,7 @@ class ItemsUI:
             for child in list(self.xml_items.findall("Item")):
                 self.xml_items.remove(child)
             for _id in self.itemlist_by_id:
-                match version:
-                    case "1":
-                        self.xml_items.append(self.itemlist_by_id[_id].save())
-                    case "2":
-                        self.xml_items.append(self.itemlist_by_id[_id].save_v2())
+                self.xml_items.append(self.itemlist_by_id[_id].save())
 
         # As these entries do not overwrite, remove the old entries, and add the new ones.
         for child in list(self.xml_current_itemset.findall("Slot")):
@@ -881,39 +947,56 @@ class ItemsUI:
         """
         # _debug(f"show_itemset, {_itemset}, {self.xml_current_itemset}, {self.itemsets}")
         if 0 <= _itemset < len(self.itemsets):
-            if self.xml_current_itemset is not None:
+            if self.current_itemset is not None:
                 self.save()
                 # self.clear_controls()
-            self.xml_current_itemset = self.itemsets[_itemset]
+            self.current_itemset = self.itemsets[_itemset]
 
             for slot_ui in self.abyssal_item_slot_ui_list:
                 slot_ui.setHidden(True)
 
             """ Process the Slot entries and set default items"""
-            slots = self.xml_current_itemset.findall("Slot")
-            if len(slots) > 0:
-                for slot_xml in slots:
-                    # The regex is for a data error: 1Swap -> 1 Swap
-                    slot_name = re.sub(r"([12])Swap", "\\1 Swap", slot_xml.get("name", ""))
-                    item_id = int(slot_xml.get("itemId", "-1"))
-                    if slot_name != "" and item_id >= 0:
-                        # There are illegal entries in PoB xmls, like 'Belt Abyssal Socket 3'.
-                        # They will create a KeyError. By absorbing them, we'll remove them from the xml.
-                        try:
-                            slot_ui: ItemSlotUI = self.item_slot_ui_list[slot_name]
-                            # Clear the slot if not used
-                            if item_id == 0:
-                                slot_ui.clear_default_item()
-                            else:
-                                item = self.itemlist_by_id[item_id]
-                                slot_ui.set_default_by_text(item.name)
-                                slot_ui.itemPbURL = slot_xml.get("itemPbURL", "")
-                                if item.type == "Flask":
-                                    slot_ui.active = str_to_bool(slot_xml.get("active", "False"))
-                                if "Abyssal" in slot_name:
-                                    slot_ui.setHidden(False)
-                        except KeyError:
-                            pass
+            # ToDo: This is for XML. Move re.sub to the load xml part
+            slots = self.current_itemset["Slots"]
+            for _name, value in slots.items():
+                item_id = value.get("itemId", -1)
+                if item_id >= 0:
+                    slot_ui: ItemSlotUI = self.item_slot_ui_list[_name]
+                    # Clear the slot if not used
+                    if item_id == 0:
+                        slot_ui.clear_default_item()
+                    else:
+                        item = self.itemlist_by_id[item_id]
+                        slot_ui.set_default_by_text(item.name)
+                        slot_ui.itemPbURL = value.get("itemPbURL", "")
+                        if item.type == "Flask":
+                            slot_ui.active = value.get("active", False)
+                        if "Abyssal" in _name:
+                            slot_ui.setHidden(False)
+            # slots = self.current_itemset["Slots"]
+            # if len(slots) > 0:
+            #     for slot_xml in slots:
+            #         # The regex is for a data error: 1Swap -> 1 Swap
+            #         slot_name = re.sub(r"([12])Swap", "\\1 Swap", slot_xml.get("name", ""))
+            #         item_id = int(slot_xml.get("itemId", "-1"))
+            #         if slot_name != "" and item_id >= 0:
+            #             # There are illegal entries in PoB xmls, like 'Belt Abyssal Socket 3'.
+            #             # They will create a KeyError. By absorbing them, we'll remove them from the xml.
+            #             try:
+            #                 slot_ui: ItemSlotUI = self.item_slot_ui_list[slot_name]
+            #                 # Clear the slot if not used
+            #                 if item_id == 0:
+            #                     slot_ui.clear_default_item()
+            #                 else:
+            #                     item = self.itemlist_by_id[item_id]
+            #                     slot_ui.set_default_by_text(item.name)
+            #                     slot_ui.itemPbURL = slot_xml.get("itemPbURL", "")
+            #                     if item.type == "Flask":
+            #                         slot_ui.active = str_to_bool(slot_xml.get("active", "False"))
+            #                     if "Abyssal" in slot_name:
+            #                         slot_ui.setHidden(False)
+            #             except KeyError:
+            #                 pass
             else:
                 # Have a guess at what could be - used for imports
                 for slot_name in self.item_slot_ui_list:

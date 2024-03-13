@@ -202,14 +202,14 @@ class TreeUI:
         for combo in (self.combo_manage_tree, self.win.combo_ItemsManageTree, self.combo_compare):
             combo.clear()
         for idx, spec in enumerate(self.build.specs):
-            print(f"fill_current_tree_combo: {type(spec), spec.title}")
+            # print(f"fill_current_tree_combo: {type(spec), spec.title}")
             if spec is not None:
                 if spec.treeVersion != _VERSION_str:
                     title = f"[{tree_versions[spec.treeVersion]}] {spec.title}"
                 else:
                     title = spec.title
                 for combo in (self.combo_manage_tree, self.win.combo_ItemsManageTree, self.combo_compare):
-                    print("fill_current_tree_combo", title, idx)
+                    # print("fill_current_tree_combo", title, idx)
                     combo.addItem(title, idx)
                     combo.view().setMinimumWidth(combo.minimumSizeHint().width())
 

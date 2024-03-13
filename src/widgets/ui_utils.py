@@ -256,7 +256,7 @@ class HTMLDelegate(QStyledItemDelegate):
         self.doc = QTextDocument()
 
     def paint(self, painter, option, index):
-        options = QStyleOptionViewItem()
+        options = QStyleOptionViewItem(option)
         self.initStyleOption(options, index)
         style = QApplication.style() if options.widget is None else options.widget.style()
 

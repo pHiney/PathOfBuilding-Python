@@ -34,6 +34,8 @@ default_max_charges = 3
 # Default config incase the settings file doesn't exist
 def_theme = "dark"
 starting_scion_node = "58833"
+
+""" ################################################ SETTINGS ################################################# """
 default_settings = f"""<PathOfBuilding>
 <Misc theme="{def_theme}" slotOnlyTooltips="true" showTitlebarName="true" showWarnings="true" defaultCharLevel="1" 
 nodePowerTheme="0" connectionProtocol="0" thousandsSeparator="n" decimalSeparator="_" 
@@ -43,6 +45,8 @@ proxyURL="" buildPath="" open_build=""/>
    <recentBuilds/>
    <size width="800" height="600"/>
 </PathOfBuilding>"""
+
+""" ################################################### XML ################################################### """
 
 default_spec_xml = f"""<Spec title="Default" classId="0" ascendClassId="0" masteryEffects="" nodes="{starting_scion_node}" 
 treeVersion="{_VERSION_str}"></Spec>"""
@@ -66,7 +70,7 @@ empty_build_xml = f"""
     <Calcs/>
     <Skills sortGemsByDPSField="CombinedDPS" matchGemLevelToCharacterLevel="false" activeSkillSet="1" 
         sortGemsByDPS="true" defaultGemQuality="0" defaultGemLevel="normalMaximum" showSupportGemTypes="ALL" 
-        showAltQualityGems="false">
+        showAltQualityGems="true">
         {default_skill_set_xml}
     </Skills>
     <Items activeItemSet="1">
@@ -87,8 +91,10 @@ empty_build_xml = f"""
     </Config>
 </PathOfBuilding>"""
 
-default_spec_dict = {
-    "title": "",
+""" ############################################### DICT / JSON ############################################### """
+
+empty_spec_dict = {
+    "title": "Default",
     "treeVersion": _VERSION_str,
     "classId": 0,
     "ascendClassId": 0,
@@ -98,18 +104,10 @@ default_spec_dict = {
     "Sockets": "",
     "Overrides": "",
 }
-empty_socket_group_dict = {
-    "mainActiveSkillCalcs": 0,
-    "includeInFullDPS": "false",
-    "label": "",
-    "enabled": "true",
-    "slot": "",
-    "mainActiveSkill": 0,
-}
 
 empty_gem_dict = {
     "enabled": True,
-    "name": "",
+    "name": "Spectral Throw",
     "skillId": "ThrownWeapon",
     "level": 20,
     "qualityId": "Default",
@@ -119,31 +117,57 @@ empty_gem_dict = {
     "enableGlobal2": True,
     "gemId": "Metadata/Items/Gems/SkillGemThrownWeapon",
 }
-
-empty_sgroup_dict = {
-    "mainActiveSkillCalcs": 1,
-    "includeInFullDPS": False,
-    "label": "",
+empty_socket_group_dict = {
     "enabled": True,
-    "mainActiveSkill": 1,
+    "label": "",
+    "mainActiveSkillCalcs": 0,
+    "includeInFullDPS": False,
+    "slot": "",
+    "mainActiveSkill": 0,
     "Gems": [empty_gem_dict],
 }
-
-default_skillset_dict = {
+# empty_sgroup_dict = {
+#     "mainActiveSkillCalcs": 1,
+#     "includeInFullDPS": False,
+#     "label": "",
+#     "enabled": True,
+#     "mainActiveSkill": 1,
+#     "Gems": [empty_gem_dict],
+# }
+empty_skillset_dict = {
     "id": 0,
     "title": "Default",
-    "SGroups": [empty_sgroup_dict],
+    "SGroups": [empty_socket_group_dict],
 }
-
-default_skill_dict = {
+empty_skill_dict = {
     "activeSkillSet": 0,
     "sortGemsByDPSField": "CombinedDPS",
     "sortGemsByDPS": True,
     "defaultGemQuality": 0,
     "defaultGemLevel": "normalMaximum",
     "showSupportGemTypes": "ALL",
-    "showAltQualityGems": False,
-    "SkillSets": [default_skillset_dict],
+    "showAltQualityGems": True,
+    "SkillSets": [empty_skillset_dict],
+}
+
+empty_item_dict = {
+    "id": 0,
+    "title": "",
+    "base_name": "",
+    "rarity": "",
+    "sockets": "",
+    "Attribs": {
+        "level_req": 0,
+        "quality": 0,
+    },
+    "Implicits": {"Mod": []},
+    "Explicits": {"Mod": []},
+    "Requires": {},
+    # Base Items (like uniques) will have entries like this. Saved items will only have "current"
+    "Variants": {"1": "Pre 3.19.0", "2": "Current"},
+    "VariantEntries": {"base_name": ["Coral Amulet", "Marble Amulet", "Marble Amulet"]},
+    # Ordinary saved items will only have, as the above entries are in the self.base_item
+    # "Variants": {"current": 0},
 }
 
 empty_item_slots_dict = {
@@ -209,7 +233,7 @@ empty_item_slots_dict = {
     "Belt Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
     "Belt Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
 }
-empty_itemset_dict = {"useSecondWeaponSet": False, "id": 1, "Slot": empty_item_slots_dict}
+empty_itemset_dict = {"title": "", "id": 0, "useSecondWeaponSet": False, "Slots": {}}  # empty_item_slots_dict}
 
 empty_build = {
     "PathOfBuilding": {
@@ -222,19 +246,20 @@ empty_build = {
             "characterLevelAutoMode": True,
             "mainSocketGroup": 0,
             "viewMode": default_view_mode,
+            "PlayerStat": [],
+            "MinionStat": [],
         },
         "Import": {"exportParty": False, "lastAccountHash": "", "lastCharacterHash": "", "lastRealm": "", "lastLeague": ""},
-        "Items": {"activeItemSet": 0, "ItemSet": empty_itemset_dict},
-        "Skills": default_skill_dict,
+        "Items": {"activeItemSet": 0, "ItemSets": [empty_itemset_dict], "Items": []},
+        "Skills": empty_skill_dict,
         "Tree": {
             "activeSpec": 0,
-            "Specs": [default_spec_dict],
+            "Specs": [empty_spec_dict],
         },
         "Config": {
             "Input": {
-                "customMods": "+1 to Maximum Endurance Charges\n+14% increased maximum Life",
-                "bandit": "None",
                 "resistancePenalty": -30,
+                "bandit": "None",
                 "pantheonMajorGod": "None",
                 "pantheonMinorGod": "None",
                 "igniteMode": "AVERAGE",
@@ -245,6 +270,7 @@ empty_build = {
                 "overrideFrenzyCharges": 3,
                 "useEnduranceCharges": True,
                 "overrideEnduranceCharges": 5,
+                "customMods": "+1 to Maximum Endurance Charges~^+14% increased maximum Life",
             },
             "Placeholder": {
                 "enemySpeed": 700,
@@ -313,7 +339,7 @@ empty_build = {
         "Party": {"destination": "All", "ShowAdvanceTools": False, "append": False},
         "TreeView": {"searchStr": "", "zoomY": 0, "zoomLevel": 3, "showStatDifferences": True, "zoomX": 0},
         "Notes": "",
-        "NotesHTML": None,
+        "NotesHTML": """&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"&gt;,""",
     },
 }
 
@@ -788,13 +814,13 @@ player_stats_list = {
     "EffectiveSpellSuppressionChance": {"label": "Spell Suppression Chance", "fmt": "%d%%"},
     "blankm": {},
     "FireResist": {"label": "Fire Resistance", "fmt": "%d%%", "colour": ColourCodes.FIRE.value},
-    "FireResistOverCap": {"label": "Fire Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "FireResistOverCap": {"label": "Fire Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "ColdResist": {"label": "Cold Resistance", "fmt": "%d%%", "colour": ColourCodes.COLD.value},
-    "ColdResistOverCap": {"label": "Cold Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "ColdResistOverCap": {"label": "Cold Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "LightningResist": {"label": "Lightning Resistance", "fmt": "%d%%", "colour": ColourCodes.LIGHTNING.value},
-    "LightningResistOverCap": {"label": "Lightning Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "LightningResistOverCap": {"label": "Lightning Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "ChaosResist": {"label": "Chaos Resistance", "fmt": "%d%%", "colour": ColourCodes.CHAOS.value},
-    "ChaosResistOverCap": {"label": "Chaos Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "ChaosResistOverCap": {"label": "Chaos Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "blankn": {},
     "EffectiveMovementSpeedMod": {"label": "Movement Speed Modifier", "fmt": "+%d%%"},
     "blanko": {},

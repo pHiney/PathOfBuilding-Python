@@ -1,0 +1,20 @@
+# and add these in for when pyCharm wipes them. Feel free to add more
+
+PySide6.QtWidgets.stateChanged.*
+PySide6.QtWidgets.currentIndexChanged.*
+PySide6.QtWidgets.clicked.*
+PySide6.QtWidgets.stateChanged.*
+PySide6.QtWidgets.returnPressed.*
+PySide6.QtWidgets.textChanged.*
+PySide6.QtWidgets.valueChanged.*
+PySide6.QtWidgets.currentTextChanged.*
+
+# Edit PathOfBuilding-Python\.idea\inspectionProfiles\Project_Default.xml 
+          <option value="PySide6.QtWidgets.stateChanged.*" />
+          <option value="PySide6.QtWidgets.currentIndexChanged.*" />
+          <option value="PySide6.QtWidgets.clicked.*" />
+          <option value="PySide6.QtWidgets.stateChanged.*" />
+          <option value="PySide6.QtWidgets.returnPressed.*" />
+          <option value="PySide6.QtWidgets.textChanged.connect" />
+          <option value="PySide6.QtWidgets.valueChanged.*" />
+          <option value="PySide6.QtWidgets.currentTextChanged.connect" />

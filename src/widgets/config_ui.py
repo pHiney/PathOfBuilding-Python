@@ -81,28 +81,31 @@ class ConfigUI:
 
     def save(self):
         """
-        Save internal structures back to the build object
+        Save internal structures back to the build object, overwriting what is there.
+        So if power charges are turned off, then no settings for power charges will be saved.
         """
-        _input = {}
+        # Don't use self.build.properties, as we overwrite self.json_config["Input"] below
+        # General.
+        # pycharm rewrote this to a "dictionary literal"
+        _input = {
+            "resistancePenalty": self.win.combo_ResPenalty.currentData(),
+            "bandit": self.win.combo_Bandits.currentData(),
+            "pantheonMajorGod": self.win.combo_MajorPantheon.currentData(),
+            "pantheonMinorGod": self.win.combo_MinorPantheon.currentData(),
+            "igniteMode": self.win.combo_igniteMode.currentData(),
+            "EHPUnluckyWorstOf": self.win.combo_EHPUnluckyWorstOf.currentData(),
+            "usePowerCharges": self.win.check_PowerCharges.isChecked(),
+            "overridePowerCharges": self.win.spin_NumPowerCharges.value(),
+            "useFrenzyCharges": self.win.check_FrenzyCharges.isChecked(),
+            "overrideFrenzyCharges": self.win.spin_NumFrenzyCharges.value(),
+            "useEnduranceCharges": self.win.check_EnduranceCharges.isChecked(),
+            "overrideEnduranceCharges": self.win.spin_NumEnduranceCharges.value(),
+        }
 
-        # General
-        self.build.resistancePenalty = self.win.combo_ResPenalty.currentData()
-        self.build.bandit = self.win.combo_Bandits.currentData()
-        self.build.pantheonMajorGod = self.win.combo_MajorPantheon.currentData()
-        self.build.pantheonMinorGod = self.win.combo_MinorPantheon.currentData()
-
-        _input["igniteMode"] = self.win.combo_igniteMode.currentData()
-        _input["EHPUnluckyWorstOf"] = self.win.combo_EHPUnluckyWorstOf.currentData()
         # ignoreJewelLimits
 
         # Combat
-        _input["usePowerCharges"] = self.win.check_PowerCharges.isChecked()
-        _input["overridePowerCharges"] = self.win.spin_NumPowerCharges.value()
-        _input["useFrenzyCharges"] = self.win.check_FrenzyCharges.isChecked()
-        _input["overrideFrenzyCharges"] = self.win.spin_NumFrenzyCharges.value()
-        _input["useEnduranceCharges"] = self.win.check_EnduranceCharges.isChecked()
-        _input["overrideEnduranceCharges"] = self.win.spin_NumEnduranceCharges.value()
-        # ToDo: Thisneedsimporvement to accomodate ItemSets and that the relevant item is active in an ItemSet
+        # ToDo: This needs improvement to accomodate ItemSets and that the relevant item is active in an ItemSet
         if self.win.check_SiphoningCharges.isVisible():  # from Disintegrator
             _input["useSiphoningCharges"] = self.win.check_SiphoningCharges.isChecked()
             _input["overrideSiphoningCharges"] = self.win.spin_NumSiphoningCharges.value()

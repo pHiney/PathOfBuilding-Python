@@ -13,12 +13,11 @@ from PySide6.QtWidgets import QListWidgetItem
 from PoB.constants import (
     ColourCodes,
     bad_text,
-    default_skill_dict,
+    empty_skill_dict,
     default_skill_set_xml,
     empty_itemset_dict,
     empty_socket_group_dict,
     empty_socket_group_xml,
-    empty_sgroup_dict,
     empty_gem_dict,
     empty_gem_xml,
     quality_id,
@@ -82,9 +81,8 @@ class SkillsUI:
         self.settings = _settings
         self.build = _build
         self.win = _win
-        self.json_skills = default_skill_dict
+        self.json_skills = empty_skill_dict
         # list of elements for the SkillSet
-        print("SkillsUI", self.json_skills["SkillSets"])
         self.json_skillsets = self.json_skills["SkillSets"]
 
         # xml element for the currently chosen skillset
@@ -544,7 +542,7 @@ class SkillsUI:
         self.clear_socket_group_settings()
         self.win.list_SocketGroups.clear()
         if 0 <= new_index < len(self.json_skillsets):
-            self.show_skill_set(self.json_skills[new_index], new_index, True)
+            self.show_skill_set(self.json_skillsets[new_index], new_index, True)
 
     def rename_set(self, row, new_title):
         """
@@ -752,7 +750,7 @@ class SkillsUI:
         for idx in range(self.win.list_SocketGroups.count()):
             item = self.win.list_SocketGroups.item(idx)
             # print("update_socket_group_labels", idx, item)
-            self.define_socket_group_label(item, self.current_skill_set[idx])
+            self.define_socket_group_label(item, self.current_skill_set["SGroups"][idx])
 
     @Slot()
     def delete_socket_group(self):
@@ -1069,7 +1067,7 @@ class SkillsUI:
         print("gems_remove_checkbox_selected", item, gem_ui)
         row = self.win.list_Skills.row(item)
         self.win.list_Skills.takeItem(row)
-        _gem = gem_ui.json_gem
+        _gem = gem_ui.pob_gem
         if self.current_socket_group is not None and _gem in self.current_socket_group["Gems"]:
             # print("gem_ui_notify", row, ui)
             # self.remove_gem_ui(_key)

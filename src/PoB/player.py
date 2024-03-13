@@ -46,7 +46,7 @@ class Player:
         self.minion = _minion
         self.settings = settings
         self.build = build
-        self.xml_build = build.xml_build
+        self.json_build = build.json_build
         self.win = _win
         self.player_class = build.current_class
         # self.ascendancy = build.ascendancy
@@ -80,40 +80,48 @@ class Player:
         :return: N/A
         """
         self.clear()
-        self.xml_build = _build
+        self.json_build = _build
         # Strip all stats. They are only there for third party tools. We will do our own calcs and save them.
         stat_name = self.minion and "MinionStat" or "PlayerStat"
-        for stat in self.xml_build.findall(stat_name):
-            del stat
-        # for stat in self.xml_build.findall("PlayerStat"):
-        #     stat_name = stat.get("stat")
-        #     try:
-        #         # Sometimes there is an entry like '<{stat_name} stat="SkillDPS" value="table: 0x209a50f0" />'
-        #         stat_value = float(stat.get("value"))
-        #         self.stats[stat_name] = stat_value
-        #     except ValueError:
-        #         print(f"Error in {stat_name}. Value was '{stat.get('value', 'Error Value')}'")
-        #         self.xml_build.remove(stat)
-        #         continue
+        for stat in self.json_build[stat_name]:
+            self.json_build.remove(stat)
 
-    def save(self, _build):
+    def save(self):
         """
         Save internal structures back to the build object
 
-        :param _build: build xml
         :return: N/A
         """
         stat_name = self.minion and "MinionStat" or "PlayerStat"
         # Remove everything and then add ours
-        for stat in self.xml_build.findall(stat_name):
-            self.xml_build.remove(stat)
+        for stat in self.json_build[stat_name]:
+            self.json_build.remove(stat)
         for name in self.stats:
             if self.stats[name]:
-                self.xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+                self.json_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
         # Stats that are included in the build xml but not shown on the left hand side of the PoB window.
         for name in extraSaveStats:
             if self.stats.get(name, None):
-                self.xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+                self.json_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+
+    def save_to_xml(self, xml_build):
+        """
+        Save internal structures back to the build object
+
+        :param xml_build: build xml
+        :return: N/A
+        """
+        stat_name = self.minion and "MinionStat" or "PlayerStat"
+        # Remove everything and then add ours
+        for stat in xml_build.findall(stat_name):
+            xml_build.remove(stat)
+        for name in self.stats:
+            if self.stats[name]:
+                xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+        # Stats that are included in the build xml but not shown on the left hand side of the PoB window.
+        for name in extraSaveStats:
+            if self.stats.get(name, None):
+                xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
 
     def calc_stats(self, active_items, test_item=None, test_node=None):
         """
