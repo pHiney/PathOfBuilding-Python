@@ -1,4 +1,5 @@
 import atexit
+import copy
 import datetime
 import glob
 import os
@@ -34,7 +35,6 @@ from PoB.constants import (
     bad_text,
     def_theme,
     empty_build,
-    empty_build_xml,
     pantheon_major_gods,
     pantheon_minor_gods,
     player_stats_list,
@@ -48,6 +48,7 @@ from PoB.build import Build
 from PoB.settings import Settings
 from PoB.pob_file import get_file_info
 from PoB.player import Player
+from PoB.xml import load_from_xml
 from dialogs.browse_file_dialog import BrowseFileDlg
 from dialogs.export_dialog import ExportDlg
 from dialogs.import_dialog import ImportDlg
@@ -640,13 +641,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # open the file using the filename in the build.
         self.build_loader(full_path)
 
-    def build_loader(self, filename_or_xml=Union[str, Path, ET.ElementTree]):
+    def build_loader(self, filename=Union[str, Path]):
         """
         Common actions for UI components when we are loading a build.
 
-        :param filename_or_xml: Path: the filename of file to be loaded, or "Default" if called from the New action.
-        :param filename_or_xml: String: build name, commonly "Default" when called from the New action.
-        :param filename_or_xml: ET.ElementTree: the xml of a file that was loaded or downloaded.
+        :param filename: Path: the filename of file to be loaded, or "Default" if called from the New action.
+        :param filename: String: build name, commonly "Default" when called from the New action.
         :return: N/A
         """
         self.alerting = False
@@ -654,24 +654,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.config_ui.initial_startup_setup()
         new = True
         self.build.filename = ""
-        if type(filename_or_xml) is ET.ElementTree:
-            self.build.new(filename_or_xml)
+        self.settings.open_build = ""
+        name, file_extension = os.path.splitext(filename)
+        xml = file_extension == ".xml"
+        if xml:
+            self.build.new(load_from_xml(filename))
+            # Don't update last opened build
         else:
-            new = filename_or_xml == "Default"
+            new = filename == "Default"
             if not new:
                 # open the file
-                self.build.load_from_file(filename_or_xml)
-                self.build.filename = filename_or_xml
-                self.settings.open_build = self.build.filename
+                self.build.load_from_file(filename)
+                self.settings.open_build = filename
             else:
-                self.build.new(empty_build)
-                # self.build.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
-                self.settings.open_build = ""
+                self.build.new(copy.deepcopy(empty_build))
 
         # if everything worked, lets update the UI
         if self.build.json_PoB is not None:
-            # _debug("build_loader")
-            if not new:
+            # _debug("build_loader", filename)
+            if not new and not xml:
                 self.add_recent_build_menu_item()
             self.config_ui.load(self.build.json_config)
             self.tree_ui.load(self.build.json_tree)

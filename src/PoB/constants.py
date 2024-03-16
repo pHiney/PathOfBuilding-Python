@@ -46,51 +46,6 @@ proxyURL="" buildPath="" open_build=""/>
    <size width="800" height="600"/>
 </PathOfBuilding>"""
 
-""" ################################################### XML ################################################### """
-
-default_spec_xml = f"""<Spec title="Default" classId="0" ascendClassId="0" masteryEffects="" nodes="{starting_scion_node}" 
-treeVersion="{_VERSION_str}"></Spec>"""
-default_skill_set_xml = """<SkillSet id="1" title="Default">
-  <Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label="" enabled="true" slot="" mainActiveSkill="1"></Skill>
-</SkillSet>"""
-
-empty_socket_group_xml = """<Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label=""
-enabled="true" slot="" mainActiveSkill="1"/>"""
-
-empty_gem_xml = """<Gem enableGlobal2="false" level="1" enableGlobal1="true" skillId="" qualityId="Default"
-gemId="" enabled="true" quality="0" count="1" nameSpec=""/>"""
-
-empty_build_xml = f"""
-<PathOfBuilding>
-    <Build version="2" level="1" targetVersion="3_0" bandit="None" className="Scion" ascendClassName="None"
-     mainSocketGroup="1" viewMode="{default_view_mode}" pantheonMajorGod="None" pantheonMinorGod="None">
-            <PlayerStat stat="AverageHit" value="0"/>
-     </Build>
-    <Import/>
-    <Calcs/>
-    <Skills sortGemsByDPSField="CombinedDPS" matchGemLevelToCharacterLevel="false" activeSkillSet="1" 
-        sortGemsByDPS="true" defaultGemQuality="0" defaultGemLevel="normalMaximum" showSupportGemTypes="ALL" 
-        showAltQualityGems="true">
-        {default_skill_set_xml}
-    </Skills>
-    <Items activeItemSet="1">
-        <ItemSet useSecondWeaponSet="false" id="1"/>
-    </Items>
-    <Tree activeSpec="1">
-        {default_spec_xml}
-    </Tree>
-    <Notes/>
-    <NotesHTML/>
-    <TreeView searchStr="" zoomY="0" showHeatMap="nil" zoomLevel="3" showStatDifferences="true" zoomX="0"/>
-    <Config>
-        <Input name="resistancePenalty" number="-60"/>
-        <Input name="pantheonMinorGod" string="None"/>
-        <Input name="enemyIsBoss" string="None"/>
-        <Input name="pantheonMajorGod" string="None"/>
-        <Input name="bandit" string="None"/>
-    </Config>
-</PathOfBuilding>"""
-
 """ ############################################### DICT / JSON ############################################### """
 
 empty_spec_dict = {
@@ -98,7 +53,7 @@ empty_spec_dict = {
     "treeVersion": _VERSION_str,
     "classId": 0,
     "ascendClassId": 0,
-    "nodes": "",
+    "nodes": starting_scion_node,
     "masteryEffects": "",
     "URL": "https://www.pathofexile.com/passive-skill-tree/AAAABgAAAAAA",
     "Sockets": "",
@@ -107,7 +62,7 @@ empty_spec_dict = {
 
 empty_gem_dict = {
     "enabled": True,
-    "name": "Spectral Throw",
+    "nameSpec": "Spectral Throw",
     "skillId": "ThrownWeapon",
     "level": 20,
     "qualityId": "Default",
@@ -155,19 +110,11 @@ empty_item_dict = {
     "title": "",
     "base_name": "",
     "rarity": "",
-    "sockets": "",
-    "Attribs": {
-        "level_req": 0,
-        "quality": 0,
-    },
-    "Implicits": {"Mod": []},
-    "Explicits": {"Mod": []},
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
     "Requires": {},
-    # Base Items (like uniques) will have entries like this. Saved items will only have "current"
-    "Variants": {"1": "Pre 3.19.0", "2": "Current"},
-    "VariantEntries": {"base_name": ["Coral Amulet", "Marble Amulet", "Marble Amulet"]},
-    # Ordinary saved items will only have, as the above entries are in the self.base_item
-    # "Variants": {"current": 0},
+    # Ignoring "ModRange": {},  # dict {"<id num>": <range num>, ...}
 }
 
 empty_item_slots_dict = {
@@ -246,8 +193,15 @@ empty_build = {
             "characterLevelAutoMode": True,
             "mainSocketGroup": 0,
             "viewMode": default_view_mode,
-            "PlayerStat": [],
-            "MinionStat": [],
+            "PlayerStat": {},
+            "MinionStat": {},
+            "TimelessData": {
+                "devotionVariant1": 1,
+                "devotionVariant2": 1,
+                "searchListFallback": "",
+                "searchList": "",
+                "socketFilterDistance": 0,
+            },
         },
         "Import": {"exportParty": False, "lastAccountHash": "", "lastCharacterHash": "", "lastRealm": "", "lastLeague": ""},
         "Items": {"activeItemSet": 0, "ItemSets": [empty_itemset_dict], "Items": []},
@@ -286,7 +240,7 @@ empty_build = {
         },
         "Calcs": {
             "Input": {"misc_buffMode": "EFFECTIVE", "skill_number": 1},
-            "Section": {
+            "Sections": {
                 "ViewSkillDetails": {"collapsed": False, "id": "SkillSelect"},
                 "SkillHitDamage": {"collapsed": False, "id": "HitDamage"},
                 "ExertingWarcries": {"collapsed": False, "id": "Warcries"},
@@ -337,7 +291,7 @@ empty_build = {
             },
         },
         "Party": {"destination": "All", "ShowAdvanceTools": False, "append": False},
-        "TreeView": {"searchStr": "", "zoomY": 0, "zoomLevel": 3, "showStatDifferences": True, "zoomX": 0},
+        "TreeView": {"searchStr": "", "showStatDifferences": True},
         "Notes": "",
         "NotesHTML": """&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"&gt;,""",
     },

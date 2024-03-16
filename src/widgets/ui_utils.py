@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt, QMargins, QPoint, QRect, QSize
 from PySide6.QtGui import QAbstractTextDocumentLayout, QPalette, QTextDocument
 from PySide6.QtWidgets import QApplication, QComboBox, QProxyStyle, QStyle, QStyleOptionViewItem, QStyledItemDelegate
 
-from PoB.constants import ColourCodes, pob_debug, locale, empty_build, empty_build_xml
+from PoB.constants import ColourCodes, pob_debug, locale, empty_build
 
 
 def str_to_bool(in_str):
@@ -289,44 +289,3 @@ class HTMLDelegate(QStyledItemDelegate):
         q.setWidth(self.doc.idealWidth() + 20)
         q.setHeight(self.doc.size().height())
         return q
-
-
-def load_from_xml(filename):
-    """
-    Everything to convert a xml to internal dict
-    :param filename: str:
-    :return: dict
-    """
-    # ToDo: Complete
-    build = empty_build
-    return build
-
-
-def save_to_xml(filename, build):
-    """
-    Everything needed to convert internal dict to xml
-    :param filename:
-    :param build: Build() class
-    :return: N/A
-    """
-    # ToDo: Complete
-    xml_build = empty_build_xml
-    xml_root = xml_build.getroot()
-    xml_import_field = xml_root.find("Import")
-    if xml_import_field is not None:
-        last_account_hash = xml_import_field.get("lastAccountHash", "")
-        last_character_hash = xml_import_field.get("lastCharacterHash", "")
-        last_realm = xml_import_field.get("lastRealm", "")
-        last_league = xml_import_field.get("lastLeague", "")
-    xml_calcs = xml_root.find("Calcs")
-    xml_skills = xml_root.find("Skills")
-    xml_tree = xml_root.find("Tree")
-    xml_notes = xml_root.find("Notes")
-    xml_notes_html = xml_root.find("NotesHTML")
-    # lua version doesn't have NotesHTML, expect it to be missing
-    if xml_notes_html is None:
-        xml_notes_html = ET.Element("NotesHTML")
-        xml_root.append(xml_notes_html)
-    xml_tree_view = xml_root.find("TreeView")
-    xml_items = xml_root.find("Items")
-    xml_config = xml_root.find("Config")
