@@ -2,54 +2,45 @@
 A class to show and manage the gem ui on the right hand side of the Skills tab.
 """
 
-import xml.etree.ElementTree as ET
+from copy import deepcopy
 
 from PySide6.QtCore import QRect, Slot, QSize, Qt
 from PySide6.QtGui import QColor, QBrush, QIcon
-from PySide6.QtWidgets import QCheckBox, QComboBox, QPushButton, QSpinBox, QWidget
+from PySide6.QtWidgets import QCheckBox, QComboBox, QListWidgetItem, QPushButton, QSpinBox, QWidget
 
-from PoB.constants import ColourCodes, empty_gem_xml, empty_gem_dict
-from PoB.gem import Gem
-from widgets.ui_utils import (
-    _debug,
-    str_to_bool,
-    bool_to_str,
-    print_a_xml_element,
-    print_call_stack,
-    set_combo_index_by_data,
-)
+from PoB.constants import ColourCodes, empty_gem_dict
+from PoB.settings import Settings
+from PoB.utils import _debug, bool_to_str, html_colour_text, print_call_stack, str_to_bool
+from widgets.ui_utils import set_combo_index_by_data
 
 
 class GemUI(QWidget):
-    """
-    A class to manage one gem/skill on the right hand side of the UI
-    """
+    """A class to manage one gem/skill on the right hand side of the UI"""
 
-    def __init__(self, my_list_item, json_gems, parent_notify, gem=None) -> None:
+    def __init__(self, list_widget_item: QListWidgetItem, gems_by_name_or_id, parent_notify, _settings: Settings, gem=None) -> None:
         """
         init
 
-        :param my_list_item:QListWidgetItem: the item inthe list box that this instance is attached to
-        :param json_gems: dict: a dictionary of skills by id and name
+        :param list_widget_item:QListWidgetItem: the item inthe list box that this instance is attached to
+        :param gems_by_name_or_id: dict: a dictionary of skills by id and name
         :param parent_notify: function: function to call when a change has happened
+        :param _settings: A pointer to the settings
         :param gem: ET.elementree: prefill with this gem
         """
         super(GemUI, self).__init__()
 
+        self.settings = _settings
+
         self.widget_height = 30
         self.setGeometry(0, 0, 620, self.widget_height)
         self.setMinimumHeight(self.widget_height)
-        self.my_list_item = my_list_item
+        self.list_widget_item = list_widget_item
         # reference to the loaded json so we can get data for the selected gem
-        self.ggg_gem_list = json_gems
+        self.gems_by_name_or_id = gems_by_name_or_id
+        self.gem = gem
         if gem is None:
-            gem = empty_gem_dict
-        self.pob_gem = gem
+            self.gem = deepcopy(empty_gem_dict)
         self.parent_notify = parent_notify
-
-        self.coloured_text = ""
-        self.tags = []
-        self.ggg_gem = None
 
         # def setupUi(self, gem_list, show_support_gems):
         self.btn_GemRemove = QPushButton(self)
@@ -65,12 +56,15 @@ class GemUI(QWidget):
         self.spin_gem_level.setGeometry(300, 2, 50, 24)
         self.spin_gem_level.setMinimum(1)
         self.spin_gem_level.setMaximum(20)
+        self.spin_gem_level.setValue(self.level)
         self.spin_gem_quality = QSpinBox(self)
         self.spin_gem_quality.setGeometry(360, 2, 50, 24)
         self.spin_gem_quality.setMaximum(40)
+        self.spin_gem_quality.setValue(self.quality)
         self.combo_gem_variant = QComboBox(self)
         self.combo_gem_variant.setObjectName("combo_gem_variant")
         self.combo_gem_variant.addItem("Default", "Default")
+        self.combo_gem_variant.setCurrentText(self.qualityId)
         # self.combo_gem_variant.addItem("Anomalous", "Alternate1")
         # self.combo_gem_variant.addItem("Divergent", "Alternate2")
         # self.combo_gem_variant.addItem("Phantasmal", "Alternate3")
@@ -78,14 +72,62 @@ class GemUI(QWidget):
         self.check_gem_enabled = QCheckBox(self)
         self.check_gem_enabled.setGeometry(530, 4, 20, 20)
         self.check_gem_enabled.setChecked(True)
+        self.check_gem_enabled.setChecked(self.enabled)
         self.spin_gem_count = QSpinBox(self)
         self.spin_gem_count.setGeometry(570, 2, 50, 24)
         self.spin_gem_count.setMinimum(1)
         self.spin_gem_count.setMaximum(20)
         self.spin_gem_count.setVisible(False)
+        self.spin_gem_count.setValue(self.count)
 
-        self.load(self.pob_gem)
-        # self.fill_gem_list(json_gems, show_support_gems)
+        self.coloured_text = ""  # html formatted name
+        self.tags = []
+        self.ggg_gem = None
+
+        self.support = False
+        self.colour = ""  # ColourCodes value
+        self.levels = [{}]  # List of dict.
+        self.max_reqDex = 0  # value from the json
+        self.max_reqInt = 0  # value from the json
+        self.max_reqStr = 0  # value from the json
+        self.reqDex = 0
+        self.reqInt = 0
+        self.reqStr = 0
+        self.naturalMaxLevel = 20
+        self.stats_per_level = {}
+
+        # needs to be a string as there are entries like "Limited to: 1 Survival"
+        self.limited_to = ""
+        # self._quality = 0
+        self.unique_id = ""
+        self.requires = {}
+        self.influences = []
+        self._armour = 0
+        self.base_armour = 0  # value without quality and +nn additions/multipliers
+        self._evasion = 0
+        self.evasion_base_percentile = 0.0
+        self.base_evasion = 0  # value without quality and +nn additions/multipliers
+        self._energy_shield = 0
+        self.energy_shield_base_percentile = 0.0
+        self.base_energy_shield = 0  # value without quality and +nn additions/multipliers
+        self.armour_base_percentile = 0.0
+
+        """
+        new
+        gemId="Metadata/Items/Gems/SupportGemFeedingFrenzy" 	<-skillId
+        variantId="FeedingFrenzySupport" 						<-Dict Key
+        skillId="SupportMinionOffensiveStance" 					<-grantedEffectId
+        nameSpec="Feeding Frenzy"								<-grantedEffect.name
+
+        old
+        gemId="Metadata/Items/Gems/SupportGemImpendingDoom"		<-skillId
+        skillId="ViciousHexSupport"								<-Dict Key
+        nameSpec="Impending Doom"								<-grantedEffect.name
+        """
+
+        self.set_triggers()
+        # the call to fill_gem_list() will set the current gem name in the combo_gem_list widget.
+        # doing this now wouldn't work as the combobox isn't full.
 
     def __del__(self):
         """
@@ -95,7 +137,7 @@ class GemUI(QWidget):
 
         :return: N/A
         """
-        # Remove triggers
+        # Remove triggers and don't be put off by errors
         try:
             self.spin_gem_level.valueChanged.disconnect(self.save)
         except RuntimeError:
@@ -126,111 +168,129 @@ class GemUI(QWidget):
         return QSize(620, self.widget_height)
 
     @property
-    def name(self):
+    def nameSpec(self) -> str:
         # nameSpec
-        return self.pob_gem.get("name", "")
+        return self.gem.get("nameSpec", "")
 
-    @name.setter
-    def name(self, new_value):
-        self.pob_gem["name"] = new_value
+    @nameSpec.setter
+    def nameSpec(self, new_value):
+        self.gem["nameSpec"] = new_value
 
     @property
-    def level(self):
-        return self.pob_gem.get("level", "")
+    def level(self) -> int:
+        return self.gem.get("level", 1)
 
     @level.setter
     def level(self, new_value):
-        self.pob_gem["level"] = new_value
+        self.gem["level"] = new_value
         self.spin_gem_level.setValue(new_value)
 
     @property
-    def quality(self):
-        return self.pob_gem.get("quality", "")
+    def quality(self) -> int:
+        return self.gem.get("quality", 0)
 
     @quality.setter
     def quality(self, new_value):
-        self.pob_gem["quality"] = new_value
+        self.gem["quality"] = new_value
         self.spin_gem_quality.setValue(new_value)
 
     @property
-    def qualityId(self):
-        return self.pob_gem.get("qualityId", "")
+    def qualityId(self) -> str:
+        return self.gem.get("qualityId", "")
 
     @qualityId.setter
     def qualityId(self, new_value):
-        self.pob_gem["qualityId"] = new_value
+        self.gem["qualityId"] = new_value
         set_combo_index_by_data(self.combo_gem_variant, new_value)
 
+    # @property
+    # def skillId(self) -> str:
+    #     return self.gem.get("skillId", "")
+    #
+    # @skillId.setter
+    # def skillId(self, new_value):
+    #     self.gem["skillId"] = new_value
+
     @property
-    def enabled(self):
-        return self.pob_gem.get("enabled", True)
+    def enabled(self) -> bool:
+        return self.gem.get("enabled", True)
 
     @enabled.setter
     def enabled(self, new_value):
-        self.pob_gem["enabled"] = new_value
+        self.gem["enabled"] = new_value
         self.check_gem_enabled.setChecked(new_value)
 
     @property
-    def enableGlobal1(self):
-        return self.pob_gem.get("enableGlobal1", True)
+    def enableGlobal1(self) -> bool:
+        return self.gem.get("enableGlobal1", True)
 
     @enableGlobal1.setter
     def enableGlobal1(self, new_value):
-        self.pob_gem["enableGlobal1"] = new_value
+        self.gem["enableGlobal1"] = new_value
 
     @property
-    def enableGlobal2(self):
-        return self.pob_gem.get("enableGlobal2", True)
+    def enableGlobal2(self) -> bool:
+        return self.gem.get("enableGlobal2", True)
 
     @enableGlobal2.setter
     def enableGlobal2(self, new_value):
-        self.pob_gem["enableGlobal2"] = new_value
+        self.gem["enableGlobal2"] = new_value
 
     @property
-    def count(self):
-        return self.pob_gem.get("count", 1)
+    def count(self) -> int:
+        return self.gem.get("count", 1)
 
     @count.setter
     def count(self, new_value):
-        self.pob_gem["count"] = new_value
+        self.gem["count"] = new_value
         self.spin_gem_count.setValue(new_value)
 
     @property
-    def skill_id(self):
+    def variantId(self) -> str:
         """
         Needed so we can have a setter function.
 
         :return: str: The name of this gem
         """
-        return self.pob_gem.get("skillId")
+        return self.gem.get("variantId", "")
 
-    @skill_id.setter
-    def skill_id(self, new_value):
+    @variantId.setter
+    def variantId(self, new_value):
         """
-        Actions when the skill_id changes.
+        Actions when the variantId / combo_gem_list changes.
 
         :param new_value: str
-        :return:
+        :return: N/A
         """
         self.btn_GemRemove.setEnabled(new_value != "")
         self.spin_gem_count.setVisible("Support" not in new_value)
         if new_value == "":
             return
-        try:
-            self.ggg_gem = self.ggg_gem_list[new_value]
-            self.coloured_text = self.ggg_gem.get("coloured_text")
-            # set the editbox portion of combobox to the correct colour
-            colour = self.ggg_gem.get("colour", ColourCodes.NORMAL.value)
-            self.combo_gem_list.setStyleSheet(f"QComboBox:!editable {{color: {colour}}}")
+        # try:
+        print(f"variantId: {new_value=}")
+        self.ggg_gem = self.gems_by_name_or_id[new_value]
+        self.coloured_text = self.ggg_gem.get("coloured_text")
+        # set the editbox portion of combobox to the correct colour
+        colour = self.ggg_gem.get("colour", ColourCodes.NORMAL.value)
+        self.combo_gem_list.setStyleSheet(f"QComboBox:!editable {{color: {colour}}}")
 
-            # If the comboBox was empty before calling this function, then return
-            if self.pob_gem is None:
-                return
-            self.pob_gem["skillId"] = new_value
-            if self.combo_gem_list.currentText():
-                self.pob_gem["name"] = self.combo_gem_list.currentText()
-        except KeyError:
-            pass
+        # If the comboBox was empty before calling this function, then return
+        if self.gem is None:
+            return
+        self.gem["variantId"] = new_value
+        self.nameSpec = self.combo_gem_list.currentText()
+        self.gem["skillId"] = self.ggg_gem["grantedEffectId"]
+
+        self.support = self.ggg_gem.get("support", False)
+        self.levels.append(self.ggg_gem["grantedEffect"]["levels"])
+        self.max_reqDex = self.ggg_gem.get("reqDex", 0)
+        self.max_reqInt = self.ggg_gem.get("reqInt", 0)
+        self.max_reqStr = self.ggg_gem.get("reqStr", 0)
+        self.naturalMaxLevel = self.ggg_gem.get("naturalMaxLevel", 20)
+
+        # except KeyError:
+        #     print("Error in variantId: variantId setter.")
+        #     pass
 
     def set_triggers(self):
         """Setup triggers to save information back the dict"""
@@ -242,94 +302,102 @@ class GemUI(QWidget):
 
     def load(self, gem):
         """
-        load the UI elements from the xml element
+        load the UI elements from the json dict
         :return: N/A
         """
-        self.pob_gem = gem
+        print(f"gem_ui: load: {gem=}")
+        self.gem = gem
+        self.spin_gem_level.setValue(self.level)
+        self.spin_gem_quality.setValue(self.quality)
+        self.spin_gem_count.setValue(self.count)
+        self.check_gem_enabled.setChecked(self.enabled)
+        self.combo_gem_variant.setCurrentText(self.qualityId)
         self.set_triggers()
+        self.combo_gem_list.setCurrentText(gem["nameSpec"])
 
     @Slot()
     def save(self, notify=True):
         """
-        Save the UI elements into the xml element
-        This is called by all the elements in this class
+        Save the UI elements into the json dict
+        This is called by all the elements in this class, including combo_gem_list_changed, so don't set variantId.
 
-        :param: notify: bool: If true don't use call back
-        :return: N/A
+        :param notify: bool: If True use call back.
+        :return N/A
         """
-        # This stops an empty gem saving to the xml
-        if self.skill_id == "":
+        # This stops an empty gem saving
+        if self.variantId == "":
             return
-        if self.pob_gem is None:
-            self.pob_gem = ET.fromstring(empty_gem_xml)
         self.level = self.spin_gem_level.value()
         self.quality = self.spin_gem_quality.value()
         self.count = self.spin_gem_count.value()
-        self.enabled = bool_to_str(self.check_gem_enabled.isChecked())
+        self.enabled = self.check_gem_enabled.isChecked()
         self.qualityId = self.combo_gem_variant.currentData()
-        self.skill_id = self.combo_gem_list.currentData()
 
         if notify:
-            self.parent_notify(self.my_list_item)
+            self.parent_notify(self.list_widget_item)
 
-    def load_from_xml(self, gem):
-        """
-        load the UI elements from the xml element
-        :return: N/A
-        """
-        # print(print_a_xml_element(gem))
-        if gem is not None:
-            self.pob_gem = empty_gem_xml
-            self.level = int(gem.get("level", 1))
-            self.quality = int(gem.get("quality", 0))
-            self.count = gem.get("count", 1) == "nil" and 1 or int(gem.get("count"))
-            self.enabled = str_to_bool(gem.get("enabled"))
-            self.qualityId = gem.get("qualityId", "Default")
-            self.skill_id = gem.get("skillId")
+        # print(f"gem_ui: save: {self.gem=}")
+        return self.gem
 
-        self.set_triggers()
+    # def load_from_xml(self, gem):
+    #     """
+    #     load the UI elements from the xml element
+    #     :return: N/A
+    #     """
+    #     # print(print_a_xml_element(gem))
+    #     if gem is not None:
+    #         self.gem = empty_gem_xml
+    #         self.level = int(gem.get("level", 1))
+    #         self.quality = int(gem.get("quality", 0))
+    #         self.count = gem.get("count", 1) == "nil" and 1 or int(gem.get("count"))
+    #         self.enabled = str_to_bool(gem.get("enabled"))
+    #         self.qualityId = gem.get("qualityId", "Default")
+    #         self.skillId = gem.get("skillId")
+    #
+    #     self.set_triggers()
 
-    def save_to_xml(self):
-        """
-        Save the UI elements into the xml element
-        This is called by all the elements in this class
-
-        :param: notify: bool: If true don't use call back
-        :return: ET.xml snippet
-        """
-        # This stops an empty gem saving to the xml
-        xml_gem = ET.fromstring(empty_gem_xml)
-        if self.skill_id == "":
-            return
-        # ToDO: fix
-        xml_gem.set("level", str(self.spin_gem_level.value()))
-        xml_gem.set("quality", str(self.spin_gem_quality.value()))
-        xml_gem.set("count", str(self.spin_gem_count.value()))
-        xml_gem.set("enabled", bool_to_str(self.check_gem_enabled.isChecked()))
-        xml_gem.set("qualityId", self.combo_gem_variant.currentData())
-        xml_gem.set("skill_id", self.combo_gem_list.currentData())
+    # def save_to_xml(self):
+    #     """
+    #     Save the UI elements into the xml element
+    #     This is called by all the elements in this class
+    #
+    #     :param notify: bool: If true don't use call back
+    #     :return: ET.xml snippet
+    #     """
+    #     # This stops an empty gem saving to the xml
+    #     xml_gem = ET.fromstring(empty_gem_xml)
+    #     if self.skillId == "":
+    #         return
+    #     # ToDO: fix
+    #     xml_gem.set("level", str(self.spin_gem_level.value()))
+    #     xml_gem.set("quality", str(self.spin_gem_quality.value()))
+    #     xml_gem.set("count", str(self.spin_gem_count.value()))
+    #     xml_gem.set("enabled", bool_to_str(self.check_gem_enabled.isChecked()))
+    #     xml_gem.set("qualityId", self.combo_gem_variant.currentData())
+    #     xml_gem.set("skillId", self.combo_gem_list.currentData())
 
     @Slot()
-    def combo_gem_list_changed(self, item):
+    def combo_gem_list_changed(self, item, notify=True):
         """
         Triggered when the gem list combo is changed.
 
-        :param item: str:
-        :return: N/A
+        :param item: str: Text from comboBox
+        :param notify: bool: If True use call back when calling save
+        :return N/A
         """
-        # print(f"combo_gem_list_changed, {item=}")
+        # Set a value. When first run, save will not activate if skillId is empty
         if item == "":
             return
-        # Set a value. When first run, save will not activate if skill_id is empty
-        self.skill_id = self.ggg_gem_list[item]["skillId"]
-        self.save()
+        # print(f"combo_gem_list_changed, {item=}, {self.combo_gem_list.currentData()=}")
+        self.variantId = self.combo_gem_list.currentData()
+        self.save(notify)
 
-    def fill_gem_list(self, gem_list, show_support_gems):
+    def fill_gem_list(self, base_gems, show_support_gems):
         """
-        File the gem list combo
+        File the gem list combo. This is called separately as we need the show_support_gems value from SkillsUI()
 
-        :param gem_list: a list of curated gems available
-        :param show_support_gems: if True, only add non-awakened gems
+        :param base_gems: a list of curated gems available
+        :param show_support_gems: str: "All", "Normal" and "Awakened"
         :return:
         """
 
@@ -340,21 +408,21 @@ class GemUI(QWidget):
             :param index: int: Index into the combolist
             :return: N/A
             """
-            colour = gem_list[g].get("colour", ColourCodes.NORMAL.value)
+            colour = g.get("colour", ColourCodes.NORMAL.value)
             self.combo_gem_list.setItemData(index, QBrush(colour), Qt.ForegroundRole)
 
         if show_support_gems == "Awakened":
-            for g in gem_list:
-                display_name = gem_list[g]["base_item"]["display_name"]
+            for variantId, g in base_gems.items():
+                display_name = g["base_item"]["display_name"]
                 if "Awakened" in display_name:
-                    self.combo_gem_list.addItem(display_name, g)
+                    self.combo_gem_list.addItem(display_name, variantId)
                     add_colour(self.combo_gem_list.count() - 1)
         else:
-            for g in gem_list:
-                display_name = gem_list[g]["grantedEffect"]["name"]
+            for variantId, g in base_gems.items():
+                display_name = g["grantedEffect"]["name"]
                 if show_support_gems == "Normal" and "Awakened" in display_name:
                     continue
-                self.combo_gem_list.addItem(display_name, g)
+                self.combo_gem_list.addItem(display_name, userData=variantId)
                 add_colour(self.combo_gem_list.count() - 1)
 
         # set the ComboBox dropdown width.
@@ -362,12 +430,14 @@ class GemUI(QWidget):
         # ToDo: Sort by other methods
         # Sort Alphabetically
         self.combo_gem_list.model().sort(0)
-        if self.pob_gem is not None and self.skill_id != "":
-            self.combo_gem_list.setCurrentIndex(set_combo_index_by_data(self.combo_gem_list, self.skill_id))
+        if self.gem is not None and self.variantId != "":
+            # self.combo_gem_list.setCurrentIndex(set_combo_index_by_data(self.combo_gem_list, self.skillId))
+            self.combo_gem_list.setCurrentText(self.nameSpec)
+            self.combo_gem_list_changed(self.nameSpec, False)
         else:
             self.combo_gem_list.setCurrentIndex(-1)
 
-        # Setup trigger to save information back the the xml object
+        # Setup trigger to save information back to the json dict
         self.combo_gem_list.currentTextChanged.connect(self.combo_gem_list_changed)
 
 

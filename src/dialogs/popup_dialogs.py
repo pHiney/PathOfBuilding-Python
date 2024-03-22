@@ -2,8 +2,9 @@
 simple popups that don't need complex activities to load or execute them
 """
 
-import re
+from copy import deepcopy
 import base64
+import re
 import requests
 
 from PySide6.QtCore import Slot, Qt, QSize
@@ -24,7 +25,8 @@ from PySide6.QtWidgets import (
 )
 
 from PoB.constants import ColourCodes, _VERSION_str, get_http_headers, tree_versions
-from widgets.ui_utils import HTMLDelegate, html_colour_text
+from PoB.utils import  html_colour_text
+from widgets.ui_utils import HTMLDelegate
 
 from ui.PoB_Main_Window import Ui_MainWindow
 

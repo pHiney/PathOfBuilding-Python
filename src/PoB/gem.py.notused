@@ -2,22 +2,13 @@
 A class to encapsulate one gem/skill
 """
 
-import xml.etree.ElementTree as ET
-import math
-import re
+from copy import deepcopy
 
-from PoB.constants import bad_text, pob_debug, ColourCodes, empty_gem_dict, empty_gem_xml, quality_id
+from PoB.constants import bad_text, pob_debug, ColourCodes, empty_gem_dict, quality_id
 from PoB.settings import Settings
 from PoB.mod import Mod
-from widgets.ui_utils import (
-    _debug,
-    html_colour_text,
-    index_exists,
-    str_to_bool,
-    bool_to_str,
-    print_a_xml_element,
-    search_stats_list_for_regex,
-)
+from PoB.utils import _debug, html_colour_text, index_exists, str_to_bool, bool_to_str
+from widgets.ui_utils import search_stats_list_for_regex
 
 colours = (
     ColourCodes.NORMAL.value,
@@ -29,10 +20,11 @@ colours = (
 
 
 class Gem:
-    def __init__(self, _settings: Settings) -> None:
+    def __init__(self, _settings: Settings, pob_gem) -> None:
         """
         Initialise defaults
-        :param _settings: A pointer to the settings
+        :param _settings: A pointer to the settings.
+        :param: pob_gem: dict from build.
         """
         self.settings = _settings
         # This gem's entry from gems.json
@@ -42,7 +34,9 @@ class Gem:
         self.sub_type = ""  # or item_class - eg claw
         self.active = False  # is this the item that is currently chosen/shown in the dropdown ?
 
-        self.gem = empty_gem_dict
+        self.gem = pob_gem
+        if self.gem is None:
+            self.gem = deepcopy(empty_gem_dict)
 
         # this is not always available from the json character download
         self.level_req = 0
@@ -50,17 +44,16 @@ class Gem:
         self.id = 0
         self.rarity = "NORMAL"
         self._level = 1
-        self.enabled = True
-        self.quality = self.settings.default_gem_quality
-        self.count = 1
-        self.name = ""
+        # self.enabled = True
+        # self.quality = self.settings.default_gem_quality
+        # self.count = 1
         self.support = False
         self.qualityVariant = "Default"
         self.minion = False
-        self.skillMinionSkillCalcs = 0
-        self.skillMinionCalcs = ""
-        self.skillMinionSkill = 0
-        self.skillMinion = ""
+        # self.skillMinionSkillCalcs = 0
+        # self.skillMinionCalcs = ""
+        # self.skillMinionSkill = 0
+        # self.skillMinion = ""
 
         self.colour = ""  # ColourCodes value
         self.coloured_name = ""  # html formatted name
@@ -76,7 +69,7 @@ class Gem:
 
         # needs to be a string as there are entries like "Limited to: 1 Survival"
         self.limited_to = ""
-        self._quality = 0
+        # self._quality = 0
         self.unique_id = ""
         self.requires = {}
         self.influences = []
@@ -90,9 +83,149 @@ class Gem:
         self.base_energy_shield = 0  # value without quality and +nn additions/multipliers
         self.armour_base_percentile = 0.0
 
+    @property
+    def level(self) -> int:
+        return self.gem.get("level", 1)
+
+    @level.setter
+    def level(self, new_level):
+        """Set things like armour damage, required stats based on the level"""
+        self._level = new_level
+        if self.max_reqDex:
+            self.reqDex = self.gem_stat_requirement(new_level, self.max_reqDex)
+        if self.max_reqInt:
+            self.reqInt = self.gem_stat_requirement(new_level, self.max_reqInt)
+        if self.max_reqStr:
+            self.reqStr = self.gem_stat_requirement(new_level, self.max_reqStr)
+        self.stats_per_level = self.levels[new_level]
+
+    @property
+    def enabled(self) -> bool:
+        return self.gem.get("count", True)
+
+    @enabled.setter
+    def enabled(self, new_value):
+        self.gem["count"] = new_value
+
+    @property
+    def nameSpec(self) -> str:
+        return self.gem.get("nameSpec", "")
+
+    @nameSpec.setter
+    def nameSpec(self, new_value):
+        self.gem["nameSpec"] = new_value
+
+    @property
+    def skillId(self) -> str:
+        return self.gem.get("skillId", "")
+
+    @skillId.setter
+    def skillId(self, new_value):
+        self.gem["skillId"] = new_value
+
+    @property
+    def variantId(self) -> str:
+        return self.gem.get("variantId", "")
+
+    @variantId.setter
+    def variantId(self, new_value):
+        self.gem["variantId"] = new_value
+
+    @property
+    def quality(self) -> int:
+        return self.gem.get("quality", self.settings.default_gem_quality)
+
+    @quality.setter
+    def quality(self, new_value):
+        self.gem["quality"] = new_value
+
+    @property
+    def qualityId(self) -> str:
+        return self.gem.get("qualityId", "Default")
+
+    @quality.setter
+    def quality(self, new_value):
+        self.gem["qualityId"] = new_value
+
+    @property
+    def count(self) -> int:
+        return self.gem.get("count", 1)
+
+    @count.setter
+    def count(self, new_value):
+        self.gem["count"] = new_value
+
+    @property
+    def enableGlobal1(self) -> bool:
+        return self.gem.get("enableGlobal1", True)
+
+    @enableGlobal1.setter
+    def enableGlobal1(self, new_value):
+        self.gem["enableGlobal1"] = new_value
+
+    @property
+    def enableGlobal2(self) -> bool:
+        return self.gem.get("enableGlobal2", True)
+
+    @enableGlobal2.setter
+    def enableGlobal2(self, new_value):
+        self.gem["enableGlobal2"] = new_value
+
+    @property
+    def gemId(self) -> str:
+        return self.gem.get("gemId", "")
+
+    @gemId.setter
+    def gemId(self, new_value):
+        self.gem["gemId"] = new_value
+
+    @property
+    def skillMinionSkillCalcs(self) -> int:
+        return self.gem.get("skillMinionSkillCalcs", 1)
+
+    @skillMinionSkillCalcs.setter
+    def skillMinionSkillCalcs(self, new_value):
+        if new_value:
+            self.gem["skillMinionSkillCalcs"] = new_value
+        else:
+            self.gem.pop("skillMinionSkillCalcs", 0)
+
+    @property
+    def skillMinionCalcs(self) -> int:
+        return self.gem.get("skillMinionCalcs", 1)
+
+    @skillMinionCalcs.setter
+    def skillMinionCalcs(self, new_value):
+        if new_value:
+            self.gem["skillMinionCalcs"] = new_value
+        else:
+            self.gem.pop("skillMinionCalcs", 0)
+
+    @property
+    def skillMinionSkill(self) -> str:
+        return self.gem.get("skillMinionSkill", "")
+
+    @skillMinionSkill.setter
+    def skillMinionSkill(self, new_value):
+        if new_value:
+            self.gem["skillMinionSkill"] = new_value
+        else:
+            self.gem.pop("skillMinionSkill", "")
+
+    @property
+    def skillMinion(self) -> str:
+        return self.gem.get("skillMinion", "")
+
+    @skillMinion.setter
+    def skillMinion(self, new_value):
+        if new_value:
+            self.gem["skillMinion"] = new_value
+        else:
+            self.gem.pop("skillMinion", "")
+
     def load_from_ggg_json(self, json_gem, gems_by_name_or_id):
         """
-        Load gem from GGG. This should be called after load_from_gems_json so it can load the defaults.
+        Load gem from GGG. This should be called after load_base_gem_json so it can load the defaults.
         :param json_gem: This gem from the imported json.
         :param gems_by_name_or_id: list of gems from gems.json.
         :return: gem's xml
@@ -120,12 +253,13 @@ class Gem:
 
         return self.gem
 
-    def load_from_gems_json(self, json_gem):
+    def load_base_gem_json(self, json_gem):
         """
 
         :param json_gem:
-        :return: xml verion of the gem
+        :return: xml version of the gem
         """
+        self.base_gem = json_gem
         self.name = json_gem["grantedEffect"]["name"]
         self.support = json_gem.get("support", False)
         self.colour = colours[json_gem.get("colour", 0)]
@@ -136,44 +270,22 @@ class Gem:
         self.max_reqStr = json_gem.get("reqStr", 0)
         self.naturalMaxLevel = json_gem.get("naturalMaxLevel", 20)
 
-        self.gem.set("gemId", json_gem.get("id", ""))
-        self.gem.set("skillId", json_gem["grantedEffectId"])
-
         return self.gem
 
     def load(self, gem):
         """
-        Load gem from build. This should be called after load_from_gems_json so it can load the defaults.
-        :param: xml_gem
+        Load gem from build. This should be called after load_base_gem_json so that it can load the defaults.
+        :param: gem
         :return: N/A
         """
-        self.level = gem.get("level")
-        self.enabled = gem.get("enabled")
-        self.quality = gem.set("quality")
-        self.count = gem.get("count")
-        self.qualityVariant = gem.get("qualityId")
-        if self.minion:
-            self.skillMinionSkillCalcs = gem.get("skillMinionSkillCalcs")  # 1
-            self.skillMinionCalcs = gem.get("skillMinionCalcs")  # "GuardianRelicAll"
-            self.skillMinionSkill = gem.get("skillMinionSkill")  # 1
-            self.skillMinion = gem.get("skillMinion")  # "GuardianRelicAll"
+        self.gem = gem
+        self.gem.set("gemId", self.base_gem.get("skillId", ""))
+        self.gem.set("skillId", self.base_gem["grantedEffectId"])
+        self.gem.set("variantId", self.base_gem["grantedEffectId"])
 
     def save(self, xml=False):
         """Save"""
-        gem = empty_gem_xml
-        if xml:
-            gem.set("level", f"{self.level}")
-            gem.set("enabled", f"{self.enabled}")
-            gem.set("quality", f"{self.quality}")
-            gem.set("count", f"{self.count}")
-            gem.set("nameSpec", self.name)
-            gem.set("qualityId", self.qualityVariant)
-            if self.minion:
-                gem.set("skillMinionSkillCalcs", f"{self.skillMinionSkillCalcs}")  # 1
-                gem.set("skillMinionCalcs", self.skillMinionCalcs)  # "GuardianRelicAll"
-                gem.set("skillMinionSkill", f"{self.skillMinionSkill}")  # 1
-                gem.set("skillMinion", self.skillMinion)  # "GuardianRelicAll"
-        return xml and gem or self.gem
+        return self.gem
 
     def gem_stat_requirement(self, gem_level, required_stat):
         """
@@ -216,19 +328,3 @@ class Gem:
         result = round(gem_level * a + b)
         # Gems seem to have no requirements lower then 14
         return 0 if result < 14 else result
-
-    @property
-    def level(self):
-        return self._level
-
-    @level.setter
-    def level(self, new_level):
-        """Set things like armour damage, required stats based on the level"""
-        self._level = new_level
-        if self.max_reqDex:
-            self.reqDex = self.gem_stat_requirement(new_level, self.max_reqDex)
-        if self.max_reqInt:
-            self.reqInt = self.gem_stat_requirement(new_level, self.max_reqInt)
-        if self.max_reqStr:
-            self.reqStr = self.gem_stat_requirement(new_level, self.max_reqStr)
-        self.stats_per_level = self.levels[new_level]

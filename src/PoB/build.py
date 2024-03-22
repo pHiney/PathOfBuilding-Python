@@ -11,6 +11,7 @@ associated with a Player.
 """
 
 import builtins
+from copy import deepcopy
 import re
 import xml.etree.ElementTree as ET
 from pprint import pprint
@@ -24,7 +25,6 @@ from PoB.constants import (
     bandits,
     default_view_mode,
     empty_build,
-    empty_build_xml,
     program_title,
     tree_versions,
 )
@@ -34,15 +34,14 @@ from PoB.spec import Spec
 from PoB.pob_file import read_json, write_json
 from PoB.xml import read_v1_custom_mods, read_xml, write_xml
 from dialogs.popup_dialogs import critical_dialog, yes_no_dialog
-from widgets.ui_utils import (
+from widgets.ui_utils import set_combo_index_by_data
+from PoB.utils import (
     _debug,
     is_str_a_boolean,
     is_str_a_number,
     str_to_bool,
     bool_to_str,
-    print_a_xml_element,
     print_call_stack,
-    set_combo_index_by_data,
 )
 
 from ui.PoB_Main_Window import Ui_MainWindow
@@ -385,67 +384,6 @@ class Build:
         for _input in self.xml_config.findall(key):
             del _input
 
-    def load_from_xml(self, xml_obj):
-        """Load from v1 XML"""
-        print("build.new: xml")
-        if xml_obj is None:
-            build_obj = empty_build_xml
-            self.name = "Default"
-        xml_PoB = xml_obj
-        xml_root = xml_obj.getroot()
-        xml_build = xml_root.find("Build")
-        xml_import_field = xml_root.find("Import")
-        if xml_import_field is not None:
-            self.last_account_hash = xml_import_field.get("lastAccountHash", "")
-            self.last_character_hash = xml_import_field.get("lastCharacterHash", "")
-            self.last_realm = xml_import_field.get("lastRealm", "")
-            self.last_league = xml_import_field.get("lastLeague", "")
-        xml_calcs = xml_root.find("Calcs")
-        xml_skills = xml_root.find("Skills")
-        xml_tree = xml_root.find("Tree")
-        xml_notes = xml_root.find("Notes")
-        xml_notes_html = xml_root.find("NotesHTML")
-        # lua version doesn't have NotesHTML, expect it to be missing
-        if xml_notes_html is None:
-            xml_notes_html = ET.Element("NotesHTML")
-            xml_root.append(xml_notes_html)
-        xml_tree_view = xml_root.find("TreeView")
-        xml_items = xml_root.find("Items")
-        self.xml_config = xml_root.find("Config")
-        # print("build.new", print_a_xml_element(self.config))
-
-        self.specs.clear()
-        # Find invalid trees, alert and convert to latest
-        invalid_spec_versions = set()
-        for xml_spec in xml_tree.findall("Spec"):
-            vers = xml_spec.get("treeVersion", _VERSION_str)
-            if vers not in tree_versions.keys():
-                v = re.sub("_", ".", vers)
-                invalid_spec_versions.add(v)
-                xml_spec.set("treeVersion", _VERSION_str)
-                title = xml_spec.get("title", "Default")
-                xml_spec.set("title", f"{title} ({self.tr('was')} v{v})")
-        if invalid_spec_versions:
-            critical_dialog(
-                self.win,
-                f"{self.tr('Load build')}: v{self.version}",
-                f"{self.tr('The build contains the following unsupported Tree versions')}:\n"
-                f"{str(invalid_spec_versions)[1:-1]}\n\n"
-                + self.tr(f"These will be converted to {_VERSION} and renamed to indicate this.\n"),
-                self.tr("Close"),
-            )
-
-        # Do not use self.new_spec() as this will duplicate the xml information
-        for xml_spec in xml_tree.findall("Spec"):
-            self.specs.append(Spec(self, xml_spec))
-        self.current_spec = self.specs[0]
-
-        # In the xml, activeSpec is 1 based, but python indexes are 0 based, so we subtract 1
-        self.activeSpec = int(xml_tree.get("activeSpec", 1)) - 1
-        self.current_spec = self.specs[self.activeSpec]
-        self.className = self.current_spec.classId_str()
-        self.ascendClassName = self.current_spec.ascendClassId_str()
-
     def new(self, build_obj):
         """
         Common function to load functions. Fill internal variables from the xml or json.
@@ -453,7 +391,7 @@ class Build:
         :param build_obj: xml tree object from loading the source XML or the default one.
         :return: N/A
         """
-        print(f"build.new: {type(build_obj)}")
+        # print(f"build.new: {type(build_obj)}")
         if build_obj is None:
             build_obj = empty_build
             self.json_PoB = build_obj["PathOfBuilding"]
@@ -471,8 +409,9 @@ class Build:
         self.json_import_field = self.json_PoB["Import"]
         self.json_items = self.json_PoB["Items"]
         self.json_skills = self.json_PoB["Skills"]
+        # print(f"build.new: {self.json_tree=}")
         self.json_tree = self.json_PoB["Tree"]
-        print(f"build.new: {self.json_skills=}")
+        # print(f"build.new: {self.json_skills=}")
         self.json_config = self.json_PoB["Config"]
         self.json_calcs = self.json_PoB["Calcs"]
         self.json_tree_view = self.json_PoB["TreeView"]

@@ -4,6 +4,7 @@ Import dialog
 Open a dialog for importing a character.
 """
 
+from copy import deepcopy
 import re
 import requests
 import urllib3
@@ -16,7 +17,7 @@ from PySide6.QtCore import Qt, Slot, QTimer
 from PoB.constants import get_http_headers, post_http_headers, website_list
 from PoB.settings import Settings
 from PoB.build import Build
-from widgets.ui_utils import html_colour_text, deflate_and_base64_encode, print_a_xml_element, set_combo_index_by_text
+from PoB.utils import html_colour_text, deflate_and_base64_encode
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgBuildExport import Ui_BuildExport

@@ -2,12 +2,14 @@
 
 """
 
+from copy import deepcopy
 import re
 
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QDialog, QPushButton, QFileDialog, QDialogButtonBox
 
-from widgets.ui_utils import set_combo_index_by_text, format_number, html_colour_text
+from PoB.utils import format_number, html_colour_text
+from widgets.ui_utils import set_combo_index_by_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgSettings import Ui_Settings

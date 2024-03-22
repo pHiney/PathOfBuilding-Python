@@ -1,10 +1,11 @@
 """
 This Class is communicating between the calculation Classes and the UI Classes
 """
+from copy import deepcopy
 
 from PoB.settings import Settings
 from PoB.constants import bad_text, player_stats_list, ColourCodes
-from widgets.ui_utils import html_colour_text
+from PoB.utils import html_colour_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 

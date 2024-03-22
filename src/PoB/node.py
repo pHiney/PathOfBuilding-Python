@@ -6,6 +6,9 @@ As well as the information from the json file, it will have image data added.
 
 It is referenced by the Tree class
 """
+
+from copy import deepcopy
+
 from PoB.constants import _VERSION
 from PoB.settings import str_to_bool
 

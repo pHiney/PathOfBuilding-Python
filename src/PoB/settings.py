@@ -7,6 +7,7 @@ As the settings.xml can be altered by humans, care must be taken to ensure data 
 This is a base PoB class. It doesn't import any other PoB ui classes
 """
 
+from copy import deepcopy
 from pathlib import Path
 import os
 import tempfile
@@ -16,10 +17,11 @@ from PySide6.QtCore import QSize, Slot
 from PySide6.QtWidgets import QFileDialog, QDialogButtonBox
 from PySide6.QtUiTools import QUiLoader
 
-from PoB.pob_file import read_xml, write_xml
+from PoB.xml import read_xml, write_xml, print_a_xml_element
 from PoB.constants import ColourCodes, pob_debug, def_theme, default_settings, locale
+from PoB.utils import html_colour_text, str_to_bool
+from PoB.xml import html_colour_text, str_to_bool
 
-from widgets.ui_utils import html_colour_text, str_to_bool, print_a_xml_element
 from dialogs.settings_dialog import SettingsDlg
 
 

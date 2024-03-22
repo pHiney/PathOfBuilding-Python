@@ -2,12 +2,14 @@
 This Class manages all the elements and owns some elements of the "CONFIG" tab
 """
 
+from copy import deepcopy
+
 from PySide6.QtWidgets import QGridLayout
 
 from PoB.constants import default_max_charges
 from PoB.settings import Settings
 from PoB.build import Build
-from widgets.ui_utils import set_combo_index_by_data, print_a_xml_element
+from widgets.ui_utils import set_combo_index_by_data
 
 from ui.PoB_Main_Window import Ui_MainWindow
 

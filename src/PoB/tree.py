@@ -11,6 +11,7 @@ This holds, in memory, a copy of the tree data and doesn't know about any active
 It is referenced by the TreeView class to display the tree
 """
 
+from copy import deepcopy
 import re
 import math
 from collections import OrderedDict
@@ -35,7 +36,7 @@ from PoB.constants import (
 from PoB.pob_file import read_json
 from PoB.node import Node
 from widgets.tree_graphics_item import TreeGraphicsItem
-from widgets.ui_utils import _debug
+from PoB.utils import _debug
 
 nodeOverlay = {
     "Normal": {

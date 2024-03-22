@@ -1,5 +1,5 @@
 import atexit
-import copy
+from copy import deepcopy
 import datetime
 import glob
 import os
@@ -48,6 +48,7 @@ from PoB.build import Build
 from PoB.settings import Settings
 from PoB.pob_file import get_file_info
 from PoB.player import Player
+from PoB.utils import html_colour_text, format_number, print_call_stack, _debug
 from PoB.xml import load_from_xml
 from dialogs.browse_file_dialog import BrowseFileDlg
 from dialogs.export_dialog import ExportDlg
@@ -62,7 +63,7 @@ from widgets.player_stats import PlayerStats
 from widgets.skills_ui import SkillsUI
 from widgets.tree_ui import TreeUI
 from widgets.tree_view import TreeView
-from widgets.ui_utils import html_colour_text, format_number, set_combo_index_by_data, print_call_stack, _debug
+from widgets.ui_utils import set_combo_index_by_data
 
 from ui.PoB_Main_Window import Ui_MainWindow
 
@@ -70,6 +71,7 @@ from ui.PoB_Main_Window import Ui_MainWindow
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, _app) -> None:
         super(MainWindow, self).__init__()
+        self.last_message = ""
         print(f"{datetime.datetime.now()}. {program_title}, running on {platform.system()} {platform.release()};" f" {platform.version()}")
         self.app = _app
         self.tr = self.app.tr
@@ -92,6 +94,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.resize(self.settings.size)
 
         self.setupUi(self)
+        self.last_messages = []
 
         atexit.register(self.exit_handler)
         self.setWindowTitle(program_title)  # Do not translate
@@ -667,7 +670,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.build.load_from_file(filename)
                 self.settings.open_build = filename
             else:
-                self.build.new(copy.deepcopy(empty_build))
+                self.build.new(deepcopy(empty_build))
 
         # if everything worked, lets update the UI
         if self.build.json_PoB is not None:
@@ -691,14 +694,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     self.spin_level.setValue(self.build.level)
         #     self.combo_classes.setCurrentText(self.build.className)
         #     self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
-        #     self.update_status_bar(f"Loaded: {self.build.name}", 10)
         #     # self.stats.load(self.build.xml_build)
         #     self.player.load(self.build.xml_build)
         #
         # # This is needed to make the jewels show. Without it, you need to select or deselect a node.
-        # self.gview_Tree.add_tree_images(True)
+        self.gview_Tree.add_tree_images(True)
         # # Make sure the Main and Alt weapons are active and shown as appropriate
-        # self.items_ui.weapon_swap2(self.btn_WeaponSwap.isChecked())
+        self.items_ui.weapon_swap2(self.btn_WeaponSwap.isChecked())
+        self.update_status_bar(f"Loaded: {self.build.name}", 10)
         # Do calcs. Needs to be near last n this function
         self.alerting = True
         # self.do_calcs()
@@ -1139,19 +1142,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.skills_ui.update_socket_group_labels()
 
     @Slot()
-    def update_status_bar(self, message="", timeout=2):
+    def update_status_bar(self, message="", timeout=5, colour=""):
         """
         Update the status bar. Use default text if no message is supplied.
         This triggers when the message is set and when it is cleared after the time out.
         :param message: str: the message.
         :param timeout: int: time for the message to be shown, in secs
+        :param colour: str: a colour code to colour the text in the tooltip (eg "RED").
         :return: N/A
         """
         # we only care for when the message clears
         if pob_debug and message == "":
+            # if message == "":
             process = psutil.Process(os.getpid())
             message = f"RAM: {'{:.2f}'.format(process.memory_info().rss / 1048576)}MB used:"
-            self.statusbar_MainWindow.showMessage(message, timeout * 1000)
+        # elif "RAM" not in message and [m for m in self.last_messages if message == m] == []:
+        elif "RAM" not in message and self.last_message != message:
+            self.last_message = message
+            if colour:
+                self.last_messages.insert(0, html_colour_text(colour, message))
+            else:
+                self.last_messages.insert(0, message)
+            if len(self.last_messages) > 5:
+                self.last_messages.pop()
+            self.statusbar_MainWindow.setToolTip("<br>".join(self.last_messages))
+        self.statusbar_MainWindow.showMessage(message, timeout * 1000)
 
     @Slot()
     def do_calcs(self, test_item=None, test_node=None):

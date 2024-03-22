@@ -3,6 +3,7 @@ A layout to autoorganise widgets according the the size of the window around the
 This is a compilation of many examples on the internet and PoB original content.
 """
 
+from copy import deepcopy
 import warnings
 
 from PySide6.QtCore import Qt, QMargins, QPoint, QRect, QSize

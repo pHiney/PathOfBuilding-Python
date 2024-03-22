@@ -10,6 +10,8 @@ need to be supported for backwards compatibility reason.
 
 """
 
+from copy import deepcopy
+
 from PySide6.QtCore import QLineF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter, QPixmap
 from PySide6.QtWidgets import QFrame, QGraphicsEllipseItem, QGraphicsScene, QGraphicsView, QDialogButtonBox
@@ -20,7 +22,7 @@ from PoB.settings import Settings
 from PoB.build import Build
 from dialogs.popup_dialogs import MasteryPopup
 from widgets.tree_graphics_item import TreeGraphicsItem
-from widgets.ui_utils import _debug, html_colour_text, print_call_stack
+from PoB.utils import _debug, html_colour_text, print_call_stack
 
 
 class TreeView(QGraphicsView):

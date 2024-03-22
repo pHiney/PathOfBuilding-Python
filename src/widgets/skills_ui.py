@@ -2,7 +2,7 @@
 This Class manages all the UI controls and takes ownship of the controls on the "SKILLS" tab
 """
 
-import xml.etree.ElementTree as ET
+from copy import deepcopy
 from pathlib import Path
 import re
 from random import randint
@@ -14,30 +14,19 @@ from PoB.constants import (
     ColourCodes,
     bad_text,
     empty_skill_dict,
-    default_skill_set_xml,
-    empty_itemset_dict,
+    empty_skillset_dict,
     empty_socket_group_dict,
-    empty_socket_group_xml,
     empty_gem_dict,
-    empty_gem_xml,
     quality_id,
     slot_map,
 )
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import read_json
-from PoB.gem import Gem
-from widgets.ui_utils import (
-    _debug,
-    bool_to_str,
-    html_colour_text,
-    index_exists,
-    print_a_xml_element,
-    print_call_stack,
-    set_combo_index_by_data,
-    set_combo_index_by_text,
-    str_to_bool,
-)
+
+# from PoB.gem import Gem
+from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, print_call_stack, str_to_bool
+from widgets.ui_utils import set_combo_index_by_data, set_combo_index_by_text
 from dialogs.popup_dialogs import yes_no_dialog
 from dialogs.skillsets_dialog import ManageSkillsDlg
 from widgets.gem_ui import GemUI
@@ -81,9 +70,9 @@ class SkillsUI:
         self.settings = _settings
         self.build = _build
         self.win = _win
-        self.json_skills = empty_skill_dict
+        self.skills = empty_skill_dict
         # list of elements for the SkillSet
-        self.json_skillsets = self.json_skills["SkillSets"]
+        self.skillsets = self.skills["SkillSets"]
 
         # xml element for the currently chosen skillset
         self.current_skill_set = None
@@ -91,7 +80,7 @@ class SkillsUI:
         self.current_socket_group = None
         # list of gems from gems.json
         self.gems_by_name_or_id = {}
-        self.json_gems = self.load_gems_json()
+        self.base_gems = self.load_base_gems_json()
         # tracks the state of the triggers, to stop setting triggers more than once or disconnecting when not connected
         self.triggers_connected = False
         self.internal_clipboard = None
@@ -129,8 +118,8 @@ class SkillsUI:
         self.win.list_SocketGroups.model().rowsMoved.connect(self.socket_groups_rows_moved)  # , Qt.QueuedConnection)
         self.win.list_SocketGroups.model().rowsAboutToBeMoved.connect(self.socket_groups_rows_about_to_be_moved)  # , Qt.QueuedConnection
         self.skill_gem_to_be_moved = None
-        self.win.list_Skills.model().rowsMoved.connect(self.skill_gem_rows_moved)  # , Qt.QueuedConnection)
-        self.win.list_Skills.model().rowsAboutToBeMoved.connect(self.skill_gem_rows_about_to_be_moved)  # , Qt.QueuedConnection
+        self.win.list_Skills.model().rowsMoved.connect(self.skill_gem_row_moved)  # , Qt.QueuedConnection)
+        self.win.list_Skills.model().rowsAboutToBeMoved.connect(self.skill_gem_row_about_to_be_moved)  # , Qt.QueuedConnection
 
         # Do NOT turn on skill triggers here
 
@@ -143,59 +132,59 @@ class SkillsUI:
 
     @property
     def activeSkillSet(self) -> int:
-        return self.json_skills.get("activeSkillSet", 0)
+        return self.skills.get("activeSkillSet", 0)
 
     @activeSkillSet.setter
     def activeSkillSet(self, new_setting):
-        self.json_skills["activeSkillSet"] = int(new_setting)
+        self.skills["activeSkillSet"] = int(new_setting)
 
     @property
     def sortGemsByDPSField(self) -> str:
-        return self.json_skills.get("sortGemsByDPSField", "CombinedDPS")
+        return self.skills.get("sortGemsByDPSField", "CombinedDPS")
 
     @sortGemsByDPSField.setter
     def sortGemsByDPSField(self, new_setting):
-        self.json_skills["sortGemsByDPSField"] = new_setting
+        self.skills["sortGemsByDPSField"] = new_setting
 
     @property
     def sortGemsByDPS(self) -> bool:
-        return self.json_skills.get("sortGemsByDPS", True)
+        return self.skills.get("sortGemsByDPS", True)
 
     @sortGemsByDPS.setter
     def sortGemsByDPS(self, new_setting):
-        self.json_skills["sortGemsByDPS"] = new_setting
+        self.skills["sortGemsByDPS"] = new_setting
 
     @property
     def defaultGemQuality(self) -> int:
-        return self.json_skills.get("activeSkillSet", 0)
+        return self.skills.get("activeSkillSet", 0)
 
     @defaultGemQuality.setter
     def defaultGemQuality(self, new_setting):
-        self.json_skills["defaultGemQuality"] = new_setting
+        self.skills["defaultGemQuality"] = new_setting
 
     @property
     def defaultGemLevel(self) -> str:
-        return self.json_skills.get("defaultGemLevel", "normalMaximum")
+        return self.skills.get("defaultGemLevel", "normalMaximum")
 
     @defaultGemLevel.setter
     def defaultGemLevel(self, new_setting):
-        self.json_skills["defaultGemLevel"] = new_setting
+        self.skills["defaultGemLevel"] = new_setting
 
     @property
     def showSupportGemTypes(self) -> str:
-        return self.json_skills.get("showSupportGemTypes", "ALL")
+        return self.skills.get("showSupportGemTypes", "ALL")
 
     @showSupportGemTypes.setter
     def showSupportGemTypes(self, new_setting):
-        self.json_skills["showSupportGemTypes"] = new_setting
+        self.skills["showSupportGemTypes"] = new_setting
 
     @property
     def showAltQualityGems(self) -> bool:
-        return self.json_skills.get("showAltQualityGems", False)
+        return self.skills.get("showAltQualityGems", False)
 
     @showAltQualityGems.setter
     def showAltQualityGems(self, new_setting):
-        self.json_skills["showAltQualityGems"] = new_setting
+        self.skills["showAltQualityGems"] = new_setting
 
     def load_from_json(self, _skills):
         """
@@ -204,7 +193,7 @@ class SkillsUI:
         :param _skills: Reference to the xml <Skills> tag set
         :return: N/A
         """
-        self.json_skills = _skills
+        self.skills = _skills
         self.disconnect_skill_triggers()
         # clean up
         self.change_skill_set(-1)
@@ -223,10 +212,10 @@ class SkillsUI:
         # )
 
         self.win.combo_SkillSet.clear()
-        self.json_skillsets = self.json_skills["SkillSets"]
+        self.skillsets = self.skills["SkillSets"]
 
-        for idx, _set in enumerate(self.json_skillsets):
-            print("skills_ui.load_from_json", idx, _set["title"], _set)
+        for idx, _set in enumerate(self.skillsets):
+            # print("skills_ui.load_from_json", idx, _set["title"], _set)
             self.win.combo_SkillSet.addItem(_set["title"], idx)
         # set the SkillSet ComboBox dropdown width.
         self.win.combo_SkillSet.view().setMinimumWidth(self.win.combo_SkillSet.minimumSizeHint().width())
@@ -239,85 +228,85 @@ class SkillsUI:
         # active_skill_set = min(self.activeSkillSet, len(self.skill_gems_list) - 1)
         self.win.combo_SkillSet.setCurrentIndex(self.activeSkillSet)
 
-    def load_from_xml(self, _skills):
-        """
-        Load internal structures from the build object.
-
-        :param _skills: Reference to the xml <Skills> tag set
-        :return: N/A
-        """
-        """
-        Load internal structures from the build object.
-
-        :param _skills: Reference to the xml <Skills> tag set
-        :return: N/A
-        """
-        xml_skills = _skills
-        self.disconnect_skill_triggers()
-        # clean up
-        self.change_skill_set(-1)
-
-        self.win.check_SortByDPS.setChecked(str_to_bool(xml_skills.get("sortGemsByDPS", "True")))
-        set_combo_index_by_data(self.win.combo_SortByDPS, xml_skills.get("sortGemsByDPSField", "FullDPS"))
-        self.win.check_ShowGemQualityVariants.setChecked(str_to_bool(xml_skills.get("showAltQualityGems", "False")))
-        set_combo_index_by_data(self.win.combo_ShowSupportGems, xml_skills.get("showSupportGemTypes", "ALL"))
-        quality = xml_skills.get("defaultGemQuality", 0)
-        if quality == "nil":
-            quality = 0
-        self.win.spin_DefaultGemQuality.setValue(int(quality))
-
-        # matchGemLevelToCharacterLevel deprecated/defaultGemLevel changed. Check for it and use it if it exists
-        level = xml_skills.get("defaultGemLevel", "normalMaximum")
-        m = re.search(r"(\d+)$", level)
-        if level == "nil" or m is None:
-            level = "normalMaximum"
-        else:
-            if int(m.group(1)) == 20:
-                level = "normalMaximum"
-            else:
-                level = "characterLevel"
-        set_combo_index_by_data(self.win.combo_DefaultGemLevel, level)
-
-        value = xml_skills.get("matchGemLevelToCharacterLevel", "NotFound")
-        if value != "NotFound":
-            if str_to_bool(value):
-                set_combo_index_by_data(self.win.combo_DefaultGemLevel, "characterLevel")
-
-        # self.win.spin_DefaultGemLevel.setValue(int(level))
-        # self.win.check_MatchToLevel.setChecked(
-        #     str_to_bool(xml_skills.get("matchGemLevelToCharacterLevel", "False"))
-        # )
-
-        self.win.combo_SkillSet.clear()
-        self.json_skillsets.clear()
-        _sets = xml_skills.findall("SkillSet")
-        if len(_sets) == 0:
-            # The lua version won't create a <skillset> (socket group) if there is only one skill set.
-            # let's create one so we have code compatibility in all circumstances
-            _set = empty_itemset_dict
-            self.json_skillsets.append(_set)
-            # Move skills to the new socket group
-            # ToDo: Fix this
-            xml_socket_groups = xml_skills.findall("Skill")
-            for group in xml_socket_groups:
-                _set.append(group)
-                xml_skills.remove(group)
-
-        for idx, xml_set in enumerate(xml_skills.findall("SkillSet")):
-            # ToDo: Fix this
-            _set = empty_itemset_dict
-            self.json_skillsets.append(_set)
-            self.win.combo_SkillSet.addItem(_set.get("title", f"Default{idx}"), idx)
-        # set the SkillSet ComboBox dropdown width.
-        self.win.combo_SkillSet.view().setMinimumWidth(self.win.combo_SkillSet.minimumSizeHint().width())
-
-        self.connect_skill_triggers()
-        # make sure this is loaded after the skillset's
-        # self.activeSkillSet = xml_skills.get("activeSkillSet", len(self.skill_gems_list))
-
-        # activate trigger to run change_skill_set
-        # active_skill_set = min(self.activeSkillSet, len(self.skill_gems_list) - 1)
-        self.win.combo_SkillSet.setCurrentIndex(self.activeSkillSet)
+    # def load_from_xml(self, _skills):
+    #     """
+    #     Load internal structures from the build object.
+    #
+    #     :param _skills: Reference to the xml <Skills> tag set
+    #     :return: N/A
+    #     """
+    #     """
+    #     Load internal structures from the build object.
+    #
+    #     :param _skills: Reference to the xml <Skills> tag set
+    #     :return: N/A
+    #     """
+    #     xml_skills = _skills
+    #     self.disconnect_skill_triggers()
+    #     # clean up
+    #     self.change_skill_set(-1)
+    #
+    #     self.win.check_SortByDPS.setChecked(str_to_bool(xml_skills.get("sortGemsByDPS", "True")))
+    #     set_combo_index_by_data(self.win.combo_SortByDPS, xml_skills.get("sortGemsByDPSField", "FullDPS"))
+    #     self.win.check_ShowGemQualityVariants.setChecked(str_to_bool(xml_skills.get("showAltQualityGems", "False")))
+    #     set_combo_index_by_data(self.win.combo_ShowSupportGems, xml_skills.get("showSupportGemTypes", "ALL"))
+    #     quality = xml_skills.get("defaultGemQuality", 0)
+    #     if quality == "nil":
+    #         quality = 0
+    #     self.win.spin_DefaultGemQuality.setValue(int(quality))
+    #
+    #     # matchGemLevelToCharacterLevel deprecated/defaultGemLevel changed. Check for it and use it if it exists
+    #     level = xml_skills.get("defaultGemLevel", "normalMaximum")
+    #     m = re.search(r"(\d+)$", level)
+    #     if level == "nil" or m is None:
+    #         level = "normalMaximum"
+    #     else:
+    #         if int(m.group(1)) == 20:
+    #             level = "normalMaximum"
+    #         else:
+    #             level = "characterLevel"
+    #     set_combo_index_by_data(self.win.combo_DefaultGemLevel, level)
+    #
+    #     value = xml_skills.get("matchGemLevelToCharacterLevel", "NotFound")
+    #     if value != "NotFound":
+    #         if str_to_bool(value):
+    #             set_combo_index_by_data(self.win.combo_DefaultGemLevel, "characterLevel")
+    #
+    #     # self.win.spin_DefaultGemLevel.setValue(int(level))
+    #     # self.win.check_MatchToLevel.setChecked(
+    #     #     str_to_bool(xml_skills.get("matchGemLevelToCharacterLevel", "False"))
+    #     # )
+    #
+    #     self.win.combo_SkillSet.clear()
+    #     self.skillsets.clear()
+    #     _sets = xml_skills.findall("SkillSet")
+    #     if len(_sets) == 0:
+    #         # The lua version won't create a <skillset> (socket group) if there is only one skill set.
+    #         # let's create one so we have code compatibility in all circumstances
+    #         _set = deepcopy(empty_skillset_dict)
+    #         self.skillsets.append(_set)
+    #         # Move skills to the new socket group
+    #         # ToDo: Fix this
+    #         xml_socket_groups = xml_skills.findall("Skill")
+    #         for group in xml_socket_groups:
+    #             _set.append(group)
+    #             xml_skills.remove(group)
+    #
+    #     for idx, xml_set in enumerate(xml_skills.findall("SkillSet")):
+    #         # ToDo: Fix this
+    #         _set = deepcopy(empty_skillset_dict)
+    #         self.skillsets.append(_set)
+    #         self.win.combo_SkillSet.addItem(_set.get("title", f"Default{idx}"), idx)
+    #     # set the SkillSet ComboBox dropdown width.
+    #     self.win.combo_SkillSet.view().setMinimumWidth(self.win.combo_SkillSet.minimumSizeHint().width())
+    #
+    #     self.connect_skill_triggers()
+    #     # make sure this is loaded after the skillset's
+    #     # self.activeSkillSet = xml_skills.get("activeSkillSet", len(self.skill_gems_list))
+    #
+    #     # activate trigger to run change_skill_set
+    #     # active_skill_set = min(self.activeSkillSet, len(self.skill_gems_list) - 1)
+    #     self.win.combo_SkillSet.setCurrentIndex(self.activeSkillSet)
 
     def save_to_json(self):
         """
@@ -334,66 +323,77 @@ class SkillsUI:
         self.defaultGemQuality = self.win.spin_DefaultGemQuality.value()
         self.activeSkillSet = self.win.combo_SkillSet.currentIndex()
         # Renumber skillsets in case they have been moved, created or deleted.
-        return self.json_skills
+        # print(f"skill_ui: save_to_json: {self.skills=}")
+        return self.skills
 
-    def save_to_xml(self):
-        """
-        Save internal structures back to the build's skills object.
-        The gems have been saving themselves to the xml object whenever there was a change,
-          so we only need to get the other UI widget's values
-        :return : xml.etree.ElementTree
-        """
-        xml_skills = default_skill_set_xml
-        xml_skills.set("sortGemsByDPS", bool_to_str(self.win.check_SortByDPS.isChecked()))
-        # xml_skills.set("matchGemLevelToCharacterLevel", bool_to_str(self.win.check_MatchToLevel.isChecked()))
-        xml_skills.set("showAltQualityGems", bool_to_str(self.win.check_ShowGemQualityVariants.isChecked()))
-        xml_skills.set("sortGemsByDPSField", self.win.combo_SortByDPS.currentData())
-        xml_skills.set("showSupportGemTypes", self.win.combo_ShowSupportGems.currentData())
-        xml_skills.set("defaultGemLevel", self.win.combo_DefaultGemLevel.currentData())
-        xml_skills.set("defaultGemQuality", str(self.win.spin_DefaultGemQuality.value()))
-        self.activeSkillSet = self.win.combo_SkillSet.currentIndex()
-        # Renumber skillsets in case they have been moved, created or deleted.
-        for idx, _set in enumerate(xml_skills.findall("SkillSet")):
-            _set.set("id", str(idx))
-        return xml_skills
+    # def save_to_xml(self):
+    #     """
+    #     Save internal structures back to the build's skills object.
+    #     The gems have been saving themselves to the xml object whenever there was a change,
+    #       so we only need to get the other UI widget's values
+    #     :return : xml.etree.ElementTree
+    #     """
+    #     xml_skills = default_skill_set_xml
+    #     xml_skills.set("sortGemsByDPS", bool_to_str(self.win.check_SortByDPS.isChecked()))
+    #     # xml_skills.set("matchGemLevelToCharacterLevel", bool_to_str(self.win.check_MatchToLevel.isChecked()))
+    #     xml_skills.set("showAltQualityGems", bool_to_str(self.win.check_ShowGemQualityVariants.isChecked()))
+    #     xml_skills.set("sortGemsByDPSField", self.win.combo_SortByDPS.currentData())
+    #     xml_skills.set("showSupportGemTypes", self.win.combo_ShowSupportGems.currentData())
+    #     xml_skills.set("defaultGemLevel", self.win.combo_DefaultGemLevel.currentData())
+    #     xml_skills.set("defaultGemQuality", str(self.win.spin_DefaultGemQuality.value()))
+    #     self.activeSkillSet = self.win.combo_SkillSet.currentIndex()
+    #     # Renumber skillsets in case they have been moved, created or deleted.
+    #     for idx, _set in enumerate(xml_skills.findall("SkillSet")):
+    #         _set.set("id", str(idx))
+    #     return xml_skills
 
-    def load_gems_json(self):
+    def load_base_gems_json(self):
         """
         Load gems.json and remove bad entries, like [Unused] and not released
         :return: dictionary of valid entries
         """
 
-        def get_coloured_text(colour):
+        def get_coloured_text(this_gem):
             """
             Define the coloured_text for this gem instance.
 
             :param colour: int:
             :return: N/A
             """
+            tags = this_gem["tags"]
+            colour = ColourCodes.NORMAL.value
+            if tags is not None:
+                if "dexterity" in tags:
+                    colour = ColourCodes.DEXTERITY.value
+                elif "strength" in tags:
+                    colour = ColourCodes.STRENGTH.value
+                elif "intelligence" in tags:
+                    colour = ColourCodes.INTELLIGENCE.value
+            return colour
 
         # read in all gems but remove all invalid/unreleased ones
         # "Afflictions" will be removed by this (no display_name), so maybe a different list for them
         gems = read_json(Path(self.pob_config.data_dir, "base_gems.json"))
         if gems is None:
             return None
-        # make a list by name and skill_id. Index supports using the full name (Faster Attacks Support)
+        # make a list by name and skillId. Index supports using the full name (Faster Attacks Support)
         #  and the display name (Faster Attacks)
-        for g in gems.keys():
-            _gem = gems[g]
+        for g, _gem in gems.items():
             name = _gem["grantedEffect"]["name"]
-            # _gem.load_from_gems_json()
+            _gem["colour"] = get_coloured_text(_gem)
+            _gem["coloured_text"] = html_colour_text(_gem["colour"], name)
 
             self.gems_by_name_or_id[g] = _gem  # g = "AddedChaosDamageSupport"
             self.gems_by_name_or_id[name] = _gem  # name = "Added Chaos Damage"
-            self.gems_by_name_or_id[_gem["skillId"]] = _gem  # skillId = "Metadata/Items/Gems/SkillGemAddedChaosDamageSupport"
-            # add supports using the full name
-            if _gem["grantedEffect"].get("support", False):
+            self.gems_by_name_or_id[_gem["grantedEffectId"]] = _gem  # grantedEffectId = "SupportAddedChaosDamagePlus"
+            # Also add supports using the full name.
+            if _gem.get("support", False):
                 self.gems_by_name_or_id[f"{name} Support"] = _gem  # name = "Added Chaos Damage" + " Support"
 
         return gems
-        # load_gems_json
+        # load_base_gems_json
 
-    def load_gems_json_v1(self):
+    def load_base_gems_json_v1(self):
         """
         Load gems.json and remove bad entries, like [Unused] and not released
         :return: dictionary of valid entries
@@ -467,7 +467,7 @@ class SkillsUI:
                 self.gems_by_name_or_id[full_name]["skillId"] = g
 
         return gems
-        # load_gems_json
+        # load_base_gems_json
 
     def connect_skill_triggers(self):
         """re-connect triggers"""
@@ -513,10 +513,10 @@ class SkillsUI:
         :return: XML: The new Itemset
         """
         self.disconnect_skill_triggers()
-        new_skillset = empty_itemset_dict
-        new_skillset.set("id", len(self.json_skillsets) + 1)
+        new_skillset = deepcopy(empty_skillset_dict)
+        new_skillset["id"] = len(self.skillsets) + 1
         new_skillset["title"] = itemset_name
-        self.json_skillsets.append(new_skillset)
+        self.skillsets.append(new_skillset)
         self.win.combo_SkillSet.addItem(itemset_name, new_skillset)
         # set the SkillSet ComboBox dropdown width.
         self.win.combo_SkillSet.view().setMinimumWidth(self.win.combo_SkillSet.minimumSizeHint().width())
@@ -541,8 +541,8 @@ class SkillsUI:
         self.current_socket_group = None
         self.clear_socket_group_settings()
         self.win.list_SocketGroups.clear()
-        if 0 <= new_index < len(self.json_skillsets):
-            self.show_skill_set(self.json_skillsets[new_index], new_index, True)
+        if 0 <= new_index < len(self.skillsets):
+            self.show_skill_set(self.skillsets[new_index], new_index, True)
 
     def rename_set(self, row, new_title):
         """
@@ -551,8 +551,7 @@ class SkillsUI:
         :param new_title: str:
         :return: N/A
         """
-        _set = self.json_skillsets[row]
-        _set.set("title", new_title)
+        self.skillsets[row]["title"] = new_title
         self.win.combo_SkillSet.setItemText(row, new_title)
 
     def show_skill_set(self, _set, _index=0, trigger=False):
@@ -564,12 +563,12 @@ class SkillsUI:
         :param trigger: if True, this is called from a trigger, so don't disconnect/reconnect triggers
         :return: N/A
         """
-        # print("show_skill_set", _index, self.win.combo_SkillSet.currentText(), xml_set)
+        # print("show_skill_set", _index, self.win.combo_SkillSet.currentText(), _set)
         if not trigger:
             self.disconnect_skill_triggers()
 
         self.current_skill_set = _set
-        # Find all Socket Groups (<Skill> in the xml) and add them to the Socket Group list
+        # Find all Socket Groups and add them to the Socket Group list
         socket_groups = self.current_skill_set["SGroups"]
 
         self.win.list_SocketGroups.clear()
@@ -585,23 +584,19 @@ class SkillsUI:
         self.win.list_SocketGroups.setCurrentRow(0)
         # Use change_socket_group using mainActiveSkill -1
 
-    def delete_skill_set(self, itemset):
+    def delete_skill_set(self, itemset_num):
         """
         Delete ONE skillset
-        :param: dict: the item to be removed.
+        :param itemset_num: int: the item to be removed.
         """
         # print("delete_skill_set")
-        try:
-            index = self.json_skillsets.index(itemset)
-        except ValueError:
-            return
-        self.json_skillsets.remove(itemset)
-        if self.current_skill_set == itemset:
-            if len(self.json_skillsets) == 0:
+        if self.current_skill_set == self.skillsets[itemset_num]:
+            if len(self.skillsets) == 1:
                 self.current_skill_set = None
             else:
-                self.current_skill_set = self.json_skillsets[index == 0 and 0 or index - 1]
-        self.win.combo_SkillSet.removeItem(index)
+                self.current_skill_set = self.skillsets[itemset_num == 0 and 0 or itemset_num - 1]
+        self.skillsets.remove(itemset_num)
+        self.win.combo_SkillSet.removeItem(itemset_num)
 
     def delete_all_skill_sets(self, prompt=True):
         """Delete all skill sets
@@ -619,7 +614,7 @@ class SkillsUI:
         ):
             self.disconnect_skill_triggers()
             self.current_skill_set = None
-            self.json_skillsets.clear()
+            self.skillsets.clear()
             self.win.combo_SkillSet.clear()
             self.connect_skill_triggers()
 
@@ -632,12 +627,11 @@ class SkillsUI:
         :return:
         """
         print("skill_ui.move_set", start, destination)
-        _set = self.json_skillsets[start]
         if start < destination:
             # need to decrement dest by one as we are going to remove start first
             destination -= 1
-        self.json_skillsets.remove(_set)
-        self.json_skillsets.insert(destination, _set)
+        _set = self.skillsets.pop(start)
+        self.skillsets.insert(destination, _set)
         # Turn off triggers whilst moving the combobox to stop unnecessary updates)
         self.disconnect_skill_triggers()
         curr_index = self.win.combo_SkillSet.currentIndex()
@@ -656,11 +650,11 @@ class SkillsUI:
         :param new_name: str: the new set's name
         :return: xml.etree.ElementTree: The new set
         """
-        _set = self.json_skillsets[index]
+        _set = deepcopy(self.skillsets[index])
         index += 1
         new_skillset = _set.copy()
         new_skillset.set("title", new_name)
-        self.json_skillsets.insert(index, new_skillset)
+        self.skillsets.insert(index, new_skillset)
         self.disconnect_skill_triggers()
         self.win.combo_SkillSet.insertItem(index, new_name, new_skillset)
         self.connect_skill_triggers()
@@ -685,8 +679,8 @@ class SkillsUI:
         """
         Setup the passed in QListWidgetItem's text depending on whether it's active or not, etc.
 
-        :param: item: QListWidgetItem:
-        :param: group: ElementTree.Element:
+        :param item: QListWidgetItem:
+        :param group: ElementTree.Element:
         :return: QListWidgetItem
         """
         # print("define_socket_group_label", item, xml_group)
@@ -903,7 +897,7 @@ class SkillsUI:
         """
         Actions for when the socket group settings are altered. Save to xml. Do *NOT* call internally.
 
-        :param: Any: Some sort of info for a widget. EG: checked state for a checkBox, text for a comboBox.
+        :param Any: Some sort of info for a widget. EG: checked state for a checkBox, text for a comboBox.
         :return: N/A
         """
         if self.current_socket_group is not None:
@@ -921,7 +915,7 @@ class SkillsUI:
     @Slot()
     def socket_groups_rows_moved(self, parent, start, end, destination, dest_row):
         """
-        Respond to a socket group being moved, by moving it's matching xml element. It's called 4 times (sometimes)
+        Respond to a socket group being moved, by moving it's matching dict. It's called 4 times (sometimes)
 
         :param parent: QModelIndex: not Used.
         :param start: int: where the row was moved from.
@@ -937,11 +931,10 @@ class SkillsUI:
             return
         # Do move
         if self.current_skill_set is not None:
-            _sg = self.current_skill_set[start]
             if start < dest_row:
                 # need to decrement dest by one as we are going to remove start first
                 dest_row -= 1
-            self.current_skill_set.remove(_sg)
+            _sg = self.current_skill_set.pop(start)
             self.current_skill_set.insert(dest_row, _sg)
 
         # reset to none, this way we only respond to the first call of the four.
@@ -981,19 +974,21 @@ class SkillsUI:
     ################################################### GEM UI ###################################################
     """
 
-    def gem_ui_notify(self, item):
+    def gem_ui_notify(self, w_item):
         """
         React to a wigdet change from an instance of GemUI(), where that widget is not the remove button.
 
-        :param item: the triggering WidgetItem from list_Skills.
+        :param w_item: the triggering WidgetItem from list_Skills.
         :return: N/A
         """
-        row = self.win.list_Skills.row(item)
-        gem_ui = self.win.list_Skills.itemWidget(item)
+        row = self.win.list_Skills.row(w_item)
+        # print(f"skills_ui: gem_ui_notify: {w_item=}, {row=}")
+        gem_ui: GemUI = self.win.list_Skills.itemWidget(w_item)
         # print("gem_ui_notify", item, row, gem_ui)
-        if gem_ui.xml_gem is not None and gem_ui.skill_id != "" and gem_ui.xml_gem not in self.current_socket_group["Gems"]:
-            self.current_socket_group.append(gem_ui.xml_gem)
-            # print(f"gem_ui_notify: {gem_ui.skill_id} not found, adding.")
+        # If gem_ui.gem *is* in self.current_socket_group["Gems"], then we are altering an existing gemUI, and don't add it.
+        if gem_ui.gem is not None and gem_ui.variantId != "" and gem_ui.gem not in self.current_socket_group["Gems"]:
+            self.current_socket_group["Gems"].append(gem_ui.gem)
+            # print(f"gem_ui_notify: {gem_ui.variantId} not found, adding.")
             # Create an empty gem at the end
             self.create_gem_ui(len(self.gem_ui_list), None)
         self.update_socket_group_labels()
@@ -1004,18 +999,18 @@ class SkillsUI:
         Add a new row to the Skills list.
 
         :param index: int: number of this gem in this skill group
-        :param gem: ET.elementtree: The item to be added
+        :param gem: dict: The item to be added (from the build json)
         :return:
         """
         # print("create_gem_ui", index, gem)
         item = QListWidgetItem()
         self.win.list_Skills.addItem(item)
-        gem_ui = GemUI(item, self.gems_by_name_or_id, self.gem_ui_notify, gem)
-        gem_ui.fill_gem_list(self.json_gems, self.win.combo_ShowSupportGems.currentText())
+        gem_ui = GemUI(item, self.gems_by_name_or_id, self.gem_ui_notify, self.settings, gem)
+        gem_ui.fill_gem_list(self.base_gems, self.win.combo_ShowSupportGems.currentText())
         item.setSizeHint(gem_ui.sizeHint())
         self.win.list_Skills.setItemWidget(item, gem_ui)
 
-        # this one is for deleting the gem
+        # this is for deleting the gem
         gem_ui.btn_GemRemove.clicked.connect(lambda checked: self.gems_remove_checkbox_selected(item, gem_ui))
 
     def clear_gem_ui_list(self):
@@ -1067,7 +1062,7 @@ class SkillsUI:
         print("gems_remove_checkbox_selected", item, gem_ui)
         row = self.win.list_Skills.row(item)
         self.win.list_Skills.takeItem(row)
-        _gem = gem_ui.pob_gem
+        _gem = gem_ui.gem
         if self.current_socket_group is not None and _gem in self.current_socket_group["Gems"]:
             # print("gem_ui_notify", row, ui)
             # self.remove_gem_ui(_key)
@@ -1077,7 +1072,7 @@ class SkillsUI:
         self.update_socket_group_labels()
         self.load_main_skill_combo()
 
-    def skill_gem_rows_moved(self, parent, start, end, destination, dest_row):
+    def skill_gem_row_moved(self, parent, start, end, destination, dest_row):
         """
         Respond to a socket group being moved, by moving it's matching xml element. It's called 4 times (sometimes)
 
@@ -1088,7 +1083,7 @@ class SkillsUI:
         :param dest_row: int: The destination row.
         :return: N/A
         """
-        # print("skill_gem_rows_moved")
+        # print("skill_gem_row_moved")
         # if not None, do move in current_xml_group and set self.socket_group_to_be_moved = None
         # this way the last three are ignored.
         if self.socket_group_to_be_moved is None:
@@ -1096,18 +1091,17 @@ class SkillsUI:
         # Do move
         if self.current_socket_group is not None:
             # item = self.win.list_SocketGroups.item(start)
-            _sg = self.current_socket_group[start]
             if start < dest_row:
                 # need to decrement dest by one as we are going to remove start first
                 dest_row -= 1
-            self.current_socket_group.remove(_sg)
+            _sg = self.current_socket_group.pop(start)
             self.current_socket_group.insert(dest_row, _sg)
 
         # reset to none, this way we only respond to the first call of the four.
-        self.socket_group_to_be_moved = None
+        self.skill_gem_to_be_moved = None
 
     @Slot()
-    def skill_gem_rows_about_to_be_moved(self, source_parent, source_start, source_end, dest_parent, dest_row):
+    def skill_gem_row_about_to_be_moved(self, source_parent, source_start, source_end, dest_parent, dest_row):
         """
         Setup for a socket group move. It's called 4 times (sometimes).
 
@@ -1118,8 +1112,8 @@ class SkillsUI:
         :param dest_row: int: not Used
         :return: N/A
         """
-        # print("skill_gem_rows_about_to_be_moved")
-        self.socket_group_to_be_moved = source_parent
+        # print("skill_gem_row_about_to_be_moved")
+        self.skill_gem_to_be_moved = source_parent
 
     def import_gems_ggg_json(self, json_items, delete_all):
         """
@@ -1182,7 +1176,9 @@ class SkillsUI:
                     _gem.set("skillId", self.gems_by_name_or_id[_name]["skillId"])
 
                     base_item = self.gems_by_name_or_id[_name]["base_item"]
-                    _gem.set("gemId", base_item.get("id"))
+                    print(f"skills_ui.import_gems_ggg_json: skipping gemId=id {base_item.get('id')}")
+                    print("Delete this when you confirmed it is all good")
+                    # _gem.set("gemId", base_item.get("id"))
 
                     q = json_gem.get("typeLine", "Anomalous")
                     _gem.set("qualityId", quality_id[q])
@@ -1218,7 +1214,9 @@ class SkillsUI:
                 _gem.set("skillId", self.gems_by_name_or_id[_name]["skillId"])
 
                 base_item = self.gems_by_name_or_id[_name]["base_item"]
-                _gem.set("gemId", base_item.get("id"))
+                print(f"skills_ui.import_from_poep_json: skipping gemId=id {base_item.get('id')}")
+                print("Delete this when you confirmed it is all good")
+                # _gem.set("gemId", base_item.get("id"))
 
                 q = json_gem.get("typeLine", "Anomalous")
                 _gem.set("qualityId", quality_id[q])

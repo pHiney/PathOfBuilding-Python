@@ -3,6 +3,7 @@ Import dialog
 
 Open a dialog for importing a character.
 """
+from copy import deepcopy
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QDialog, QListWidgetItem, QPushButton
@@ -11,7 +12,7 @@ from PoB.constants import _VERSION, _VERSION_str, tree_versions
 from PoB.settings import Settings
 from PoB.build import Build, _debug, print_call_stack
 from dialogs.popup_dialogs import yes_no_dialog, ExportTreePopup, ImportTreePopup, NewTreePopup
-from widgets.ui_utils import html_colour_text
+from PoB.utils import html_colour_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgManageTree import Ui_ManageTree

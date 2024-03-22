@@ -1,5 +1,6 @@
 """Enumeration Data for Path of Exile constants."""
 
+from copy import deepcopy
 import enum
 import locale
 
@@ -25,9 +26,9 @@ tree_versions = {
 }
 _VERSION_str = "3_23"
 _VERSION = tree_versions[_VERSION_str]
-default_view_mode = "TREE"
+# default_view_mode = "TREE"
 # default_view_mode = "ITEMS"
-# default_view_mode = "SKILLS"
+default_view_mode = "SKILLS"
 
 default_max_charges = 3
 
@@ -62,33 +63,26 @@ empty_spec_dict = {
 
 empty_gem_dict = {
     "enabled": True,
-    "nameSpec": "Spectral Throw",
-    "skillId": "ThrownWeapon",
-    "level": 20,
+    "nameSpec": "",
+    "skillId": "",
+    "level": 1,
     "qualityId": "Default",
     "quality": 0,
     "count": 1,
     "enableGlobal1": True,
     "enableGlobal2": True,
-    "gemId": "Metadata/Items/Gems/SkillGemThrownWeapon",
+    # "gemId": "", # gemID isn't used. If luaPoB opens an xml with it missing, it just adds it. It has no value.
 }
 empty_socket_group_dict = {
     "enabled": True,
-    "label": "",
+    "label": "Default",
     "mainActiveSkillCalcs": 0,
     "includeInFullDPS": False,
     "slot": "",
     "mainActiveSkill": 0,
-    "Gems": [empty_gem_dict],
+    # "Gems": [empty_gem_dict],
+    "Gems": [],
 }
-# empty_sgroup_dict = {
-#     "mainActiveSkillCalcs": 1,
-#     "includeInFullDPS": False,
-#     "label": "",
-#     "enabled": True,
-#     "mainActiveSkill": 1,
-#     "Gems": [empty_gem_dict],
-# }
 empty_skillset_dict = {
     "id": 0,
     "title": "Default",
@@ -109,7 +103,7 @@ empty_item_dict = {
     "id": 0,
     "title": "",
     "base_name": "",
-    "rarity": "",
+    "Rarity": "",
     "Attribs": {},
     "Implicits": [],
     "Explicits": [],
@@ -180,7 +174,7 @@ empty_item_slots_dict = {
     "Belt Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
     "Belt Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
 }
-empty_itemset_dict = {"title": "", "id": 0, "useSecondWeaponSet": False, "Slots": {}}  # empty_item_slots_dict}
+empty_itemset_dict = {"title": "Default", "id": 0, "useSecondWeaponSet": False, "Slots": {}}  # empty_item_slots_dict}
 
 empty_build = {
     "PathOfBuilding": {
@@ -212,7 +206,7 @@ empty_build = {
         },
         "Config": {
             "Input": {
-                "resistancePenalty": -30,
+                "resistancePenalty": -60,
                 "bandit": "None",
                 "pantheonMajorGod": "None",
                 "pantheonMinorGod": "None",
@@ -462,6 +456,20 @@ class ColourCodes(enum.Enum):
     WARD = RARE
 
 
+colourEscapes = [
+    ColourCodes.BLACK,  # ^0
+    ColourCodes.RED,  # ^1
+    ColourCodes.GREEN,  # ^2
+    ColourCodes.BLUE,  # ^3
+    ColourCodes.YELLOW,  # ^4
+    ColourCodes.PURPLE,  # ^5
+    ColourCodes.AQUA,  # ^6
+    ColourCodes.WHITE,  # ^7
+    ColourCodes.GRAY,  # ^8
+    ColourCodes.DARKGRAY,  # ^9
+]
+
+
 @enum.unique
 class PlayerClasses(enum.IntEnum):
     SCION = 0
@@ -472,6 +480,21 @@ class PlayerClasses(enum.IntEnum):
     TEMPLAR = 5
     SHADOW = 6
 
+
+influence_colours = {
+    "Shaper Item": ColourCodes.SHAPER.value,
+    "Elder Item": ColourCodes.ELDER.value,
+    "Warlord Item": ColourCodes.ADJUDICATOR.value,
+    "Hunter Item": ColourCodes.BASILISK.value,
+    "Crusader Item": ColourCodes.CRUSADER.value,
+    "Redeemer Item": ColourCodes.EYRIE.value,
+    "Searing Exarch Item": ColourCodes.CLEANSING.value,
+    "Eater of Worlds Item": ColourCodes.TANGLE.value,
+    # these are ignored
+    # "Synthesised Item"
+    # "Fractured Item"
+}
+influencers = influence_colours.keys()
 
 # Background artwork behind the tree
 class_backgrounds = {

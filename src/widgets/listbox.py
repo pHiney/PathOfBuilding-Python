@@ -4,6 +4,8 @@ Pob implementation of QlistWidget
 Currently only needed .
 """
 
+from copy import deepcopy
+
 from PySide6.QtWidgets import QListWidget
 from PySide6.QtCore import Qt
 

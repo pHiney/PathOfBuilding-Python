@@ -5,11 +5,13 @@ This class represents a graphical instance of one visual element of a Passive Tr
 
 """
 
+from copy import deepcopy
+
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QGraphicsPixmapItem
 
 from PoB.settings import Settings
-from widgets.ui_utils import html_colour_text
+from PoB.utils import html_colour_text
 
 
 class TreeGraphicsItem(QGraphicsPixmapItem):

@@ -4,6 +4,7 @@ Import dialog
 Open a dialog for importing a character.
 """
 
+from copy import deepcopy
 import json
 import re
 import requests
@@ -18,13 +19,8 @@ from PoB.constants import valid_websites, website_list, get_http_headers
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import write_json, read_json
-from widgets.ui_utils import (
-    decode_base64_and_inflate,
-    deflate_and_base64_encode,
-    html_colour_text,
-    set_combo_index_by_text,
-    unique_sorted,
-)
+from PoB.utils import decode_base64_and_inflate, deflate_and_base64_encode, html_colour_text, unique_sorted
+from widgets.ui_utils import set_combo_index_by_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgBuildImport import Ui_BuildImport

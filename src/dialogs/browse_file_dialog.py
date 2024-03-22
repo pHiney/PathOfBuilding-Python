@@ -4,6 +4,7 @@ File Dialog
 Open a dialog for Opening or Saving a character.
 """
 
+from copy import deepcopy
 import glob
 import os
 import re
@@ -15,7 +16,7 @@ from PoB.build import Build
 from dialogs.popup_dialogs import yes_no_dialog
 from PoB.settings import Settings
 from PoB.pob_file import get_file_info
-from widgets.ui_utils import html_colour_text
+from PoB.utils import html_colour_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgBrowseFile import Ui_BrowseFile

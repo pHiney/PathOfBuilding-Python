@@ -3,6 +3,7 @@ This Class manages all the elements and owns some elements of the "TREE" tab
 
 """
 
+from copy import deepcopy
 import re
 
 from PySide6.QtCore import Qt, Slot, QSize

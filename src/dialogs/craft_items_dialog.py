@@ -11,7 +11,7 @@ For the purposes of processing, the colour comboBox manages the connector to the
   socket list. There is processing to force this.
 """
 
-import xml.etree.ElementTree as ET
+from copy import deepcopy
 import re
 
 from PySide6.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QMainWindow, QStatusBar
@@ -21,7 +21,8 @@ from PySide6.QtGui import QColor, QBrush, QIcon
 from PoB.constants import ColourCodes
 from PoB.settings import Settings
 from PoB.item import Item
-from widgets.ui_utils import html_colour_text, set_combo_index_by_text, print_call_stack
+from PoB.utils import html_colour_text, print_call_stack
+from widgets.ui_utils import set_combo_index_by_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgCraftItems import Ui_CraftItems
@@ -115,22 +116,23 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
     def item(self, newitem: Item):
         self.original_item = newitem
         # go via text so we get a unique python object
-        self._item.load_from_xml_v2(newitem.save_v2())
+        self._item.load_from_json(deepcopy(newitem.pob_item))
         self.fill_widgets()
         self.update_status_bar(f"Loaded {newitem.coloured_name}")
 
     def fill_widgets(self):
-        """Fill the widgets with default values. called when setting self.item"""
-        self.setWindowTitle(self.item.name)
-        base_item = self.base_items[self.item.base_name]
+        """Fill the widgets with default values. Called when setting self.item"""
+        self.setWindowTitle(self.item.name + "....")
+        if self.item.type != "Flask":
+            base_item = self.base_items[self.item.base_name]
 
-        # Ensure there is a proper socket setup
-        if self.item.sockets == "":
-            self.item.sockets = base_item.get("initial_sockets", "")
-        # Some belts have sockets, but will not have a max_num_sockets entry, so setup a new max_num_sockets.
-        self.curr_socket_state = [char for char in " " + self.item.sockets if char in ("R", "G", "B", "W", "A")]
-        self.curr_connector_state = [char for char in " " + self.item.sockets if char in (" ", "-")]
-        self.max_num_sockets = max(base_item.get("max_num_sockets", 0), len(self.curr_socket_state))
+            # Ensure there is a proper socket setup
+            if self.item.sockets == "":
+                self.item.sockets = base_item.get("initial_sockets", "")
+            # Some belts have sockets, but will not have a max_num_sockets entry, so setup a new max_num_sockets.
+            self.curr_socket_state = [char for char in " " + self.item.sockets if char in ("R", "G", "B", "W", "A")]
+            self.curr_connector_state = [char for char in " " + self.item.sockets if char in (" ", "-")]
+            self.max_num_sockets = max(base_item.get("max_num_sockets", 0), len(self.curr_socket_state))
 
         # Hide unused socket combos and connectors, yes this may hide them all
         if self.max_num_sockets != len(self.socket_widgets):
@@ -139,11 +141,18 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             for c_idx in range(max(self.max_num_sockets, 1), len(self.connector_widgets)):
                 self.connector_widgets[c_idx].setHidden(True)
 
+        print(len(self.item.variant_names))
         variants = len(self.item.variant_names) != 1
-        self.combo_Variants.setVisible(variants)
-        self.label_Variants.setVisible(variants)
+        self.combo_Variants1.setVisible(variants)
+        self.label_Variants1.setVisible(variants)
+        self.combo_Variants2.setVisible(False)
+        self.label_Variants2.setVisible(False)
+        self.combo_Variants3.setVisible(False)
+        self.label_Variants3.setVisible(False)
         # skip the leading ""
-        self.combo_Variants.addItems(self.item.variant_names[1:])
+        self.combo_Variants1.addItems(self.item.variant_names[1:])
+        self.combo_Variants2.addItems(self.item.variant_names[1:])
+        self.combo_Variants3.addItems(self.item.variant_names[1:])
 
         self.connect_triggers()
 
@@ -156,8 +165,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
                         set_combo_index_by_text(self.socket_widgets[idx], socket)
 
         if variants:
-            curr_variant = self.item.curr_variant == 0 and self.combo_Variants.count() or self.item.curr_variant
-            self.combo_Variants.setCurrentIndex(curr_variant - 1)
+            curr_variant = self.item.current_variant == 0 and self.combo_Variants1.count() or self.item.current_variant
+            self.combo_Variants1.setCurrentIndex(curr_variant - 1)
         self.label_Item.setText(self.item.tooltip())
 
     def connect_triggers(self):
@@ -190,7 +199,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         for idx, checkbox in enumerate(self.connector_widgets):  # Remember self.connector_widgets is a 1 based array
             make_checkbox_connection(idx, checkbox)
 
-        self.combo_Variants.currentIndexChanged.connect(self.change_variant)
+        self.combo_Variants1.currentIndexChanged.connect(self.change_variant)
 
     @Slot()
     def update_status_bar(self, message="", timeout=10):
@@ -282,8 +291,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         self.update_status_bar("")
         del self._item
         _item = Item(self.settings, self.base_items)
-        # go via text so we get a unique python object
-        _item.load_from_xml_v2(self.original_item.save_v2())
+        _item.load_from_json(deepcopy(self.original_item.pob_item))
         self.item = _item
 
     @Slot()

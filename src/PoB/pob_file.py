@@ -2,18 +2,19 @@
 Functions for reading and writing xml and json
 
 This is a base PoB class. It doesn't import any other PoB classes
+
+!!!! read_xml_as_dict(filename) stays in this module as it is used by get_file_info !!!!
 """
 
+from copy import deepcopy
 from pathlib import Path, WindowsPath
-import xml.etree.ElementTree as ET
-import xmltodict
 import json
 import os
-import re
 import xml
+import xmltodict
 
 from PoB.constants import ColourCodes
-from widgets.ui_utils import html_colour_text
+from PoB.utils import html_colour_text
 
 
 def get_file_info(settings, filename, max_length, max_filename_width=40, html=True, menu=False):
@@ -140,6 +141,26 @@ def write_json(filename, _dict):
             json.dump(_dict, json_file, indent=2)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
         print(f"Unable to write to {_fn}")
+
+
+def read_xml_as_dict(filename):
+    """
+    Reads a XML file
+    !!!! This stays in this module as it is used by get_file_info !!!!
+    :param filename: Name of xml to be read
+    :returns: A dictionary of the contents of the file
+    """
+    _fn = Path(filename)
+    if _fn.exists():
+        try:
+            with _fn.open("r") as xml_file:
+                xml_content = xml_file.read()
+                _dict = xmltodict.parse(xml_content)
+                return _dict
+        # parent of IOError, OSError *and* WindowsError where available
+        except EnvironmentError:
+            print(f"Unable to open {_fn}")
+    return None
 
 
 # # Why don't these work ?

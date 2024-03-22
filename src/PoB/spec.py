@@ -3,19 +3,10 @@ Represents and manages one Spec in the XML. It has a list of active nodes.
 """
 
 import base64
+from copy import deepcopy
 import re
-import xml.etree.ElementTree as ET
 
-from PoB.constants import (
-    bad_text,
-    default_spec_xml,
-    empty_spec_dict,
-    starting_scion_node,
-    tree_versions,
-    PlayerClasses,
-    _VERSION,
-    _VERSION_str,
-)
+from PoB.constants import bad_text, empty_spec_dict, starting_scion_node, tree_versions, PlayerClasses, _VERSION, _VERSION_str
 from dialogs.popup_dialogs import ok_dialog
 
 
@@ -30,41 +21,17 @@ class Spec:
         self.build = build
         self.tr = self.build.settings.app.tr
 
-        print(f"spec.new: {type(new_spec)}")
-        self.spec = type(new_spec) is dict and new_spec or empty_spec_dict
+        self.spec = type(new_spec) is dict and new_spec or deepcopy(empty_spec_dict)
         self.title = self.spec["title"]
         self.nodes = set()
         self.ascendancy_nodes = []
         self.extended_hashes = []
         self.masteryEffects = {}
-        # Table of jewels equipped in this tree
-        # Keys are node IDs, values are items
-        self.sockets = self.spec["Sockets"]
-
-        if type(new_spec) is ET:
-            self.treeVersion = new_spec["@treeVersion"]
-            self.classId = new_spec["@classId"]
-            self.ascendClassId = new_spec["@ascendClassId"]
-            self.spec["nodes"] = new_spec.get("@nodes", f"{starting_scion_node}")
-            self.spec["masteryEffects"] = new_spec["@masteryEffects"]
-            self.spec["URL"] = new_spec["URL"]
-
-            # if there are no sockets there, we don't mind. We'll create an empty one when saving
-            sockets = new_spec.find("Sockets")
-            if sockets is not None:
-                for socket in sockets.findall("Socket"):
-                    node_id = int(socket.get("nodeId", "0"))
-                    item_id = int(socket.get("itemId", "0"))
-                    # There are files which have been saved poorly and have empty jewel sockets saved as sockets ...
-                    # with itemId zero. This check filters them out to prevent dozens of invalid jewels
-                    # if item_id > 0 and node_id in self.nodes:
-                    if item_id > 0:
-                        self.sockets[node_id] = item_id
-        else:
-            self.set_sockets_from_string(self.spec.get("Sockets", ""))
+        self.sockets = {}
 
         self.set_nodes_from_string(self.spec.get("nodes", f"{starting_scion_node}"))
         self.set_mastery_effects_from_string(self.spec["masteryEffects"])
+        self.set_sockets_from_string(self.spec.get("Sockets", ""))
 
     # @property
     # def title(self):
@@ -472,10 +439,11 @@ class Spec:
         :return:
         """
         if new_sockets != "":
+            self.sockets.clear()
             # get a list of matches
             sockets = re.findall(r"{(\d+),(\d+)}", new_sockets)
             for socket in sockets:
-                self.masteryEffects[int(socket[0])] = int(socket[1])
+                self.sockets[int(socket[0])] = int(socket[1])
 
     def get_mastery_effect(self, node_id):
         """return one node id from mastery effects"""
@@ -550,30 +518,31 @@ class Spec:
             str_mastery_effects += f"{{{effect},{self.masteryEffects[effect]}}},"
         self.spec["masteryEffects"] = str_mastery_effects.rstrip(",")
 
+        # same for sockets
         str_sockets = ""
         for socket in self.sockets.keys():
             str_sockets += f"{{{socket},{self.sockets[socket]}}},"
         self.spec["Sockets"] = str_sockets.rstrip(",")
 
-        if xml:
-            xml_spec = ET.fromstring(default_spec_xml)
-            xml_spec["@title"] = self.title
-            xml_spec["@classId"] = self.spec["classId"]
-            xml_spec["@ascendClassId"] = self.spec["ascendClassId"]
-            xml_spec["@nodes"] = self.spec["nodes"]
-            xml_spec["@masteryEffects"] = self.spec["masteryEffects"]
-            xml_spec["URL"] = self.spec["URL"]
-            xml_sockets = xml_spec.find("Sockets")
-            if xml_sockets is not None:
-                xml_spec.remove(xml_sockets)
-            xml_sockets = ET.Element("Sockets")
-            xml_spec.append(xml_sockets)
-            if len(self.sockets) > 0:
-                for node_id in self.sockets.keys():
-                    xml_sockets.append(ET.fromstring(f'<Socket nodeId="{node_id}" itemId="{self.sockets[node_id]}"/>'))
-            return self.title, xml_spec
-        else:
-            return self.title, self.spec
+        # if xml:
+        #     xml_spec = ET.fromstring(default_spec_xml)
+        #     xml_spec["@title"] = self.title
+        #     xml_spec["@classId"] = self.spec["classId"]
+        #     xml_spec["@ascendClassId"] = self.spec["ascendClassId"]
+        #     xml_spec["@nodes"] = self.spec["nodes"]
+        #     xml_spec["@masteryEffects"] = self.spec["masteryEffects"]
+        #     xml_spec["URL"] = self.spec["URL"]
+        #     xml_sockets = xml_spec.find("Sockets")
+        #     if xml_sockets is not None:
+        #         xml_spec.remove(xml_sockets)
+        #     xml_sockets = ET.Element("Sockets")
+        #     xml_spec.append(xml_sockets)
+        #     if len(self.sockets) > 0:
+        #         for node_id in self.sockets.keys():
+        #             xml_sockets.append(ET.fromstring(f'<Socket nodeId="{node_id}" itemId="{self.sockets[node_id]}"/>'))
+        #     return self.title, xml_spec
+        # else:
+        return self.title, self.spec
 
     # def save(self):
     #     """Save things to the internal dict() and return it"""

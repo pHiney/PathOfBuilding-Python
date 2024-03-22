@@ -1,10 +1,22 @@
 from pathlib import Path, WindowsPath
-import copy
+from copy import deepcopy
 import re
+import traceback
 import xml.etree.ElementTree as ET
 import xmltodict
 
-from PoB.constants import _VERSION_str, default_view_mode, empty_build, empty_item_dict, starting_scion_node
+from PoB.constants import (
+    _VERSION_str,
+    bad_text,
+    colourEscapes,
+    default_view_mode,
+    empty_build,
+    empty_item_dict,
+    influencers,
+    starting_scion_node,
+)
+from PoB.pob_file import read_xml_as_dict
+from PoB.utils import html_colour_text, str_to_bool, index_exists
 
 """ ################################################### XML ################################################### """
 
@@ -52,28 +64,20 @@ empty_build_xml = f"""
 </PathOfBuilding>"""
 
 
-def str_to_bool(in_str):
+def print_a_xml_element(the_element):
     """
-    Return a boolean from a string. As the settings could be manipulated by a human, we can't trust eval()
-      EG: eval('os.system(`rm -rf /`)')
-    :param: in_str: String: The setting to be evaluated
-    :returns: True if it looks like it could be true, otherwise False
+    Debug: Print the contents so you can see what happened and why 'it' isn't working.
+    Prints the parent caller to help track when there are many of them.
+    :param the_element: xml element
+    :return: N/A
     """
-    return in_str.lower() in ("yes", "true", "t", "1", "on")
-
-
-def index_exists(_list_or_dict, index):
-    """
-    Test if a list contains a given index
-    :param _list_or_dict: object to be tested
-    :param index: index to be tested
-    :return: Boolean: True / False
-    """
-    try:
-        _l = _list_or_dict[index]
-        return True
-    except (IndexError, KeyError, TypeError):
-        return False
+    if the_element is None:
+        print(the_element)
+        return
+    lines = traceback.format_stack()
+    print(lines[-2].strip())
+    print(ET.tostring(the_element, encoding="utf8").decode("utf8"))
+    print()
 
 
 def read_xml(filename):
@@ -91,25 +95,6 @@ def read_xml(filename):
                 return tree
         # parent of IOError, OSError *and* WindowsError where available
         except (EnvironmentError, FileNotFoundError, ET.ParseError):
-            print(f"Unable to open {_fn}")
-    return None
-
-
-def read_xml_as_dict(filename):
-    """
-    Reads a XML file
-    :param filename: Name of xml to be read
-    :returns: A dictionary of the contents of the file
-    """
-    _fn = Path(filename)
-    if _fn.exists():
-        try:
-            with _fn.open("r") as xml_file:
-                xml_content = xml_file.read()
-                _dict = xmltodict.parse(xml_content)
-                return _dict
-        # parent of IOError, OSError *and* WindowsError where available
-        except EnvironmentError:
             print(f"Unable to open {_fn}")
     return None
 
@@ -173,6 +158,26 @@ def write_xml_from_dict(filename, _dict):
         print(f"Unable to write to {_fn}")
 
 
+def remove_lua_colours(text):
+    """
+    Remove ^7 like colours
+    :param text: str: string to check
+    :return: str: changed string
+    """
+    # remove all obvious duplicate colours (mainly ^7^7)
+    for idx in range(10):  # 0..9
+        while f"^{idx}^{idx}" in text:
+            text = text.replace(f"^{idx}^{idx}", f"^{idx}")
+    # remove single charactor colours for their full versions
+    for idx in range(10):
+        try:
+            colour_idx = text.index(f"^{idx}")
+            text = html_colour_text(colourEscapes[idx].value, text[colour_idx + 2])
+        except ValueError:
+            pass
+    return text
+
+
 def load_item_from_xml(xml, debug_lines=False):
     """
     Load internal structures from the free text version of item's xml
@@ -182,16 +187,6 @@ def load_item_from_xml(xml, debug_lines=False):
     :return: boolean
     """
 
-    influencers = (
-        "Shaper Item",
-        "Elder Item",
-        "Warlord Item",
-        "Hunter Item",
-        "Crusader Item",
-        "Redeemer Item",
-        "Searing Exarch Item",
-        "Eater of Worlds Item",
-    )
     # Entries in the item Free text
     strings = (
         "Armour",
@@ -205,7 +200,7 @@ def load_item_from_xml(xml, debug_lines=False):
         "Unique ID",
         "Upgrade",
     )
-    integers = ("Item Level", "LevelReq", "Limited to" "Quality")
+    integers = ("Item Level", "Limited to" "Quality")
     floats = ("ArmourBasePercentile", "EnergyShieldBasePercentile", "EvasionBasePercentile")
 
     def get_attribute(n):
@@ -226,41 +221,51 @@ def load_item_from_xml(xml, debug_lines=False):
             # case m.group(1) if m.group(1) in bools:
             #     json_item[m.group(1)] = str_to_bool(m.group(2))
 
+            case "LevelReq":
+                json_item["Requires"]["Level"] = int(n.group(2))
             case "Variant":
                 json_item["Variants"].append(n.group(2))
+            case "{variant":
+                # variant entries found before the Implicit line are always base_name variants
+                v = re.search(r"{variant:([\d,]+)}(.*)", line)
+                _variant_numbers = v.group(1).split(",")
+                # _variant_numbers is always a list (of str), even if it contains one entry.
+                for _var in _variant_numbers:
+                    json_item.setdefault("Variant Entries", {}).setdefault("base_name", {})[_var] = v.group(2)
             case "Selected Variant":
-                json_item["Current Variant"] = int(n.group(2)) - 1
+                """variants are numbered from 1, so 0 is no selection. !!! don't add -1"""
+                json_item["Selected Variant"] = int(n.group(2))
             case "Prefix" | "Suffix":
                 json_item["Crafted"][tag].append(n.group(2))
             case "Has Alt Variant":
-                json_item["alt_variants"][1] = 0
+                json_item["Alt Variants"][1] = 0
             case "Selected Alt Variant":
-                json_item["alt_variants"][1] = int(n.group(2))
+                json_item["Alt Variants"][1] = int(n.group(2))
             case "Has Alt Variant Two":
-                json_item["alt_variants"][2] = 0
+                json_item["Alt Variants"][2] = 0
             case "Selected Alt Variant Two":
-                json_item["alt_variants"][2] = int(n.group(2))
+                json_item["Alt Variants"][2] = int(n.group(2))
             case "Has Alt Variant Three":
-                json_item["alt_variants"][3] = 0
+                json_item["Alt Variants"][3] = 0
             case "Selected Alt Variant Three":
-                json_item["alt_variants"][3] = int(n.group(2))
+                json_item["Alt Variants"][3] = int(n.group(2))
             case "Has Alt Variant Four":
-                json_item["alt_variants"][4] = 0
+                json_item["Alt Variants"][4] = 0
             case "Selected Alt Variant Four":
-                json_item["alt_variants"][4] = int(n.group(2))
+                json_item["Alt Variants"][4] = int(n.group(2))
             case "Has Alt Variant Five":
-                json_item["alt_variants"][5] = 0
+                json_item["Alt Variants"][5] = 0
             case "Selected Alt Variant Five":
-                json_item["alt_variants"][5] = int(n.group(2))
+                json_item["Alt Variants"][5] = int(n.group(2))
 
     # Deep copy or else we end up editing the constant
-    json_item = copy.deepcopy(empty_item_dict)
+    json_item = deepcopy(empty_item_dict)
 
     # debug_lines = True
     items_free_text = xml["#text"]
     json_item["id"] = xml.get("@id", 0)
     if "Alt Variant" in items_free_text:
-        json_item["alt_variants"] = {}
+        json_item["Alt Variants"] = {}
     if "Variant:" in items_free_text:
         json_item["Variants"] = []
     if "Crafted:" in items_free_text:
@@ -271,29 +276,31 @@ def load_item_from_xml(xml, debug_lines=False):
     lines = [y for y in (x.strip(" \t\r\n") for x in items_free_text.splitlines()) if y]
     # The first line has to be rarity !!!!
     line = lines.pop(0)
-    if "rarity" not in line.lower():
+    if "Rarity" not in line.lower():
         print("Error: Dave, I don't know what to do with this:\n", items_free_text)
         return False
     m = re.search(r"(.*): (.*)", line)
-    json_item["rarity"] = m.group(2).upper()
+    json_item["Rarity"] = m.group(2).upper()
     # The 2nd line is either the title or the name of a magic/normal item. This is why Rarity is first.
     line = lines.pop(0)
-    if json_item["rarity"] in ("NORMAL", "MAGIC"):
+    if json_item["Rarity"] in ("NORMAL", "MAGIC"):
         json_item["base_name"] = line
     else:
         json_item["title"] = line
         line = lines.pop(0)
-        if "{variant" in line:
-            while "{variant" in line:
-                v = re.search(r"{variant:([\d,]+)}(.*)", line)
-                _variant_numbers = v.group(1).split(",")
-                # _variant_numbers is always a list (of str), even if it contains one entry.
-                for _var in _variant_numbers:
-                    json_item["Variants"].setdefault("base_name", {})[int(_var)] = v.group(2)
-                if "{variant" in lines[0]:
-                    line = lines.pop(0)
-        else:
+        if "{variant" not in line:
             json_item["base_name"] = line
+        # if "{variant" in line:
+        #     while "{variant" in line:
+        #         v = re.search(r"{variant:([\d,]+)}(.*)", line)
+        #         _variant_numbers = v.group(1).split(",")
+        #         # _variant_numbers is always a list (of str), even if it contains one entry.
+        #         for _var in _variant_numbers:
+        #             json_item["Variants"].setdefault("base_name", {})[int(_var)] = v.group(2)
+        #         if "{variant" in lines[0]:
+        #             line = lines.pop(0)
+        # else:
+        #     json_item["base_name"] = line
 
     if debug_lines:
         print("a", len(lines), lines)
@@ -321,7 +328,7 @@ def load_item_from_xml(xml, debug_lines=False):
                 for req in m.group(1).split(","):
                     if "level" in req.lower():
                         r = re.search(r"(\w+) (\d+)", f"{req}")
-                        json_item["Requires"]["level_req"] = int(r.group(2))
+                        json_item["Requires"]["Level"] = int(r.group(2))
                     elif "class" in req.lower():
                         r = re.search(r"(\w+) (\w+)", f"{req}")
                         json_item["Requires"]["Class"] = r.group(2)
@@ -438,14 +445,20 @@ def load_from_xml(filename):
     }
     for stat_type in ("PlayerStat", "MinionStat"):
         stats = xml_build.get(stat_type, [])
+        if type(stats) is dict:
+            stats = [stats]
         for stat in stats:
             name = stat.get("@stat", "")
             if name:
-                value = stat.get("@value", "")
-                if "." in value:
-                    json_build[stat_type][name] = float(stat.get("@value", "0.0"))
-                else:
-                    json_build[stat_type][name] = int(stat.get("@value", "0"))
+                try:
+                    value = stat.get("@value", "")
+                    if "." in value:
+                        json_build[stat_type][name] = float(stat.get("@value", "0.0"))
+                    else:
+                        json_build[stat_type][name] = int(stat.get("@value", "0"))
+                except ValueError:
+                    # ValueError: invalid literal for int() with base 10: 'table: 0x1dc9d650'
+                    pass
     timeless_data = xml_build.get("TimelessData", {})
     if timeless_data:
         json_build["TimelessData"] = {
@@ -502,7 +515,7 @@ def load_from_xml(filename):
         xml_tree["Spec"] = [xml_tree["Spec"]]
     for xml_spec in xml_tree["Spec"]:
         spec = {
-            "title": xml_spec.get("@title", "Default"),
+            "title": remove_lua_colours(xml_spec.get("@title", "Default")),
             "treeVersion": xml_spec.get("@treeVersion", _VERSION_str),
             "classId": int(xml_spec.get("@classId", "0")),
             "ascendClassId": int(xml_spec.get("@ascendClassId", "0")),
@@ -537,37 +550,59 @@ def load_from_xml(filename):
     for xml_skillset in xml_skills["SkillSet"]:
         skillset = {
             "id": int(xml_skillset.get("@id", "1")) - 1,
-            "title": xml_skillset.get("@title", "Default"),
+            "title": remove_lua_colours(xml_skillset.get("@title", "Default")),
             "SGroups": [],
         }
         if type(xml_skillset["Skill"]) is dict:
             xml_skillset["Skill"] = [xml_skillset["Skill"]]
         for xml_sgroup in xml_skillset["Skill"]:
+            xml_gem = xml_sgroup.get("Gem", bad_text)
             sgroup = {
                 "enabled": str_to_bool(xml_sgroup.get("@enabled", "True")),
-                "label": xml_sgroup.get("@label", ""),
-                "mainActiveSkillCalcs": int(xml_sgroup.get("@mainActiveSkillCalcs", "0")),
+                "label": remove_lua_colours(xml_sgroup.get("@label", "")),
+                "mainActiveSkill": int(xml_sgroup.get("@mainActiveSkill", "1")) - 1,
+                "mainActiveSkillCalcs": int(xml_sgroup.get("@mainActiveSkillCalcs", "1")) - 1,
                 "includeInFullDPS": str_to_bool(xml_sgroup.get("@includeInFullDPS", "False")),
                 "slot": xml_sgroup.get("@slot", ""),
-                "mainActiveSkill": int(xml_sgroup.get("@mainActiveSkill", "0")),
                 "Gems": [],
             }
-            if type(xml_sgroup["Gem"]) is dict:
-                xml_sgroup["Gem"] = [xml_sgroup["Gem"]]
-            for xml_gem in xml_sgroup["Gem"]:
-                gem = {
-                    "enabled": str_to_bool(xml_sgroup.get("@enabled", "True")),
-                    "nameSpec": xml_gem.get("@nameSpec", ""),
-                    "skillId": xml_gem.get("@skillId", ""),
-                    "level": int(xml_sgroup.get("@level", "20")),
-                    "qualityId": xml_gem.get("@qualityId", ""),
-                    "quality": int(xml_sgroup.get("@quality", "0")),
-                    "count": int(xml_sgroup.get("@count", "1")),
-                    "enableGlobal1": str_to_bool(xml_sgroup.get("@enableGlobal1", "True")),
-                    "enableGlobal2": str_to_bool(xml_sgroup.get("@enableGlobal2", "True")),
-                    "gemId": xml_gem.get("@gemId", ""),
-                }
-                sgroup["Gems"].append(gem)
+            # Some socket groups have no skills in them as content creators just use the label.
+            if xml_gem != bad_text:
+                if type(xml_gem) is dict:
+                    xml_gem = [xml_gem]
+                for xml_gem in xml_gem:
+                    """
+                    new >=v3.23
+                    gemId="Metadata/Items/Gems/SupportGemFeedingFrenzy" 	->base_gems skillId
+                    variantId="FeedingFrenzySupport" 						->base_gems Dict Key
+                    skillId="SupportMinionOffensiveStance" 					->base_gems grantedEffectId
+                    nameSpec="Feeding Frenzy"								->base_gems grantedEffect.name
+
+                    old <3.23
+                    gemId="Metadata/Items/Gems/SupportGemFeedingFrenzy"		->base_gems skillId
+                    skillId="FeedingFrenzySupport"							->base_gems Dict Key
+                    nameSpec="Feeding Frenzy"								->base_gems grantedEffect.name
+                    """
+                    variantId = xml_gem.get("@variantId", bad_text)
+                    if variantId == bad_text:
+                        #old pre 3.23 xml
+                        xml_gem.set("@variantId", xml_gem.get("@skillId", ""))
+                        xml_gem.set("@skillId", "")
+
+                    gem = {
+                        "enabled": str_to_bool(xml_sgroup.get("@enabled", "True")),
+                        "nameSpec": xml_gem.get("@nameSpec", ""),
+                        "variantId": xml_gem.get("@variantId", ""),
+                        "skillId": xml_gem.get("@skillId", ""),
+                        "level": int(xml_sgroup.get("@level", "20")),
+                        "qualityId": xml_gem.get("@qualityId", ""),
+                        "quality": int(xml_sgroup.get("@quality", "0")),
+                        "count": int(xml_sgroup.get("@count", "1")),
+                        "enableGlobal1": str_to_bool(xml_sgroup.get("@enableGlobal1", "True")),
+                        "enableGlobal2": str_to_bool(xml_sgroup.get("@enableGlobal2", "True")),
+                        "gemId": xml_gem.get("@gemId", ""),
+                    }
+                    sgroup["Gems"].append(gem)
             skillset["SGroups"].append(sgroup)
         skills["SkillSets"].append(skillset)
 
@@ -587,7 +622,7 @@ def load_from_xml(filename):
         xml_items["ItemSet"] = [xml_items["ItemSet"]]
     for xml_itemset in xml_items["ItemSet"]:
         json_set = {
-            "title": xml_itemset.get("@title", ""),
+            "title": remove_lua_colours(xml_itemset.get("@title", "")),
             "id": int(xml_itemset.get("@id", "0")) - 1,
             "useSecondWeaponSet": str_to_bool(xml_itemset.get("@useSecondWeaponSet", "False")),
             "Slots": {},
@@ -601,6 +636,45 @@ def load_from_xml(filename):
         json_PoB["Items"]["ItemSets"].append(json_set)
 
     return new_build
+
+
+def save_item_to_xml(self):
+    """
+    Save internal structures back to a xml object. Not used.
+
+    :return: xml.etree.ElementTree:
+    """
+    text = f"Rarity: {self.rarity}\n"
+    text += self.title and f"{self.title}\n{self.base_name}\n" or f"{self.base_name}\n"
+    text += f"Unique ID: {self.unique_id}\n"
+    text += f"Item Level: {self.ilevel}\n"
+    text += f"Quality: {self.quality}\n"
+    if self.sockets:
+        text += f"Sockets: {self.sockets}\n"
+    text += f"LevelReq: {self.level_req}\n"
+    for influence in self.influences:
+        text += f"{influence}\n"
+    for requirement in self.requires.keys():
+        text += f"Requires {requirement} {self.requires[requirement]}\n"
+    if type(self.properties) is dict:
+        for prop in self.properties.keys():
+            text += f"{prop}: {self.properties[prop]}\n"
+    text += f"Implicits: {len(self.implicitMods)}\n"
+    for mod in self.implicitMods:
+        text += f"{mod.text_for_xml}\n"
+    for mod in self.full_explicitMods_list:
+        text += f"{mod.text_for_xml}\n"
+    for mod in self.crucibleMods:
+        text += f"{mod.text_for_xml}\n"
+    for mod in self.fracturedMods:
+        text += f"{mod.text_for_xml}\n"
+    if self.corrupted:
+        text += "Corrupted"
+
+    # if debug_print:
+    #     print(f"{text}\n\n")
+    return ET.fromstring(f'<Item id="{self.id}">{text}</Item>')
+    # save
 
 
 def save_to_xml(filename, build):

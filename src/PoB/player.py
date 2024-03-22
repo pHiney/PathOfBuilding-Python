@@ -4,15 +4,16 @@ A unique Player is defined by: level, class selection, ascendancy selection,
 skill selection, and itemization across the item sets.
 """
 
+from copy import deepcopy
 import math
 import re
-import xml.etree.ElementTree as ET
 
 from PySide6.QtWidgets import QLabel, QSpinBox
 
 from PoB.constants import PlayerClasses, bad_text, default_max_charges, extraSaveStats, player_stats_list
 from ui.PoB_Main_Window import Ui_MainWindow
-from widgets.ui_utils import format_number, print_call_stack, search_stats_list_for_regex
+from PoB.utils import format_number, print_call_stack
+from widgets.ui_utils import search_stats_list_for_regex
 
 # 2 base accuracy per level.
 # 50 life and gains additional 12 life per level.
@@ -70,21 +71,21 @@ class Player:
     def __repr__(self) -> str:
         return f"Level {self.level} {self.player_class.name}"
 
-    def load(self, _build):
+    def load(self, _build, minion=False):
         """
         ToDo: Should we load and keep stats - or clear them ???
         Load stats from the build object, even ones we may not be able to deal with (except table entries).
         We keep valid entries that we may not yet support so that we don't destroy another tool's ability
 
-        :param _build: build xml
+        :param _build: build json dict
+        :param minion: bool
         :return: N/A
         """
-        self.clear()
         self.json_build = _build
+        self.minion = minion
         # Strip all stats. They are only there for third party tools. We will do our own calcs and save them.
         stat_name = self.minion and "MinionStat" or "PlayerStat"
-        for stat in self.json_build[stat_name]:
-            self.json_build.remove(stat)
+        self.json_build[stat_name].clear()
 
     def save(self):
         """
@@ -94,34 +95,34 @@ class Player:
         """
         stat_name = self.minion and "MinionStat" or "PlayerStat"
         # Remove everything and then add ours
-        for stat in self.json_build[stat_name]:
-            self.json_build.remove(stat)
-        for name in self.stats:
-            if self.stats[name]:
-                self.json_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+        # for stat in self.json_build[stat_name]:
+        #     self.json_build.remove(stat)
+        # for name in self.stats:
+        #     if self.stats[name]:
+        #         self.json_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
         # Stats that are included in the build xml but not shown on the left hand side of the PoB window.
-        for name in extraSaveStats:
-            if self.stats.get(name, None):
-                self.json_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+        # for name in extraSaveStats:
+        #     if self.stats.get(name, None):
+        #         self.json_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
 
-    def save_to_xml(self, xml_build):
-        """
-        Save internal structures back to the build object
-
-        :param xml_build: build xml
-        :return: N/A
-        """
-        stat_name = self.minion and "MinionStat" or "PlayerStat"
-        # Remove everything and then add ours
-        for stat in xml_build.findall(stat_name):
-            xml_build.remove(stat)
-        for name in self.stats:
-            if self.stats[name]:
-                xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
-        # Stats that are included in the build xml but not shown on the left hand side of the PoB window.
-        for name in extraSaveStats:
-            if self.stats.get(name, None):
-                xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+    # def save_to_xml(self, xml_build):
+    #     """
+    #     Save internal structures back to the build object
+    #
+    #     :param xml_build: build xml
+    #     :return: N/A
+    #     """
+    #     stat_name = self.minion and "MinionStat" or "PlayerStat"
+    #     # Remove everything and then add ours
+    #     for stat in xml_build.findall(stat_name):
+    #         xml_build.remove(stat)
+    #     for name in self.stats:
+    #         if self.stats[name]:
+    #             xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
+    #     # Stats that are included in the build xml but not shown on the left hand side of the PoB window.
+    #     for name in extraSaveStats:
+    #         if self.stats.get(name, None):
+    #             xml_build.append(ET.fromstring(f'<{stat_name} stat="{name}" value="{self.stats[name]}" />'))
 
     def calc_stats(self, active_items, test_item=None, test_node=None):
         """
