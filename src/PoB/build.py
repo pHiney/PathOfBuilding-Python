@@ -81,18 +81,18 @@ class Build:
         # self.xml_items = None
         self.xml_config = None
 
-        self.json = empty_build
-        self.json_PoB = empty_build["PathOfBuilding"]
-        self.json_build = self.json_PoB["Build"]
-        self.json_import_field = self.json_PoB["Import"]
-        self.json_items = self.json_PoB["Items"]
-        self.json_skills = self.json_PoB["Skills"]
-        self.json_tree = self.json_PoB["Tree"]
-        self.json_config = self.json_PoB["Config"]
-        self.json_calcs = self.json_PoB["Calcs"]
-        self.json_tree_view = self.json_PoB["TreeView"]
-        self.json_notes = self.json_PoB["Notes"]
-        self.json_notes_html = None
+        # self.json = deepcopy(empty_build)
+        # self.json_PoB = self.json["PathOfBuilding"]
+        # self.json_build = self.json_PoB["Build"]
+        # self.json_import_field = self.json_PoB["Import"]
+        # self.json_items = self.json_PoB["Items"]
+        # self.json_skills = self.json_PoB["Skills"]
+        # self.json_tree = self.json_PoB["Tree"]
+        # self.json_config = self.json_PoB["Config"]
+        # self.json_calcs = self.json_PoB["Calcs"]
+        # self.json_tree_view = self.json_PoB["TreeView"]
+        # self.json_notes = self.json_PoB["Notes"]
+        # self.json_notes_html = self.json_PoB["NotesHTML"]
 
         self.last_account_hash = ""
         self.last_character_hash = ""
@@ -110,7 +110,7 @@ class Build:
            """
         # ToDo: xml. Remove. json intializes correctly
         # self.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
-        self.new(empty_build)
+        self.new(None)
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}', {self.current_tree.version}"
@@ -124,8 +124,8 @@ class Build:
     def name(self, new_name):
         self._name = new_name
         self.win.setWindowTitle(f"{program_title} - {new_name}")
-        if new_name != "Default" and (self.filename == "" or self.filename == "Default"):
-            self.filename = new_name
+        # if new_name != "Default" and (self.filename == "" or self.filename == "Default"):
+        #     self.filename = new_name
 
     @property
     def current_class(self) -> int:
@@ -232,17 +232,17 @@ class Build:
     def targetVersion(self, new_version):
         self.json_build["targetVersion"] = new_version
 
-    @property
-    def version_int(self) -> int:
-        return self.json_build.get("version", 2)
-
-    @property
-    def version(self) -> int:
-        return self.json_build.get("version", 2)
-
-    @version.setter
-    def version(self, curr_ver):
-        self.json_build["version"] = int(curr_ver)
+    # @property
+    # def version_int(self) -> int:
+    #     return self.json_build.get("version", 2)
+    #
+    # @property
+    # def version(self) -> int:
+    #     return self.json_build.get("version", 2)
+    #
+    # @version.setter
+    # def version(self, curr_ver):
+    #     self.json_build["version"] = int(curr_ver)
 
     @property
     def viewMode(self) -> str:
@@ -386,32 +386,26 @@ class Build:
 
     def new(self, build_obj):
         """
-        Common function to load functions. Fill internal variables from the xml or json.
+        Common function to load functions. Fill internal variables from the json.
 
-        :param build_obj: xml tree object from loading the source XML or the default one.
+        :param build_obj: dict object from loading the source json or the default one.
         :return: N/A
         """
         # print(f"build.new: {type(build_obj)}")
         if build_obj is None:
-            build_obj = empty_build
-            self.json_PoB = build_obj["PathOfBuilding"]
-        elif type(build_obj) is ET:
-            self.load_from_xml(build_obj)  # will setup self.json_PoB
-        elif type(build_obj) is dict:
-            self.json = build_obj
-            self.json_PoB = build_obj["PathOfBuilding"]
-        else:
+            build_obj = deepcopy(empty_build)
+            self.name = "Default"
+        elif type(build_obj) is not dict:
             # Some other bullsh*t thing, we are going to ignore.
             return
-        # So now self.json_PoB is valid
-        # print("build.new: json", build_obj)
+
+        self.json = build_obj
+        self.json_PoB = self.json["PathOfBuilding"]
         self.json_build = self.json_PoB["Build"]
         self.json_import_field = self.json_PoB["Import"]
         self.json_items = self.json_PoB["Items"]
         self.json_skills = self.json_PoB["Skills"]
-        # print(f"build.new: {self.json_tree=}")
         self.json_tree = self.json_PoB["Tree"]
-        # print(f"build.new: {self.json_skills=}")
         self.json_config = self.json_PoB["Config"]
         self.json_calcs = self.json_PoB["Calcs"]
         self.json_tree_view = self.json_PoB["TreeView"]
@@ -449,22 +443,16 @@ class Build:
                     self.tr("Close"),
                 )
             self.new(_build_pob)
+            return
 
         self.filename = filename
         self.name = Path(Path(filename).name).stem
-        if self.version_int == 1:
-            # Custom Mods has newlines in it, but python XML turns them into a space.
-            custom_mods = read_v1_custom_mods(filename)
-            if custom_mods:
-                # add in a str of custom mods
-                self.set_config_tag_item("Input", "customMods", custom_mods)
 
     def save_to_json(self):
         """
         Save the build to the filename recorded in the build Class
         :return: N/A
         """
-        self.version = 2
         self.json_import_field["lastAccountHash"] = self.last_account_hash
         self.json_import_field["lastCharacterHash"] = self.last_character_hash
         self.json_import_field["lastRealm"] = self.last_realm
@@ -478,6 +466,8 @@ class Build:
         # ensure these get updated to match the last tree shown (these are properties and will trigger their own save to the dict)
         self.className = self.current_spec.classId_str()
         self.ascendClassName = self.current_spec.ascendClassId_str()
+
+        write_json(self.filename, self.json)
 
     def save_to_xml(self):
         """
@@ -518,20 +508,6 @@ class Build:
         # print("config")
         # print(ET.tostring(self.xml_config, encoding='utf8').decode('utf8'))
         """Debug Please leave until build is mostly complete"""
-
-    def save_build_to_file(self, filename):
-        """
-        Save the build to file. Separated from the save routine above so export can use the above save routine.
-
-        :param filename: str:
-        :return: N/A
-        """
-        if "json" in filename:
-            write_json(filename, self.json)
-        elif "xml" in filename:
-            write_xml(filename, self.xml_PoB)
-        # Do nothing if something wierd
-        self.name = Path(Path(filename).name).stem
 
     def ask_for_save_if_modified(self):
         """

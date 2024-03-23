@@ -12,11 +12,12 @@ from PoB.constants import (
     default_view_mode,
     empty_build,
     empty_item_dict,
+    empty_item_slots_dict,
     influencers,
     starting_scion_node,
 )
 from PoB.pob_file import read_xml_as_dict
-from PoB.utils import html_colour_text, str_to_bool, index_exists
+from PoB.utils import _debug, html_colour_text, str_to_bool, index_exists
 
 """ ################################################### XML ################################################### """
 
@@ -117,7 +118,8 @@ def write_xml(filename, _tree):
 
 def read_v1_custom_mods(filename):
     """
-    Read the v1 xml customMods. These are line separated and will be lost when read from XML
+    Read the v1 xml customMods. These are linefeed separated and the linefeed will be lost when read from XML as a dict.
+    Reread the file as an ET.xml and get the custom mods.
     :param filename: Name of xml to be read
     :return: str: with \n encoded in it.
     """
@@ -263,7 +265,7 @@ def load_item_from_xml(xml, debug_lines=False):
 
     # debug_lines = True
     items_free_text = xml["#text"]
-    json_item["id"] = xml.get("@id", 0)
+    json_item["id"] = int(xml.get("@id", "0"))
     if "Alt Variant" in items_free_text:
         json_item["Alt Variants"] = {}
     if "Variant:" in items_free_text:
@@ -275,9 +277,9 @@ def load_item_from_xml(xml, debug_lines=False):
     #   stolen from https://stackoverflow.com/questions/7630273/convert-multiline-into-list
     lines = [y for y in (x.strip(" \t\r\n") for x in items_free_text.splitlines()) if y]
     # The first line has to be rarity !!!!
-    line = lines.pop(0)
-    if "Rarity" not in line.lower():
-        print("Error: Dave, I don't know what to do with this:\n", items_free_text)
+    line = lines.pop(0).strip()
+    if "rarity" not in line.lower():
+        _debug(f"Error: Dave, I don't know what to do with this:\n{line=}", items_free_text)
         return False
     m = re.search(r"(.*): (.*)", line)
     json_item["Rarity"] = m.group(2).upper()
@@ -412,15 +414,22 @@ def load_from_xml(filename):
                 # input.pop("@name")
                 _name = _dict.pop("@name")
                 _value = ""
-                key = [key for key in _dict.keys()]
-                match key[0]:
-                    case "@string":
-                        _value = _dict["@string"]
-                    case "@number":
-                        _value = int(_dict["@number"])
-                    case "@number":
-                        _value = str_to_bool(_dict["@number"])
-                _dst[_name] = _value
+                try:
+                    key = [key for key in _dict.keys()][0]
+                    match key:
+                        case "@string":
+                            _value = _dict[key]
+                            if _name == "customMods":
+                                # EG:
+                                #   ['name="customMods" string="+1 to Maximum Endurance Charges\n+14% increased maximum Life\n']
+                                _value = read_v1_custom_mods(filename).replace("\n", "~^")
+                        case "@boolean":
+                            _value = str_to_bool(_dict[key])
+                        case "@number":
+                            _value = int(_dict[key])
+                    _dst[_name] = _value
+                except KeyError:
+                    continue
 
     # ToDo: Complete
     xml_PoB = read_xml_as_dict(filename)
@@ -553,9 +562,9 @@ def load_from_xml(filename):
             "title": remove_lua_colours(xml_skillset.get("@title", "Default")),
             "SGroups": [],
         }
-        if type(xml_skillset["Skill"]) is dict:
+        if type(xml_skillset.get("Skill", bad_text)) is dict:
             xml_skillset["Skill"] = [xml_skillset["Skill"]]
-        for xml_sgroup in xml_skillset["Skill"]:
+        for xml_sgroup in xml_skillset.get("Skill", []):
             xml_gem = xml_sgroup.get("Gem", bad_text)
             sgroup = {
                 "enabled": str_to_bool(xml_sgroup.get("@enabled", "True")),
@@ -585,9 +594,9 @@ def load_from_xml(filename):
                     """
                     variantId = xml_gem.get("@variantId", bad_text)
                     if variantId == bad_text:
-                        #old pre 3.23 xml
-                        xml_gem.set("@variantId", xml_gem.get("@skillId", ""))
-                        xml_gem.set("@skillId", "")
+                        # pre 3.23 xml
+                        xml_gem["@variantId"] = xml_gem.get("@skillId", "")
+                        xml_gem["@skillId"] = ""
 
                     gem = {
                         "enabled": str_to_bool(xml_sgroup.get("@enabled", "True")),
@@ -627,12 +636,18 @@ def load_from_xml(filename):
             "useSecondWeaponSet": str_to_bool(xml_itemset.get("@useSecondWeaponSet", "False")),
             "Slots": {},
         }
-        for slot in xml_itemset["Slot"]:
+        # The xml has too much slot info, like "Belt Abyssal Socket 6". Use our dictioary to pick out wanted entries
+        slots = {}
+        for slot in empty_item_slots_dict.keys():
             try:
                 # any errors here will just result in a slot not being set.
-                json_set["Slots"][slot["@name"]] = {"itemId": int(slot["@itemId"]), "itemPbURL": slot.get("@itemPbURL", "")}
+                slot_xml = xml_itemset.get(slot, bad_text)
+                if slot_xml != bad_text:
+                    slots[slot] = {"itemId": int(slot_xml["@itemId"]), "itemPbURL": slot_xml.get("@itemPbURL", "")}
             except KeyError:
                 pass
+        json_set["Slots"] = slots
+        print(f"{slots=}")
         json_PoB["Items"]["ItemSets"].append(json_set)
 
     return new_build

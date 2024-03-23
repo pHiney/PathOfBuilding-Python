@@ -266,31 +266,30 @@ class GemUI(QWidget):
         self.spin_gem_count.setVisible("Support" not in new_value)
         if new_value == "":
             return
-        # try:
-        print(f"variantId: {new_value=}")
-        self.ggg_gem = self.gems_by_name_or_id[new_value]
-        self.coloured_text = self.ggg_gem.get("coloured_text")
-        # set the editbox portion of combobox to the correct colour
-        colour = self.ggg_gem.get("colour", ColourCodes.NORMAL.value)
-        self.combo_gem_list.setStyleSheet(f"QComboBox:!editable {{color: {colour}}}")
+        try:
+            self.ggg_gem = self.gems_by_name_or_id[new_value]
+            self.coloured_text = self.ggg_gem.get("coloured_text")
+            # set the editbox portion of combobox to the correct colour
+            colour = self.ggg_gem.get("colour", ColourCodes.NORMAL.value)
+            self.combo_gem_list.setStyleSheet(f"QComboBox:!editable {{color: {colour}}}")
 
-        # If the comboBox was empty before calling this function, then return
-        if self.gem is None:
-            return
-        self.gem["variantId"] = new_value
-        self.nameSpec = self.combo_gem_list.currentText()
-        self.gem["skillId"] = self.ggg_gem["grantedEffectId"]
+            # If the comboBox was empty before calling this function, then return
+            if self.gem is None:
+                return
+            self.gem["variantId"] = new_value
+            self.nameSpec = self.combo_gem_list.currentText()
+            self.gem["skillId"] = self.ggg_gem["grantedEffectId"]
 
-        self.support = self.ggg_gem.get("support", False)
-        self.levels.append(self.ggg_gem["grantedEffect"]["levels"])
-        self.max_reqDex = self.ggg_gem.get("reqDex", 0)
-        self.max_reqInt = self.ggg_gem.get("reqInt", 0)
-        self.max_reqStr = self.ggg_gem.get("reqStr", 0)
-        self.naturalMaxLevel = self.ggg_gem.get("naturalMaxLevel", 20)
+            self.support = self.ggg_gem.get("support", False)
+            self.levels.append(self.ggg_gem["grantedEffect"]["levels"])
+            self.max_reqDex = self.ggg_gem.get("reqDex", 0)
+            self.max_reqInt = self.ggg_gem.get("reqInt", 0)
+            self.max_reqStr = self.ggg_gem.get("reqStr", 0)
+            self.naturalMaxLevel = self.ggg_gem.get("naturalMaxLevel", 20)
 
-        # except KeyError:
-        #     print("Error in variantId: variantId setter.")
-        #     pass
+        except KeyError:
+            print("Error in variantId: variantId setter.")
+            pass
 
     def set_triggers(self):
         """Setup triggers to save information back the dict"""

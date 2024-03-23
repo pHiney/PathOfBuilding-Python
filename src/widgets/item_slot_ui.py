@@ -1,6 +1,7 @@
 """
 A class to show and manage the item slots ui on the left hand side of the Items tab.
 """
+
 from copy import deepcopy
 
 from PySide6.QtCore import Slot, QSize, Qt
@@ -80,7 +81,7 @@ class ItemSlotUI(QWidget):
             self.cb_active = None
 
     @property
-    def current_item_id(self):
+    def current_item_id(self) -> int:
         """Get the id number of the combo's current entry"""
         item = self.combo_item_list.currentData()
         if item == 0:  # "None"

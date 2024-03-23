@@ -837,18 +837,22 @@ class ItemsUI:
         #     json_items.append(self.itemlist_by_id[_id].save_v2())
 
         # As these entries do not delete if not used, remove the old entries, and add the new ones.
-        self.current_itemset["Slots"] = deepcopy(empty_item_slots_dict)
+        # self.current_itemset["Slots"] = deepcopy(empty_item_slots_dict)
+        self.current_itemset["Slots"].clear()
         for slot_ui_name in self.item_slot_ui_list:
             slot_ui = self.item_slot_ui_list[slot_ui_name]
-            json_self_slot_ui = self.current_itemset["Slots"][slot_ui_name]
-            json_self_slot_ui["itemId"] = slot_ui.current_item_id
-            if "Flask" in slot_ui_name:
-                json_self_slot_ui["active"] = slot_ui.active
-            json_self_slot_ui["itemPbURL"] = slot_ui.itemPbURL
+            # json_self_slot_ui = self.current_itemset["Slots"][slot_ui_name]
+            if slot_ui.current_item_id != 0:
+                json_self_slot_ui = {"itemId": slot_ui.current_item_id, "itemPbURL": slot_ui.itemPbURL}
+                if "Flask" in slot_ui_name:
+                    json_self_slot_ui["active"] = slot_ui.active
+                self.current_itemset["Slots"][slot_ui_name] = json_self_slot_ui
         self.activeItemSet = self.win.combo_ItemSet.currentIndex()
         # Renumber skillsets in case they have been moved, created or deleted.
         for idx, _set in enumerate(self.items["ItemSets"]):
             _set["id"] = idx
+        for _id in self.itemlist_by_id:
+            self.items["Items"].append(self.itemlist_by_id[_id].save())
         return self.items
 
     # def save_to_xml(self):
@@ -925,13 +929,16 @@ class ItemsUI:
                 slot_ui.setHidden(True)
 
             """ Process the Slot entries and set default items"""
-            # ToDo: This is for XML. Move re.sub to the load xml part
             slots = self.current_itemset.get("Slots", {})
             if slots:
+                print(f"slots=")
                 for _name, value in slots.items():
                     item_id = value.get("itemId", -1)
                     if item_id >= 0:
-                        slot_ui: ItemSlotUI = self.item_slot_ui_list[_name]
+                        # check for bad naming, like "Belt Abyssal Socket 6"
+                        slot_ui: ItemSlotUI = self.item_slot_ui_list.get(_name, None)
+                        if slot_ui is None:
+                            continue
                         # Clear the slot if not used
                         if item_id == 0:
                             slot_ui.clear_default_item()
@@ -1057,12 +1064,12 @@ class ItemsUI:
         :param new_name: str: the new set's name
         :return: xml.etree.ElementTree: The new set
         """
-        new_set = deepcopy(self.items[index])
+        new_set = deepcopy(self.itemsets[index])
         index += 1
-        new_set.set("title", new_name)
+        new_set["title"] = new_name
         self.itemsets.insert(index, new_set)
         self.disconnect_item_triggers()
-        self.win.combo_ItemSet.insertItem(index, new_set.get("title", "Default"), new_set)
+        self.win.combo_ItemSet.insertItem(index, new_name, new_set)
         self.connect_item_triggers()
         return new_set
 

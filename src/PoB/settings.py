@@ -362,7 +362,7 @@ class Settings:
         # get all builds into an object so we can delete them from the live xml tree without crashing
         builds = _recent.findall("build")
         for build in builds:
-            if not Path(build.text).exists():
+            if build.text is None or build.text == "" or not Path(build.text).exists():
                 _recent.remove(build)
         builds = _recent.findall("build")
         for idx, build in enumerate(builds):

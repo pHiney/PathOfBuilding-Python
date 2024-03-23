@@ -3,12 +3,11 @@ Utilities for the UI that do not have dependencies on MainWindow
 """
 
 from copy import deepcopy
+import re
 
 from PySide6.QtCore import Qt, QMargins, QPoint, QRect, QSize
 from PySide6.QtGui import QAbstractTextDocumentLayout, QPalette, QTextDocument
 from PySide6.QtWidgets import QApplication, QComboBox, QProxyStyle, QStyle, QStyleOptionViewItem, QStyledItemDelegate
-
-from PoB.constants import ColourCodes, pob_debug, locale, empty_build
 
 
 def search_stats_list_for_regex(stat_list, regex, default_value, debug=False) -> list:

@@ -70,7 +70,7 @@ class SkillsUI:
         self.settings = _settings
         self.build = _build
         self.win = _win
-        self.skills = empty_skill_dict
+        self.skills = deepcopy(empty_skill_dict)
         # list of elements for the SkillSet
         self.skillsets = self.skills["SkillSets"]
 
@@ -87,7 +87,7 @@ class SkillsUI:
         self.dlg = None  # Is a dialog active
 
         # dictionary for holding the GemUI representions of the gems in each socket group
-        self.gem_ui_list = {}
+        # self.gem_ui_list = {}
 
         self.win.list_SocketGroups.set_delegate()
 
@@ -315,6 +315,7 @@ class SkillsUI:
           so we only need to get the other UI widget's values
         :return : xml.etree.ElementTree
         """
+        self.save_socket_group_settings(None)
         self.sortGemsByDPS = self.win.check_SortByDPS.isChecked()
         self.showAltQualityGems = self.win.check_ShowGemQualityVariants.isChecked()
         self.sortGemsByDPSField = self.win.combo_SortByDPS.currentData()
@@ -323,6 +324,8 @@ class SkillsUI:
         self.defaultGemQuality = self.win.spin_DefaultGemQuality.value()
         self.activeSkillSet = self.win.combo_SkillSet.currentIndex()
         # Renumber skillsets in case they have been moved, created or deleted.
+        for idx, _set in enumerate(self.skills["SkillSets"]):
+            _set["id"] = idx
         # print(f"skill_ui: save_to_json: {self.skills=}")
         return self.skills
 
@@ -650,10 +653,9 @@ class SkillsUI:
         :param new_name: str: the new set's name
         :return: xml.etree.ElementTree: The new set
         """
-        _set = deepcopy(self.skillsets[index])
+        new_skillset = deepcopy(self.skillsets[index])
         index += 1
-        new_skillset = _set.copy()
-        new_skillset.set("title", new_name)
+        new_skillset["title"] = new_name
         self.skillsets.insert(index, new_skillset)
         self.disconnect_skill_triggers()
         self.win.combo_SkillSet.insertItem(index, new_name, new_skillset)
@@ -674,6 +676,17 @@ class SkillsUI:
     """
     ################################################### SOCKET GROUP ###################################################
     """
+
+    def load_main_skill_combo(self):
+        """
+        Load the left hand socket group (under "Main Skill") controls
+
+        :return: N/A
+        """
+        self.win.load_main_skill_combo(
+            # whatsThis has the un-coloured/un-altered text
+            [self.win.list_SocketGroups.item(i).whatsThis() for i in range(self.win.list_SocketGroups.count())]
+        )
 
     def define_socket_group_label(self, item=None, group=None):
         """
@@ -796,7 +809,7 @@ class SkillsUI:
         """Create a new socket group. Actions for when the new socket group button is pressed."""
         # print("new_socket_group")
         # Add new group to xml and Socket Group list, and then show the update
-        new_socket_group = empty_socket_group_dict
+        new_socket_group = deepcopy(empty_socket_group_dict)
         if self.current_skill_set is None:
             self.current_skill_set = self.new_skill_set()
         self.current_skill_set["SGroups"].append(new_socket_group)
@@ -806,17 +819,6 @@ class SkillsUI:
         # Trigger the filling out of the right hand side UI elements using change_socket_group -> load_socket_group
         self.win.list_SocketGroups.setCurrentRow(idx)
         return new_socket_group
-
-    def load_main_skill_combo(self):
-        """
-        Load the left hand socket group (under "Main Skill") controls
-
-        :return: N/A
-        """
-        self.win.load_main_skill_combo(
-            # whatsThis has the un-coloured/un-altered text
-            [self.win.list_SocketGroups.item(i).whatsThis() for i in range(self.win.list_SocketGroups.count())]
-        )
 
     def clear_socket_group_settings(self):
         """
@@ -888,7 +890,7 @@ class SkillsUI:
                 for idx, gem in enumerate(self.current_socket_group["Gems"]):
                     self.create_gem_ui(idx, gem)
                 # Create an empty gem at the end
-                self.create_gem_ui(len(self.gem_ui_list), None)
+                self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
 
         self.connect_skill_triggers()
 
@@ -897,15 +899,15 @@ class SkillsUI:
         """
         Actions for when the socket group settings are altered. Save to xml. Do *NOT* call internally.
 
-        :param Any: Some sort of info for a widget. EG: checked state for a checkBox, text for a comboBox.
+        :param info: Some sort of info for a widget. EG: checked state for a checkBox, text for a comboBox.
         :return: N/A
         """
         if self.current_socket_group is not None:
             # print(f"save_socket_group_settings, {type(info)}, '{info}'")
-            self.current_socket_group.set("slot", self.win.combo_SocketedIn.currentText())
-            self.current_socket_group.set("label", self.win.lineedit_SkillLabel.text())
-            self.current_socket_group.set("enabled", bool_to_str(self.win.check_SocketGroupEnabled.isChecked()))
-            self.current_socket_group.set("includeInFullDPS", bool_to_str(self.win.check_SocketGroup_FullDPS.isChecked()))
+            self.current_socket_group["slot"] = self.win.combo_SocketedIn.currentText()
+            self.current_socket_group["label"] = self.win.lineedit_SkillLabel.text()
+            self.current_socket_group["enabled"] = self.win.check_SocketGroupEnabled.isChecked()
+            self.current_socket_group["includeInFullDPS"] = self.win.check_SocketGroup_FullDPS.isChecked()
             item = self.win.list_SocketGroups.currentItem()
             # stop a recursion error as save_socket_group_settings is called from define_socket_group_label as well
             if info is not None:
@@ -974,7 +976,7 @@ class SkillsUI:
     ################################################### GEM UI ###################################################
     """
 
-    def gem_ui_notify(self, w_item):
+    def gem_ui_notify(self, w_item: QListWidgetItem):
         """
         React to a wigdet change from an instance of GemUI(), where that widget is not the remove button.
 
@@ -982,15 +984,15 @@ class SkillsUI:
         :return: N/A
         """
         row = self.win.list_Skills.row(w_item)
-        # print(f"skills_ui: gem_ui_notify: {w_item=}, {row=}")
         gem_ui: GemUI = self.win.list_Skills.itemWidget(w_item)
-        # print("gem_ui_notify", item, row, gem_ui)
+        print(f"gem_ui_notify1:, {w_item.text()=}, {row=}, {gem_ui=}")
         # If gem_ui.gem *is* in self.current_socket_group["Gems"], then we are altering an existing gemUI, and don't add it.
         if gem_ui.gem is not None and gem_ui.variantId != "" and gem_ui.gem not in self.current_socket_group["Gems"]:
             self.current_socket_group["Gems"].append(gem_ui.gem)
-            # print(f"gem_ui_notify: {gem_ui.variantId} not found, adding.")
+            print(f"gem_ui_notify2: {gem_ui.variantId} not found, adding.")
+            print(self.skills)
             # Create an empty gem at the end
-            self.create_gem_ui(len(self.gem_ui_list), None)
+            self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
         self.update_socket_group_labels()
         self.load_main_skill_combo()
 
@@ -1019,19 +1021,13 @@ class SkillsUI:
 
         :return: N/A
         """
-        # print(
-        #     f"clear_gem_ui_list, len(self.gem_ui_list)={len(self.gem_ui_list)},"
-        #     f"self.win.list_Skills.count()={self.win.list_Skills.count()}"
-        # )
-        for idx, item in enumerate(self.win.list_Skills.items(None)):
-            # item = self.win.list_Skills.item(idx)
-            gem_ui = self.win.list_Skills.itemWidget(item)
+        # print(f"clear_gem_ui_list, self.win.list_Skills.count()={self.win.list_Skills.count()}")
+        for idx, w_item in enumerate(self.win.list_Skills.items(None)):
+            gem_ui = self.win.list_Skills.itemWidget(w_item)
             # print("clear_gem_ui_list", idx)
             if gem_ui is not None and gem_ui.gem is not None:
                 # Don't notify, cause that causes a loop
                 gem_ui.save(False)
-            # del gem_ui
-        # self.gem_ui_list.clear()
         self.win.list_Skills.clear()
 
     def remove_gem_ui(self, index):
@@ -1041,14 +1037,14 @@ class SkillsUI:
         :param index: int: index of frame/GemUI() to remove
         :return:
         """
-        return
-        #     print("remove_gem_ui")
-        #     if index_exists(self.gem_ui_list, index):
-        #         # self.current_skill_set[_index].remove(self.gem_ui_list[index].gem)
-        #         del self.gem_ui_list[index]
-        #     # update all gem_ui's index in case the one being deleted was in the middle
-        #     for idx, key in enumerate(self.gem_ui_list.keys()):
-        #         self.gem_ui_list[key].index = idx
+        print("remove_gem_ui")
+        if index_exists(self.gem_ui_list, index):
+            self.current_socket_group["Gems"].remove(index)
+            # self.current_skill_set[_index].remove(self.gem_ui_list[index].gem)
+            del self.gem_ui_list[index]
+        # update all gem_ui's index in case the one being deleted was in the middle
+        for idx, key in enumerate(self.gem_ui_list.keys()):
+            self.gem_ui_list[key].index = idx
 
     @Slot()
     def gems_remove_checkbox_selected(self, item, gem_ui):
@@ -1165,15 +1161,15 @@ class SkillsUI:
                         self.check_socket_group_for_an_active_gem(current_socket_group)
                         current_socket_group_number = this_group
                         current_socket_group = self.new_socket_group()
-                        current_socket_group.set("slot", slot_map[item["inventoryId"]])
-                    _gem = empty_gem_dict
+                        current_socket_group["slot"] = slot_map[item["inventoryId"]]
+                    _gem = deepcopy(empty_gem_dict)
                     current_socket_group.append(_gem)
-                    _gem.set("level", get_property(json_gem, "Level", 1))
-                    _gem.set("quality", get_property(json_gem, "Quality", 0))
+                    _gem["level"] = get_property(json_gem, "Level", 1)
+                    _gem["quality"] = get_property(json_gem, "Quality", 0)
 
                     _name = json_gem["baseType"].replace(" Support", "")
-                    _gem.set("nameSpec", _name)
-                    _gem.set("skillId", self.gems_by_name_or_id[_name]["skillId"])
+                    _gem["nameSpec"] = _name
+                    _gem["skillId"] = self.gems_by_name_or_id[_name]["skillId"]
 
                     base_item = self.gems_by_name_or_id[_name]["base_item"]
                     print(f"skills_ui.import_gems_ggg_json: skipping gemId=id {base_item.get('id')}")
@@ -1181,7 +1177,7 @@ class SkillsUI:
                     # _gem.set("gemId", base_item.get("id"))
 
                     q = json_gem.get("typeLine", "Anomalous")
-                    _gem.set("qualityId", quality_id[q])
+                    _gem["qualityId"] = quality_id[q]
 
                 self.check_socket_group_for_an_active_gem(current_socket_group)
 
@@ -1201,17 +1197,17 @@ class SkillsUI:
             current_socket_group = self.new_socket_group()
             _slot = json_group.get("equipmentSlot", "")
             if _slot != "":
-                current_socket_group.set("slot", slot_map[_slot.title()])
+                current_socket_group["slot"] = slot_map[_slot.title()]
             for idx, json_gem in enumerate(json_group.get("skillGems")):
-                _gem = empty_gem_dict
+                _gem = deepcopy(empty_gem_dict)
                 current_socket_group.append(_gem)
-                _gem.set("level", json_gem.get("level", 1))
-                _gem.set("quality", json_gem.get("quality", 0))
-                _gem.set("enabled", json_gem.get("enabled", False))
+                _gem["level"] = json_gem.get("level", 1)
+                _gem["quality"] = json_gem.get("quality", 0)
+                _gem["enabled"] = json_gem.get("enabled", False)
 
                 _name = json_gem["name"].replace(" Support", "")
-                _gem.set("nameSpec", _name)
-                _gem.set("skillId", self.gems_by_name_or_id[_name]["skillId"])
+                _gem["nameSpec"] = _name
+                _gem["skillId"] = self.gems_by_name_or_id[_name]["skillId"]
 
                 base_item = self.gems_by_name_or_id[_name]["base_item"]
                 print(f"skills_ui.import_from_poep_json: skipping gemId=id {base_item.get('id')}")
@@ -1219,7 +1215,7 @@ class SkillsUI:
                 # _gem.set("gemId", base_item.get("id"))
 
                 q = json_gem.get("typeLine", "Anomalous")
-                _gem.set("qualityId", quality_id[q])
+                _gem["qualityId"] = quality_id[q]
 
             self.check_socket_group_for_an_active_gem(current_socket_group)
 

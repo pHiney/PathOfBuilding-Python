@@ -75,7 +75,7 @@ empty_gem_dict = {
 }
 empty_socket_group_dict = {
     "enabled": True,
-    "label": "Default",
+    "label": "",
     "mainActiveSkillCalcs": 0,
     "includeInFullDPS": False,
     "slot": "",
@@ -180,7 +180,6 @@ empty_build = {
     "PathOfBuilding": {
         "Build": {
             "level": 1,
-            "version": 2,
             "targetVersion": "3_0",
             "className": "Scion",
             "ascendClassName": "None",

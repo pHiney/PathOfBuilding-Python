@@ -101,7 +101,7 @@ class Item:
 
     @id.setter
     def id(self, new_value):
-        self.pob_item["id"] = new_value
+        self.pob_item["id"] = int(new_value)
 
     @property
     def base_name(self) -> str:
@@ -491,6 +491,7 @@ class Item:
         """
 
         self.pob_item = json
+        # print(f"item: load_from_json: {self.pob_item=}")
         self.attribs = self.pob_item["Attribs"]
         self.requires = self.pob_item["Requires"]
 
@@ -718,7 +719,7 @@ class Item:
         return True
         # load_from_xml_v2
 
-    def save_v2(self):
+    def save(self):
         """"""
         # Need to work out what has changed in variables that don't directly access the json dict.
         return self.pob_item

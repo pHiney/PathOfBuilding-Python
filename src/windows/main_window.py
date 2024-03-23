@@ -34,7 +34,6 @@ from PoB.constants import (
     bandits,
     bad_text,
     def_theme,
-    empty_build,
     pantheon_major_gods,
     pantheon_minor_gods,
     player_stats_list,
@@ -655,32 +654,40 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.alerting = False
         self.player.clear()
         self.config_ui.initial_startup_setup()
-        new = True
-        self.build.filename = ""
+        new = filename == "Default"
         self.settings.open_build = ""
-        name, file_extension = os.path.splitext(filename)
-        xml = file_extension == ".xml"
-        if xml:
-            self.build.new(load_from_xml(filename))
-            # Don't update last opened build
+        if new:
+            self.build.new(None)
         else:
-            new = filename == "Default"
-            if not new:
-                # open the file
-                self.build.load_from_file(filename)
-                self.settings.open_build = filename
+            name, file_extension = os.path.splitext(filename)
+            path, name = os.path.split(name)
+            xml = file_extension == ".xml"
+            print(name, file_extension, filename)
+            print(os.path.split(name))
+            if xml:
+                self.build.new(load_from_xml(filename))
+                self.build.filename = filename.replace(".xml", ".json")
+                self.build.name = name
             else:
-                self.build.new(deepcopy(empty_build))
+                # open the file and update names if the file was present
+                if self.build.load_from_file(filename):
+                    self.settings.open_build = filename
+                    self.add_recent_build_menu_item()
+                    self.build.name = name
 
         # if everything worked, lets update the UI
         if self.build.json_PoB is not None:
-            # _debug("build_loader", filename)
-            if not new and not xml:
-                self.add_recent_build_menu_item()
+
+            # Config_UI needs to be set before the tree, as the change_tree function uses/sets it also.
             self.config_ui.load(self.build.json_config)
             self.tree_ui.load(self.build.json_tree)
             self.skills_ui.load_from_json(self.build.json_skills)
             self.items_ui.load_from_json(self.build.json_items)
+            self.notes_ui.load(self.build.json_notes, self.build.json_notes_html)
+            self.spin_level.setValue(self.build.level)
+            self.combo_classes.setCurrentText(self.build.className)
+            self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
+            self.player.load(self.build.json_build)
 
             self.set_current_tab()
 
@@ -696,7 +703,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
         #     # self.stats.load(self.build.xml_build)
         #     self.player.load(self.build.xml_build)
-        #
+
         # # This is needed to make the jewels show. Without it, you need to select or deselect a node.
         self.gview_Tree.add_tree_images(True)
         # # Make sure the Main and Alt weapons are active and shown as appropriate
@@ -717,21 +724,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.build.filename == "":
             self.build_save_as()  # this will then call build_save()
         else:
-            print(f"Saving to v{version} file: {self.build.filename}")
-            match version:
-                case "1":
-                    self.build.save_to_xml()
-                    self.build.xml_notes.text, self.build.xml_notes_html.text = self.notes_ui.save(version)
-                case "2":
-                    self.build.save_to_json()
-                    self.build.json_notes.text, dummy_var = self.notes_ui.save(version)
-            # self.win.stats.save(self.build)
+            print(f"Saving to file: {self.build.filename}")
+            self.build.save_to_json()
+            self.build.json_notes, self.build.json_notes_html = self.notes_ui.save()
             self.player.save()
             self.skills_ui.save_to_json()
             self.items_ui.save()
             self.config_ui.save()
             # write the file
-            self.build.save_build_to_file(self.build.filename)
+            self.build.save_to_json()
 
     @Slot()
     def build_save_as(self):
