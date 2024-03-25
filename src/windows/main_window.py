@@ -643,35 +643,41 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # open the file using the filename in the build.
         self.build_loader(full_path)
 
-    def build_loader(self, filename=Union[str, Path]):
+    def build_loader(self, filename_or_dict=Union[dict, str, Path], imported_name=""):
         """
         Common actions for UI components when we are loading a build.
 
-        :param filename: Path: the filename of file to be loaded, or "Default" if called from the New action.
-        :param filename: String: build name, commonly "Default" when called from the New action.
+        :param filename_or_dict: dict: the dict of an imported build (called open_import_dialog)
+        :param filename_or_dict: String: build name, commonly "Default" when called from the New action.
+        :param filename_or_dict: Path: the filename of file to be loaded, or "Default" if called from the New action.
+        :param imported_name: str: The name of the build from the import dialog
         :return: N/A
         """
         self.alerting = False
         self.player.clear()
         self.config_ui.initial_startup_setup()
-        new = filename == "Default"
+        new = filename_or_dict == "Default"
         self.settings.open_build = ""
+        self.build.filename = ""
+        self.build.name = "Default"
         if new:
             self.build.new(None)
+        elif type(filename_or_dict) is dict:
+            self.build.new(filename_or_dict)
+            self.build.name = imported_name
         else:
-            name, file_extension = os.path.splitext(filename)
+            name, file_extension = os.path.splitext(filename_or_dict)
             path, name = os.path.split(name)
             xml = file_extension == ".xml"
-            print(name, file_extension, filename)
-            print(os.path.split(name))
             if xml:
-                self.build.new(load_from_xml(filename))
-                self.build.filename = filename.replace(".xml", ".json")
+                self.build.new(load_from_xml(filename_or_dict))
+                self.build.filename = filename_or_dict.replace(".xml", ".json")
                 self.build.name = name
             else:
                 # open the file and update names if the file was present
-                if self.build.load_from_file(filename):
-                    self.settings.open_build = filename
+                if self.build.load_from_file(filename_or_dict):
+                    self.settings.open_build = filename_or_dict
+                    self.build.filename = filename_or_dict
                     self.add_recent_build_menu_item()
                     self.build.name = name
 
@@ -720,7 +726,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return: N/A
         """
-        version = self.build.version
+        # version = self.build.version
         if self.build.filename == "":
             self.build_save_as()  # this will then call build_save()
         else:
@@ -1036,7 +1042,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dlg = ImportDlg(self.settings, self.build, self)
         dlg.exec()
         if dlg.xml is not None:
-            self.build_loader(dlg.xml)
+            self.build_loader(load_from_xml(dlg.xml), "Imported")
         elif dlg.character_data is not None:
             self.set_current_tab("CONFIG")
             self.combo_Bandits.showPopup()

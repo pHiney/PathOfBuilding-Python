@@ -23,12 +23,13 @@ tree_versions = {
     "3_21": "3.21",
     "3_22": "3.22",
     "3_23": "3.23",
+    "3_24": "3.24",
 }
 _VERSION_str = "3_23"
 _VERSION = tree_versions[_VERSION_str]
-# default_view_mode = "TREE"
+default_view_mode = "TREE"
 # default_view_mode = "ITEMS"
-default_view_mode = "SKILLS"
+# default_view_mode = "SKILLS"
 
 default_max_charges = 3
 
@@ -65,8 +66,9 @@ empty_gem_dict = {
     "enabled": True,
     "nameSpec": "",
     "skillId": "",
+    "variantId": "",
     "level": 1,
-    "qualityId": "Default",
+    # "qualityId": "Default",
     "quality": 0,
     "count": 1,
     "enableGlobal1": True,

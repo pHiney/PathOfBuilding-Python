@@ -25,6 +25,7 @@ from PoB.constants import (
     bandits,
     default_view_mode,
     empty_build,
+    empty_spec_dict,
     program_title,
     tree_versions,
 )
@@ -74,13 +75,16 @@ class Build:
         # self.xml_import_field = None
         # self.xml_calcs = None
         # self.xml_skills = None
-        # self.xml_tree = None
+        # self.json_tree["Specs"] = None
         # self.xml_notes = None
         # self.xml_notes_html = None
-        # self.xml_tree_view = None
+        # self.json_tree["Specs"]_view = None
         # self.xml_items = None
         self.xml_config = None
 
+        self.json = self.json_PoB = self.json_build = self.json_import_field = self.json_items = None
+        self.json_skills = self.json_tree = self.json_config = self.json_calcs = self.json_tree_view = None
+        self.json_notes = self.json_notes_html = None
         # self.json = deepcopy(empty_build)
         # self.json_PoB = self.json["PathOfBuilding"]
         # self.json_build = self.json_PoB["Build"]
@@ -388,10 +392,11 @@ class Build:
         """
         Common function to load functions. Fill internal variables from the json.
 
-        :param build_obj: dict object from loading the source json or the default one.
+        :param build_obj: dict: object from loading the source json.
+        :param build_obj: None: Trigger loading the default build (a real new build).
         :return: N/A
         """
-        # print(f"build.new: {type(build_obj)}")
+        print(f"build.new: {type(build_obj)}")
         if build_obj is None:
             build_obj = deepcopy(empty_build)
             self.name = "Default"
@@ -496,13 +501,13 @@ class Build:
         # print("skills")
         # print(ET.tostring(self.xml_skills, encoding='utf8').decode('utf8'))
         # print("tree")
-        # print(ET.tostring(self.xml_tree, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.json_tree["Specs"], encoding='utf8').decode('utf8'))
         # print("notes")
         # print(ET.tostring(self.xml_notes, encoding='utf8').decode('utf8'))
         # print("notes_html")
         # print(ET.tostring(self.xml_notes_html, encoding='utf8').decode('utf8'))
         # print("tree_view")
-        # print(ET.tostring(self.xml_tree_view, encoding='utf8').decode('utf8'))
+        # print(ET.tostring(self.json_tree["Specs"]_view, encoding='utf8').decode('utf8'))
         # print("items")
         # print(ET.tostring(self.xml_items, encoding='utf8').decode('utf8'))
         # print("config")
@@ -559,6 +564,7 @@ class Build:
             return True
         new_spec = self.specs[tree_id]
         different_version = self.current_spec.treeVersion != new_spec.treeVersion
+        # print(f"change_tree: {tree_id=}, {self.current_spec.treeVersion=}, {new_spec.treeVersion}")
         # Check if this version is loaded
         if self.trees.get(new_spec.treeVersion, None) is None:
             self.trees[new_spec.treeVersion] = Tree(self.settings, new_spec.treeVersion)
@@ -582,8 +588,8 @@ class Build:
                 # find the first active gem and move it, if it's index is not 0
                 if "Support" not in _gem.get("skillId"):
                     if _idx != 0:
-                        _sg.remove(_gem)
-                        _sg.insert(0, _gem)
+                        _sg["Gems"].remove(_gem)
+                        _sg["Gems"].insert(0, _gem)
                     break
 
     """ ################################################### SPECS ################################################### """
@@ -597,62 +603,60 @@ class Build:
         :return:
         """
         spec = self.specs[start]
-        xml_spec = spec.xml_spec
+        json_spec = spec.spec
         if start < destination:
             # need to decrement destination by one as we are going to remove start first
             destination -= 1
         self.specs.remove(spec)
         self.specs.insert(destination, spec)
-        self.xml_tree.remove(xml_spec)
-        self.xml_tree.insert(destination, xml_spec)
+        self.json_tree["Specs"].remove(json_spec)
+        self.json_tree["Specs"].insert(destination, json_spec)
 
-    def new_spec(self, new_title="", version=_VERSION_str, xml_spec=None, destination=-1):
+    def new_spec(self, new_title="", version=_VERSION_str, new_spec=None, destination=-1):
         """
         Add a new empty tree/Spec
 
         :param new_title: str
         :param version: float: the version number of this spec. Default to the default Tree version
-        :param xml_spec: ET.elementtree: If specified, the new xml representation
+        :param new_spec: dict: If specified, the new xml representation
         :param destination: int: If specified, insert the new spec at destination elsewise append to the end
         :return: Spec(): the newly created Spec()
         """
         # print("build.new_spec")
-        spec = Spec(self, xml_spec, version)
+        spec = Spec(self, new_spec, version)
         spec.classId = self.current_spec.classId
         spec.ascendClassId = self.current_spec.ascendClassId
         if new_title != "":
             spec.title = new_title
         if destination == -1:
             self.specs.append(spec)
-            self.xml_tree.append(spec.xml_spec)
+            self.json_tree["Specs"].append(deepcopy(empty_spec_dict))
         else:
             self.specs.insert(destination, spec)
-            self.xml_tree.insert(destination, spec.xml_spec)
+            self.json_tree["Specs"].insert(destination, deepcopy(empty_spec_dict))
         return spec
 
     def copy_spec(self, source, destination):
         """
-        Copy an existing Spec() and xml_spec
+        Copy an existing Spec() and json_spec
 
         :param source: int: The source index into self.specs and self.tree
         :param destination: int: The destination index into self.specs and self.tree
         :return: Spec(): the newly created Spec()
         """
         # print("build.copy_spec")
-        # converting to a string ensures it is copied and not one element that is shared.
-        # internet rumour indicates .clone() and .copy() may not be good enough
-        new_xml_spec = ET.fromstring(ET.tostring(self.specs[source].xml_spec))
-        return self.new_spec(new_title="", xml_spec=new_xml_spec, destination=destination)
+        new_spec = deepcopy(self.specs[source].spec)
+        return self.new_spec("", new_spec, destination)
 
     def convert_spec(self, source, destination):
         """
-        Convert an existing Spec() and xml_spec to the latest tree version.
+        Convert an existing Spec() and json_spec to the latest tree version.
 
         :param source: int: The source index into self.specs and self.tree
         :param destination: int: The destination index into self.specs and self.tree
         :return: Spec(): the newly created Spec(), None if conversion didn't happen
         """
-        print("build.convert_spec")
+        # print("build.convert_spec")
         # Looking at the lua version, convert is just copy, with the tree version set to current.
         # ToDo: should we at least check the nodes are still valid ?
         spec = self.specs[source]
@@ -670,16 +674,16 @@ class Build:
         :param index: int: The index into self.specs and self.tree
         :return:  N/A
         """
-        # print("build.delete_spec")
+        # print(f"build.delete_spec: {index}")
         if index == "all":
             # Then remove all
             for count in range(len(self.specs)):
-                xml_spec = self.specs[0].xml_spec
-                self.xml_tree.remove(xml_spec)
+                spec = self.specs[0].spec
+                self.json_tree["Specs"].remove(spec)
                 del self.specs[count]
         elif 0 <= index < len(self.specs):
-            xml_spec = self.specs[index].xml_spec
-            self.xml_tree.remove(xml_spec)
+            spec = self.specs[index].spec
+            self.json_tree["Specs"].remove(spec)
             del self.specs[index]
 
     """ ################################################### IMPORT ################################################### """

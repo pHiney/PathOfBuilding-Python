@@ -2,6 +2,7 @@ from pathlib import Path, WindowsPath
 from copy import deepcopy
 import re
 import traceback
+import xml
 import xml.etree.ElementTree as ET
 import xmltodict
 
@@ -16,6 +17,8 @@ from PoB.constants import (
     influencers,
     starting_scion_node,
 )
+
+# from PoB.item import Item
 from PoB.pob_file import read_xml_as_dict
 from PoB.utils import _debug, html_colour_text, str_to_bool, index_exists
 
@@ -30,8 +33,8 @@ default_skill_set_xml = """<SkillSet id="1" title="Default">
 empty_socket_group_xml = """<Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label=""
 enabled="true" slot="" mainActiveSkill="1"/>"""
 
-empty_gem_xml = """<Gem enableGlobal2="false" level="1" enableGlobal1="true" skillId="" qualityId="Default"
-gemId="" enabled="true" quality="0" count="1" nameSpec=""/>"""
+empty_gem_xml = """<Gem enableGlobal2="false" level="1" enableGlobal1="true" skillId="" qualityId="Default" 
+enabled="true" quality="0" count="1" nameSpec=""/>"""
 
 empty_build_xml = f"""
 <PathOfBuilding>
@@ -180,11 +183,11 @@ def remove_lua_colours(text):
     return text
 
 
-def load_item_from_xml(xml, debug_lines=False):
+def load_item_from_xml(_xml, debug_lines=False):
     """
     Load internal structures from the free text version of item's xml
 
-    :param xml: ET.element: xml of the item
+    :param _xml: ET.element: xml of the item
     :param debug_lines: Temporary to debug the process
     :return: boolean
     """
@@ -264,8 +267,10 @@ def load_item_from_xml(xml, debug_lines=False):
     json_item = deepcopy(empty_item_dict)
 
     # debug_lines = True
-    items_free_text = xml["#text"]
-    json_item["id"] = int(xml.get("@id", "0"))
+    items_free_text = _xml["#text"]
+    if debug_lines:
+        print(f"{items_free_text=}")
+    json_item["id"] = int(_xml.get("@id", "0"))
     if "Alt Variant" in items_free_text:
         json_item["Alt Variants"] = {}
     if "Variant:" in items_free_text:
@@ -359,8 +364,8 @@ def load_item_from_xml(xml, debug_lines=False):
     if debug_lines:
         print("b", len(lines), lines)
     # every thing that is left, from explicits_idx, is explicits ... and some other stuff
-    # for idx in range(explicits_idx, len(lines) + 1):
-    while len(lines) > 0:
+    # explicits_idx may not be zero. In some version of luaPoB, the type "eg: Tornado Wand" would appear twice.
+    while len(lines) > explicits_idx:
         line = lines.pop(explicits_idx)
         # Corrupted is not a mod, but will get caught in explicits due to crap data design.
         # Some items have things like UniqueID in the middle of this too.
@@ -390,15 +395,29 @@ def load_item_from_xml(xml, debug_lines=False):
     # load_item_from_xml
 
 
-def load_from_xml(filename):
+def load_from_xml(filename_or_xml):
     """
     Convert a lua PoB xml to a dict.
     lua PoB won't put a single Gem, Item, Spec, etc in a list. It will just appear as a single dict()
     So there are lots of checks for this and adding a single entry into a list().
     lua PoB is 1 based in it's counting, pyPob is 0 based
-    :param filename: str:
+    :param filename_or_xml: str|dict: either a filepath for loading an xml or an ET from the iport dialog
     :return: dict
     """
+
+    def get_param_value(_the_value, _default):
+        """
+        Get a parameter's value, guarding against 'nil'. These have always been see in params inside a xml element
+          and only numbers or booleans. - EG: <build "secondaryAscendClassId": "nil" /> .
+        So this only has to be used for param names begining with '@'.
+        :param _the_value: str: The value that has been retrieved.
+        :param _default: str: str version of default
+        :return:
+        """
+        if _the_value == "" or "nil" in _the_value:
+            return _default
+        else:
+            return _the_value
 
     def get_input_values(_src, _dst):
         """
@@ -422,7 +441,7 @@ def load_from_xml(filename):
                             if _name == "customMods":
                                 # EG:
                                 #   ['name="customMods" string="+1 to Maximum Endurance Charges\n+14% increased maximum Life\n']
-                                _value = read_v1_custom_mods(filename).replace("\n", "~^")
+                                _value = read_v1_custom_mods(filename_or_xml).replace("\n", "~^")
                         case "@boolean":
                             _value = str_to_bool(_dict[key])
                         case "@number":
@@ -432,10 +451,13 @@ def load_from_xml(filename):
                     continue
 
     # ToDo: Complete
-    xml_PoB = read_xml_as_dict(filename)
+    if type(filename_or_xml) is xml.etree.ElementTree.ElementTree:
+        xml_PoB = xmltodict.parse(ET.tostring(filename_or_xml.getroot(), encoding="utf8").decode("utf8"))
+    else:
+        xml_PoB = read_xml_as_dict(filename_or_xml)
     if xml_PoB is None:
         return None
-    new_build = empty_build
+    new_build = deepcopy(empty_build)
     xml_PoB = xml_PoB["PathOfBuilding"]
     json_PoB = new_build["PathOfBuilding"]
 
@@ -454,7 +476,7 @@ def load_from_xml(filename):
     }
     for stat_type in ("PlayerStat", "MinionStat"):
         stats = xml_build.get(stat_type, [])
-        if type(stats) is dict:
+        if type(stats) is dict:  # list or dict if only one
             stats = [stats]
         for stat in stats:
             name = stat.get("@stat", "")
@@ -520,7 +542,7 @@ def load_from_xml(filename):
         "activeSpec": int(xml_tree.get("@activeSpec", "1")) - 1,
         "Specs": [],
     }
-    if type(xml_tree["Spec"]) is dict:
+    if type(xml_tree["Spec"]) is dict:  # list or dict if only one
         xml_tree["Spec"] = [xml_tree["Spec"]]
     for xml_spec in xml_tree["Spec"]:
         spec = {
@@ -545,39 +567,39 @@ def load_from_xml(filename):
     """Skills/Gems"""
     xml_skills = xml_PoB["Skills"]
     skills = {
-        "activeSkillSet": int(xml_skills.get("@activeSkillSet", "1")) - 1,
+        "activeSkillSet": int(get_param_value(xml_skills.get("@activeSkillSet", "1"), "1")) - 1,
         "sortGemsByDPSField": xml_skills.get("@sortGemsByDPSField", "CombinedDPS"),
-        "sortGemsByDPS": str_to_bool(xml_skills.get("@sortGemsByDPS", "True")),
-        "defaultGemQuality": int(xml_skills.get("@defaultGemQuality", "0")),
+        "sortGemsByDPS": str_to_bool(get_param_value(xml_skills.get("@sortGemsByDPS", "True"), "True")),
+        "defaultGemQuality": int(get_param_value(xml_skills.get("@defaultGemQuality", "0"), "0")),
         "defaultGemLevel": xml_skills.get("@defaultGemLevel", "normalMaximum"),
         "showSupportGemTypes": xml_skills.get("@showSupportGemTypes", "ALL"),
-        "showAltQualityGems": str_to_bool(xml_skills.get("@showAltQualityGems", "True")),
+        "showAltQualityGems": str_to_bool(get_param_value(xml_skills.get("@showAltQualityGems", "True"), "True")),
         "SkillSets": [],
     }
-    if type(xml_skills["SkillSet"]) is dict:
+    if type(xml_skills["SkillSet"]) is dict:  # list or dict if only one
         xml_skills["SkillSet"] = [xml_skills["SkillSet"]]
     for xml_skillset in xml_skills["SkillSet"]:
         skillset = {
-            "id": int(xml_skillset.get("@id", "1")) - 1,
+            "id": int(get_param_value(xml_skillset.get("@id", "1"), "1")) - 1,
             "title": remove_lua_colours(xml_skillset.get("@title", "Default")),
             "SGroups": [],
         }
-        if type(xml_skillset.get("Skill", bad_text)) is dict:
+        if type(xml_skillset.get("Skill", bad_text)) is dict:  # list or dict if only one
             xml_skillset["Skill"] = [xml_skillset["Skill"]]
         for xml_sgroup in xml_skillset.get("Skill", []):
             xml_gem = xml_sgroup.get("Gem", bad_text)
             sgroup = {
-                "enabled": str_to_bool(xml_sgroup.get("@enabled", "True")),
+                "enabled": str_to_bool(get_param_value(xml_sgroup.get("@enabled", "True"), "True")),
                 "label": remove_lua_colours(xml_sgroup.get("@label", "")),
-                "mainActiveSkill": int(xml_sgroup.get("@mainActiveSkill", "1")) - 1,
-                "mainActiveSkillCalcs": int(xml_sgroup.get("@mainActiveSkillCalcs", "1")) - 1,
-                "includeInFullDPS": str_to_bool(xml_sgroup.get("@includeInFullDPS", "False")),
+                "mainActiveSkill": int(get_param_value(xml_sgroup.get("@mainActiveSkill", "1"), "1")) - 1,
+                "mainActiveSkillCalcs": int(get_param_value(xml_sgroup.get("@mainActiveSkillCalcs", "1"), "1")) - 1,
+                "includeInFullDPS": str_to_bool(get_param_value(xml_sgroup.get("@includeInFullDPS", "False"), "False")),
                 "slot": xml_sgroup.get("@slot", ""),
                 "Gems": [],
             }
             # Some socket groups have no skills in them as content creators just use the label.
             if xml_gem != bad_text:
-                if type(xml_gem) is dict:
+                if type(xml_gem) is dict:  # list or dict if only one
                     xml_gem = [xml_gem]
                 for xml_gem in xml_gem:
                     """
@@ -599,17 +621,17 @@ def load_from_xml(filename):
                         xml_gem["@skillId"] = ""
 
                     gem = {
-                        "enabled": str_to_bool(xml_sgroup.get("@enabled", "True")),
+                        "enabled": str_to_bool(get_param_value(xml_sgroup.get("@enabled", "True"), "True")),
                         "nameSpec": xml_gem.get("@nameSpec", ""),
                         "variantId": xml_gem.get("@variantId", ""),
                         "skillId": xml_gem.get("@skillId", ""),
-                        "level": int(xml_sgroup.get("@level", "20")),
+                        "level": int(get_param_value(xml_sgroup.get("@level", "1"), "1")),
                         "qualityId": xml_gem.get("@qualityId", ""),
-                        "quality": int(xml_sgroup.get("@quality", "0")),
-                        "count": int(xml_sgroup.get("@count", "1")),
-                        "enableGlobal1": str_to_bool(xml_sgroup.get("@enableGlobal1", "True")),
-                        "enableGlobal2": str_to_bool(xml_sgroup.get("@enableGlobal2", "True")),
-                        "gemId": xml_gem.get("@gemId", ""),
+                        "quality": int(get_param_value(xml_sgroup.get("@quality", "0"), "0")),
+                        "count": int(get_param_value(xml_sgroup.get("@count", "1"), "1")),
+                        "enableGlobal1": str_to_bool(get_param_value(xml_sgroup.get("@enableGlobal1", "True"), "True")),
+                        "enableGlobal2": str_to_bool(get_param_value(xml_sgroup.get("@enableGlobal2", "True"), "True")),
+                        # "gemId": xml_gem.get("@gemId", ""),
                     }
                     sgroup["Gems"].append(gem)
             skillset["SGroups"].append(sgroup)
@@ -619,76 +641,81 @@ def load_from_xml(filename):
 
     """Items"""
     xml_items = xml_PoB["Items"]
-    json_PoB["Items"]["activeItemSet"] = int(xml_items.get("@activeItemSet", "1")) - 1
+    json_PoB["Items"]["activeItemSet"] = int(get_param_value(xml_items.get("@activeItemSet", "1"), "1")) - 1
     # Items
-    if type(xml_items["Item"]) is dict:
+    if type(xml_items["Item"]) is dict:  # list or dict if only one
         xml_items["Item"] = [xml_items["Item"]]
     for xml_item in xml_items["Item"]:
         json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item))
     # ItemSets
     json_PoB["Items"]["ItemSets"].clear()  # get rid of the default itemset
-    if type(xml_items["ItemSet"]) is dict:
+    if type(xml_items["ItemSet"]) is dict:  # list or dict if only one
         xml_items["ItemSet"] = [xml_items["ItemSet"]]
     for xml_itemset in xml_items["ItemSet"]:
         json_set = {
-            "title": remove_lua_colours(xml_itemset.get("@title", "")),
-            "id": int(xml_itemset.get("@id", "0")) - 1,
+            "title": remove_lua_colours(xml_itemset.get("@title", "Default")),
+            "id": int(get_param_value(xml_itemset.get("@id", "0"), "0")) - 1,
             "useSecondWeaponSet": str_to_bool(xml_itemset.get("@useSecondWeaponSet", "False")),
-            "Slots": {},
         }
-        # The xml has too much slot info, like "Belt Abyssal Socket 6". Use our dictioary to pick out wanted entries
+        # The xml has too much slot info, like "Belt Abyssal Socket 6". Use our dictionary to pick out wanted entries.
         slots = {}
-        for slot in empty_item_slots_dict.keys():
+        for xml_slot in xml_itemset["Slot"]:
             try:
                 # any errors here will just result in a slot not being set.
-                slot_xml = xml_itemset.get(slot, bad_text)
-                if slot_xml != bad_text:
-                    slots[slot] = {"itemId": int(slot_xml["@itemId"]), "itemPbURL": slot_xml.get("@itemPbURL", "")}
+                name = xml_slot.get("@name", "")
+                _id = get_param_value(xml_slot.get("@itemId", "0"), "0")
+                if name and _id != "0" and name in empty_item_slots_dict.keys():
+                    slots[name] = {"itemId": int(_id), "itemPbURL": xml_slot.get("@itemPbURL", "")}
             except KeyError:
                 pass
         json_set["Slots"] = slots
-        print(f"{slots=}")
+        print(f"xml: {slots=}")
+        for s_id in json_set.get("SocketIdURL", []):
+            name = s_id.get("name", "")
+            if name:
+                json_set.setdefault("SocketIdURL", []).append(
+                    {"name": name, "nodeId": int(s_id.get("nodeId", "")), "itemPbURL": s_id.get("itemPbURL", "")}
+                )
         json_PoB["Items"]["ItemSets"].append(json_set)
 
     return new_build
 
 
-def save_item_to_xml(self):
+def save_item_to_xml(_item):
     """
     Save internal structures back to a xml object. Not used.
 
     :return: xml.etree.ElementTree:
     """
-    text = f"Rarity: {self.rarity}\n"
-    text += self.title and f"{self.title}\n{self.base_name}\n" or f"{self.base_name}\n"
-    text += f"Unique ID: {self.unique_id}\n"
-    text += f"Item Level: {self.ilevel}\n"
-    text += f"Quality: {self.quality}\n"
-    if self.sockets:
-        text += f"Sockets: {self.sockets}\n"
-    text += f"LevelReq: {self.level_req}\n"
-    for influence in self.influences:
+    text = f"Rarity: {_item.rarity}\n"
+    text += _item.title and f"{_item.title}\n{_item.base_name}\n" or f"{_item.base_name}\n"
+    text += f"Item Level: {_item.ilevel}\n"
+    text += f"Quality: {_item.quality}\n"
+    if _item.sockets:
+        text += f"Sockets: {_item.sockets}\n"
+    text += f"LevelReq: {_item.level_req}\n"
+    for influence in _item.influences:
         text += f"{influence}\n"
-    for requirement in self.requires.keys():
-        text += f"Requires {requirement} {self.requires[requirement]}\n"
-    if type(self.properties) is dict:
-        for prop in self.properties.keys():
-            text += f"{prop}: {self.properties[prop]}\n"
-    text += f"Implicits: {len(self.implicitMods)}\n"
-    for mod in self.implicitMods:
+    for requirement in _item.requires.keys():
+        text += f"Requires {requirement} {_item.requires[requirement]}\n"
+    if type(_item.properties) is dict:
+        for prop in _item.properties.keys():
+            text += f"{prop}: {_item.properties[prop]}\n"
+    text += f"Implicits: {len(_item.implicitMods)}\n"
+    for mod in _item.implicitMods:
         text += f"{mod.text_for_xml}\n"
-    for mod in self.full_explicitMods_list:
+    for mod in _item.full_explicitMods_list:
         text += f"{mod.text_for_xml}\n"
-    for mod in self.crucibleMods:
+    for mod in _item.crucibleMods:
         text += f"{mod.text_for_xml}\n"
-    for mod in self.fracturedMods:
+    for mod in _item.fracturedMods:
         text += f"{mod.text_for_xml}\n"
-    if self.corrupted:
+    if _item.corrupted:
         text += "Corrupted"
 
     # if debug_print:
     #     print(f"{text}\n\n")
-    return ET.fromstring(f'<Item id="{self.id}">{text}</Item>')
+    return ET.fromstring(f'<Item id="{_item.id}">{text}</Item>')
     # save
 
 
@@ -700,7 +727,7 @@ def save_to_xml(filename, build):
     :return: N/A
     """
     # ToDo: Complete
-    xml_build = empty_build_xml
+    xml_build = ET.fromstring(deepcopy(empty_build_xml))
     xml_root = xml_build.getroot()
     xml_import = xml_root.find("Import")
     if xml_import is not None:

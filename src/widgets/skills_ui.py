@@ -381,12 +381,13 @@ class SkillsUI:
             return None
         # make a list by name and skillId. Index supports using the full name (Faster Attacks Support)
         #  and the display name (Faster Attacks)
-        for g, _gem in gems.items():
+        for variantId, _gem in gems.items():
             name = _gem["grantedEffect"]["name"]
+            _gem["variantId"] = variantId
             _gem["colour"] = get_coloured_text(_gem)
             _gem["coloured_text"] = html_colour_text(_gem["colour"], name)
 
-            self.gems_by_name_or_id[g] = _gem  # g = "AddedChaosDamageSupport"
+            self.gems_by_name_or_id[variantId] = _gem  # g = "AddedChaosDamageSupport"
             self.gems_by_name_or_id[name] = _gem  # name = "Added Chaos Damage"
             self.gems_by_name_or_id[_gem["grantedEffectId"]] = _gem  # grantedEffectId = "SupportAddedChaosDamagePlus"
             # Also add supports using the full name.
@@ -504,9 +505,7 @@ class SkillsUI:
         except RuntimeError:
             pass
 
-    """
-    ################################################### SKILL SET ###################################################
-    """
+    """ ################################################### SKILL SET ################################################### """
 
     @Slot()
     def new_skill_set(self, itemset_name="ItemSet"):
@@ -673,9 +672,7 @@ class SkillsUI:
             self.dlg.exec()
             self.dlg = None
 
-    """
-    ################################################### SOCKET GROUP ###################################################
-    """
+    """ ################################################### SOCKET GROUP ################################################### """
 
     def load_main_skill_combo(self):
         """
@@ -696,7 +693,7 @@ class SkillsUI:
         :param group: ElementTree.Element:
         :return: QListWidgetItem
         """
-        # print("define_socket_group_label", item, xml_group)
+        # print(f"define_socket_group_label: , {item=}, {group=}")
         if group is None:
             group = self.current_socket_group
         if group is None:
@@ -708,8 +705,8 @@ class SkillsUI:
         _gem_list = ""
         for _gem in group["Gems"]:
             # If this gem is not a support gem and is enabled (the far right widget)
-            if "Support" not in _gem.get("skillId") and _gem.get("enabled"):
-                _gem_list += f'{_gem.get("name")}, '
+            if "Support" not in _gem.get("variantId") and _gem.get("enabled"):
+                _gem_list += f'{_gem.get("nameSpec")}, '
 
         if _gem_list == "":
             _gem_list = "-no active skills-"
@@ -723,7 +720,8 @@ class SkillsUI:
         # set enabled based on the group control and whether there is an active skill in the group
         enabled = group.get("enabled") and not (_label == "" or _label == "-no active skills-")
         full_dps = group.get("includeInFullDPS", "False")
-        active = self.win.combo_MainSkill.currentText() == _label and enabled
+        sg_idx = self.current_skill_set["SGroups"].index(group)
+        active = self.win.combo_MainSkill.currentIndex() == sg_idx and enabled
 
         # get a copy of the label with out all the extra information or colours
         item.setWhatsThis(f"{_label}:{_gem_list}")
@@ -756,7 +754,7 @@ class SkillsUI:
             return
         for idx in range(self.win.list_SocketGroups.count()):
             item = self.win.list_SocketGroups.item(idx)
-            # print("update_socket_group_labels", idx, item)
+            # print("update_socket_group_labels", idx, self.current_skill_set["SGroups"][idx])
             self.define_socket_group_label(item, self.current_skill_set["SGroups"][idx])
 
     @Slot()
@@ -859,12 +857,13 @@ class SkillsUI:
         :return: N/A
         """
         if _sg is not None:
-            for _idx, _gem in enumerate(_sg["Gems"]):
+            gem_list = _sg.get("Gems", [])
+            for _idx, _gem in enumerate(gem_list):
                 # find the first active gem and move it if it's index is not 0
                 if "Support" not in _gem.get("skillId"):
                     if _idx != 0:
-                        _sg.remove(_gem)
-                        _sg.insert(0, _gem)
+                        gem_list.remove(_gem)
+                        gem_list.insert(0, _gem)
                     break
 
     def load_socket_group(self, _index):
@@ -972,9 +971,7 @@ class SkillsUI:
             self.internal_clipboard = None
         return False
 
-    """
-    ################################################### GEM UI ###################################################
-    """
+    """ ################################################### GEM UI ################################################### """
 
     def gem_ui_notify(self, w_item: QListWidgetItem):
         """
@@ -985,12 +982,11 @@ class SkillsUI:
         """
         row = self.win.list_Skills.row(w_item)
         gem_ui: GemUI = self.win.list_Skills.itemWidget(w_item)
-        print(f"gem_ui_notify1:, {w_item.text()=}, {row=}, {gem_ui=}")
+        # print(f"gem_ui_notify1:, {w_item.text()=}, {row=}, {gem_ui=}")
         # If gem_ui.gem *is* in self.current_socket_group["Gems"], then we are altering an existing gemUI, and don't add it.
         if gem_ui.gem is not None and gem_ui.variantId != "" and gem_ui.gem not in self.current_socket_group["Gems"]:
             self.current_socket_group["Gems"].append(gem_ui.gem)
-            print(f"gem_ui_notify2: {gem_ui.variantId} not found, adding.")
-            print(self.skills)
+            # print(f"gem_ui_notify2: {gem_ui.variantId} not found, adding.")
             # Create an empty gem at the end
             self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
         self.update_socket_group_labels()
@@ -1113,9 +1109,9 @@ class SkillsUI:
 
     def import_gems_ggg_json(self, json_items, delete_all):
         """
-        Import skills from the json supplied by GGG and convert it to xml.
+        Import skills from the json supplied by GGG.
 
-        :param json_items: json import of the item data.
+        :param json_items: json import of the item data (that contains skill gem info)
         :param delete_all: bool: True will delete everything first.
         :return: int: number of skillsets
         """
@@ -1163,21 +1159,31 @@ class SkillsUI:
                         current_socket_group = self.new_socket_group()
                         current_socket_group["slot"] = slot_map[item["inventoryId"]]
                     _gem = deepcopy(empty_gem_dict)
-                    current_socket_group.append(_gem)
-                    _gem["level"] = get_property(json_gem, "Level", 1)
-                    _gem["quality"] = get_property(json_gem, "Quality", 0)
+                    current_socket_group["Gems"].append(_gem)
+                    _gem["level"] = int(get_property(json_gem, "Level", "1"))
+                    _gem["quality"] = int(get_property(json_gem, "Quality", "0"))
 
+                    """
+                    new
+                    gemId="Metadata/Items/Gems/SupportGemFeedingFrenzy" 	<-skillId
+                    variantId="FeedingFrenzySupport" 						<-Dict Key also variantId
+                    skillId="SupportMinionOffensiveStance" 					<-grantedEffectId
+                    nameSpec="Feeding Frenzy"								<-grantedEffect.name
+
+                    old
+                    gemId="Metadata/Items/Gems/SupportGemImpendingDoom"		<-skillId
+                    skillId="ViciousHexSupport"								<-Dict Key
+                    nameSpec="Impending Doom"								<-grantedEffect.name
+                    """
                     _name = json_gem["baseType"].replace(" Support", "")
                     _gem["nameSpec"] = _name
-                    _gem["skillId"] = self.gems_by_name_or_id[_name]["skillId"]
 
-                    base_item = self.gems_by_name_or_id[_name]["base_item"]
-                    print(f"skills_ui.import_gems_ggg_json: skipping gemId=id {base_item.get('id')}")
-                    print("Delete this when you confirmed it is all good")
+                    _gem["variantId"] = self.gems_by_name_or_id[_name]["variantId"]
+                    _gem["skillId"] = self.gems_by_name_or_id[_name]["grantedEffectId"]
+
                     # _gem.set("gemId", base_item.get("id"))
-
-                    q = json_gem.get("typeLine", "Anomalous")
-                    _gem["qualityId"] = quality_id[q]
+                    # q = json_gem.get("typeLine", "Anomalous")
+                    # _gem["qualityId"] = quality_id[q]
 
                 self.check_socket_group_for_an_active_gem(current_socket_group)
 
@@ -1200,22 +1206,31 @@ class SkillsUI:
                 current_socket_group["slot"] = slot_map[_slot.title()]
             for idx, json_gem in enumerate(json_group.get("skillGems")):
                 _gem = deepcopy(empty_gem_dict)
-                current_socket_group.append(_gem)
+                current_socket_group["Gems"].append(_gem)
                 _gem["level"] = json_gem.get("level", 1)
                 _gem["quality"] = json_gem.get("quality", 0)
                 _gem["enabled"] = json_gem.get("enabled", False)
 
+                """
+                new
+                gemId="Metadata/Items/Gems/SupportGemFeedingFrenzy" 	<-skillId
+                variantId="FeedingFrenzySupport" 						<-Dict Key also variantId
+                skillId="SupportMinionOffensiveStance" 					<-grantedEffectId
+                nameSpec="Feeding Frenzy"								<-grantedEffect.name
+
+                old
+                gemId="Metadata/Items/Gems/SupportGemImpendingDoom"		<-skillId
+                skillId="ViciousHexSupport"								<-Dict Key
+                nameSpec="Impending Doom"								<-grantedEffect.name
+                """
                 _name = json_gem["name"].replace(" Support", "")
                 _gem["nameSpec"] = _name
-                _gem["skillId"] = self.gems_by_name_or_id[_name]["skillId"]
-
-                base_item = self.gems_by_name_or_id[_name]["base_item"]
-                print(f"skills_ui.import_from_poep_json: skipping gemId=id {base_item.get('id')}")
-                print("Delete this when you confirmed it is all good")
+                _gem["variantId"] = self.gems_by_name_or_id[_name]["variantId"]
+                _gem["skillId"] = self.gems_by_name_or_id[_name]["grantedEffectId"]
                 # _gem.set("gemId", base_item.get("id"))
 
-                q = json_gem.get("typeLine", "Anomalous")
-                _gem["qualityId"] = quality_id[q]
+                # q = json_gem.get("typeLine", "Anomalous")
+                # _gem["qualityId"] = quality_id[q]
 
             self.check_socket_group_for_an_active_gem(current_socket_group)
 

@@ -94,7 +94,7 @@ class Spec:
         """
         # ensure it is formatted correctly (n_nn). Remove dots and a trailing sub-version
         # Do not remove the leading \. despite what python grammar checkers might say.
-        tmp_list = re.split(r".|_|/", new_version)
+        tmp_list = re.split(r"[._/]", new_version)
         self.spec["treeVersion"] = f"{tmp_list[0]}_{tmp_list[1]}"
 
     @property
@@ -225,7 +225,7 @@ class Spec:
 
         :return: N/A
         """
-        # print("Spec.import_tree", new_url)
+        print("Spec.import_tree", new_url)
         if new_url is None or new_url == "":
             return
         ggg = re.search(r"http.*passive-skill-tree/(.*/)?(.*)", new_url)
@@ -312,18 +312,18 @@ class Spec:
         def get_tree_version(minor):
             """Translates poeplanner internal tree version to GGG version"""
             # fmt: off
-            tree_versions = { # poeplanner id: ggg version
-                26: 21, 25: 20, 24: 19, 23: 18, 22: 17, 21: 16, 19: 15, 18: 14, 17: 13, 16: 12, 15: 11, 14: 10,
+            peop_tree_versions = { # poeplanner id: ggg version
+                31: 24, 29: 23, 27: 22, 26: 21, 25: 20, 24: 19, 23: 18, 22: 17, 21: 16, 19: 15, 18: 14, 17: 13, 16: 12, 15: 11, 14: 10,
             }
             # fmt: on
-            return tree_versions.get(minor, -1)
+            return peop_tree_versions.get(minor, -1)
 
         if poep_url is None or poep_url == "":
             return
         m = re.search(r"http.*poeplanner.com/(.*)?(.*)", poep_url)
         # group(1) is always the encoded string
         if m is not None:
-            print("M", m.groups())
+            # print("M", m.groups())
             # Remove any variables at the end (probably not required for poeplanner)
             tmp_output = m.group(1).split("?")
             encoded_str = tmp_output[0]
@@ -584,13 +584,13 @@ class Spec:
         :param json_tree: json import of tree and jewel data
         :return: N/A
         """
-        self.nodes = json_tree.get("selectedNodeHashes", "0")
+        self.nodes = set(json_tree.get("selectedNodeHashes", starting_scion_node))
         self.extended_hashes = json_tree.get("selectedExtendedNodeHashes", [])
         # for the json import, this is a list of:
         # { "effectHash": 28638, "masteryHash": 64128 }
         for mastery_effect in json_tree.get("selectedMasteryEffects", []):
             mastery_node = int(mastery_effect["masteryHash"])
-            self.nodes.append(mastery_node)
+            self.nodes.add(mastery_node)
             self.masteryEffects[mastery_node] = int(mastery_effect["effectHash"])
         self.classId = json_tree.get("classIndex", 0)
         self.ascendClassId = json_tree.get("ascendancyIndex", 0)

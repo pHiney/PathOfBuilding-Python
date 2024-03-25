@@ -297,7 +297,7 @@ class ItemsUI:
 
         # Fill all those slots with jewels. sockets={socket['@nodeId']},{socket['@itemId']}
         # ToDo: Determine if a cluster jewel is allowed in slot
-        print(f"{self.build.current_spec.sockets=}")
+        # print(f"{self.build.current_spec.sockets=}")
         for j_id in self.build.current_spec.sockets.values():
             # accommodate data errors, or people fiddling.
             try:
@@ -754,7 +754,7 @@ class ItemsUI:
             self.delete_all_items()
             self.delete_all_itemsets()
         self.new_itemset(itemset_name)
-        self.itemsets = self.items.findall("ItemSet")
+        self.itemsets = self.items["ItemSets"]
         id_base = len(self.itemlist_by_id) == 0 and 1 or max(self.itemlist_by_id.keys())
         # add the items to the list box
         for idx, text_item in enumerate(_items["items"]):
@@ -822,8 +822,7 @@ class ItemsUI:
     def save(self):
         """
         Save the *current itemset* back to a object.
-        This is called by import_from_poep_json, the main SaveAs routines and the change itemset,
-        prior to showing the new set.
+        This is called by import_from_poep_json, the main SaveAs routines and change itemset, prior to showing the new set.
 
         :return: the json dict for Items
         """
@@ -838,10 +837,12 @@ class ItemsUI:
 
         # As these entries do not delete if not used, remove the old entries, and add the new ones.
         # self.current_itemset["Slots"] = deepcopy(empty_item_slots_dict)
+        self.items["Items"].clear()
+        for _id in self.itemlist_by_id:
+            self.items["Items"].append(self.itemlist_by_id[_id].save())
         self.current_itemset["Slots"].clear()
         for slot_ui_name in self.item_slot_ui_list:
             slot_ui = self.item_slot_ui_list[slot_ui_name]
-            # json_self_slot_ui = self.current_itemset["Slots"][slot_ui_name]
             if slot_ui.current_item_id != 0:
                 json_self_slot_ui = {"itemId": slot_ui.current_item_id, "itemPbURL": slot_ui.itemPbURL}
                 if "Flask" in slot_ui_name:
@@ -851,8 +852,6 @@ class ItemsUI:
         # Renumber skillsets in case they have been moved, created or deleted.
         for idx, _set in enumerate(self.items["ItemSets"]):
             _set["id"] = idx
-        for _id in self.itemlist_by_id:
-            self.items["Items"].append(self.itemlist_by_id[_id].save())
         return self.items
 
     # def save_to_xml(self):
@@ -931,25 +930,28 @@ class ItemsUI:
             """ Process the Slot entries and set default items"""
             slots = self.current_itemset.get("Slots", {})
             if slots:
-                print(f"slots=")
-                for _name, value in slots.items():
-                    item_id = value.get("itemId", -1)
-                    if item_id >= 0:
+                # for _name, value in slots.items():
+                for slot_name in empty_item_slots_dict.keys():
+                    slot_ui: ItemSlotUI = self.item_slot_ui_list.get(slot_name, None)
+                    slot = slots.get(slot_name, {})
+                    if slot:
+                        item_id = slot.get("itemId", -1)
                         # check for bad naming, like "Belt Abyssal Socket 6"
-                        slot_ui: ItemSlotUI = self.item_slot_ui_list.get(_name, None)
-                        if slot_ui is None:
-                            continue
-                        # Clear the slot if not used
-                        if item_id == 0:
-                            slot_ui.clear_default_item()
-                        else:
-                            item = self.itemlist_by_id[item_id]
-                            slot_ui.set_default_by_text(item.name)
-                            slot_ui.itemPbURL = value.get("itemPbURL", "")
-                            if item.type == "Flask":
-                                slot_ui.active = value.get("active", False)
-                            if "Abyssal" in _name:
-                                slot_ui.setHidden(False)
+                        if item_id >= 0:
+                            # Clear the slot if not used
+                            if item_id == 0:
+                                slot_ui.clear_default_item()
+                            else:
+                                item = self.itemlist_by_id[item_id]
+                                slot_ui.set_default_by_text(item.name)
+                                slot_ui.itemPbURL = slot.get("itemPbURL", "")
+                                if item.type == "Flask":
+                                    slot_ui.active = slot.get("active", False)
+                                if "Abyssal" in slot_name:
+                                    slot_ui.setHidden(False)
+                    else:
+                        slot_ui.clear_default_item()
+
                 # slots = self.current_itemset["Slots"]
                 # if len(slots) > 0:
                 #     for slot_xml in slots:
@@ -1084,7 +1086,7 @@ class ItemsUI:
     def delete_all_items(self):
         """Delete all items"""
         # print("delete_all_items")
-        self.items["Item"].clear()
+        self.items["Items"].clear()
         self.clear_controls(True)
 
     @Slot()

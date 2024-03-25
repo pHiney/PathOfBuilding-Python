@@ -377,7 +377,7 @@ class Item:
         self.base_name = _json.get("typeLine", "")
         # for magic and normal items, name is blank
         self.title = _json.get("name", "")
-        self.id = _json["id"]
+        # self.UniqueID = _json["id"]
         self._slot = slot_map[_json["inventoryId"]]
         self.rarity = rarity_map[int(_json.get("frameType", 0))]
 
@@ -449,6 +449,7 @@ class Item:
         # 'explicits': ['+1 to Level of Socketed Active Skill Gems per 25 Player Levels',
         # 'Trigger a Socketed Spell when you Attack with this Weapon, with a 0.25 second Cooldown',
         # 'Adds 3 to 5 Physical Damage to Attacks with this Weapon per 3 Player Levels', '8% increased Attack Speed']}
+        print(f"import_from_poep_json: {_json=}")
         self.base_name = _json.get("baseName", "")
         # for magic and normal items, name is blank
         self.title = _json.get("name", "")
@@ -456,7 +457,7 @@ class Item:
         self._slot = _json.get("slot", "")
         if self._slot != "":
             self._slot = slot_map[self._slot.title()]
-        self.rarity = _json.get("Rarity", "")
+        self.rarity = _json.get("rarity", "")
         self.quality = _json.get("quality", "0")
         # import doesn't have socket info
         self.sockets = self.base_item.get("initial_sockets", "")
@@ -505,7 +506,7 @@ class Item:
             # self.variants.pop("current", None)
             self.variant_names = [""]  # Variants are numbered from one, insert a blank for index 0
             self.variant_names.extend(self.variants)
-            print(f"item.load_from_json: {self.variant_names=}")
+            # print(f"item.load_from_json: {self.variant_names=}")
             self.alt_variants = self.pob_item.get("Alt Variants", {})
 
             variant_base_names = self.pob_item.get("Variant Entries", {}).get("base_name", {})

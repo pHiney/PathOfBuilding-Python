@@ -15,7 +15,7 @@ from pprint import pprint
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import Qt, Slot
 
-from PoB.constants import valid_websites, website_list, get_http_headers
+from PoB.constants import bad_text, get_http_headers, valid_websites, website_list
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import write_json, read_json
@@ -131,7 +131,6 @@ class ImportDlg(Ui_BuildImport, QDialog):
         :param text: str: text to test
         :return: boolean; True if test passes.
         """
-        bad_text = "py P 0 B"
         try:
             text_json = json.loads(text)
             return (
@@ -142,7 +141,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
                 and text_json.get("skills", bad_text) != bad_text
                 and text_json.get("tree", bad_text) != bad_text
             )
-        except (KeyError, json.decoder.JSONDecodeError):
+        except (AttributeError, KeyError, json.decoder.JSONDecodeError):
             print("test_import_text_for_poeplanner_json test failed")
             return False
 

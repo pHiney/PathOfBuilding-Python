@@ -239,7 +239,7 @@ class Tree:
 
         :return:
         """
-        print(f"Loading Tree: {tree_versions[self.version]}")
+        print(f"Loading Tree: {self.version=}, {tree_versions[self.version]=}")
         try:
             json_dict = OrderedDict(read_json(self.json_file_path))
         except TypeError:
