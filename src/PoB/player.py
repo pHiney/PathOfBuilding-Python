@@ -166,13 +166,14 @@ class Player:
                 # print(f"{node_id=}, {node.stats=}")
                 self.nodes.add(node)
                 effect_id = self.build.current_spec.get_mastery_effect(node_id)
-                # the output from the list comprehansion is a list (wow), so add [0] to get the dict
-                effect = [effect for effect in node.masteryEffects if effect["effect"] == effect_id][0]
-                stat = effect["stats"][0]
-                if "Minion" in stat:
-                    self.node_minion_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
-                else:
-                    self.node_player_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
+                effect = [effect for effect in node.masteryEffects if effect["effect"] == effect_id]
+                if effect:
+                    # the output from the list comprehansion is a list (wow), so add [0] to get the resultant dict
+                    stat = effect[0]["stats"][0]
+                    if "Minion" in stat:
+                        self.node_minion_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
+                    else:
+                        self.node_player_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
         # print(f"{len(self.node_player_stats)=}, {self.node_player_stats=}")
 
         # Get stats from all active items

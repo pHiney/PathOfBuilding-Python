@@ -544,7 +544,7 @@ class SkillsUI:
         self.clear_socket_group_settings()
         self.win.list_SocketGroups.clear()
         if 0 <= new_index < len(self.skillsets):
-            self.show_skill_set(self.skillsets[new_index], new_index, True)
+            self.show_skill_set(new_index, True)
 
     def rename_set(self, row, new_title):
         """
@@ -556,35 +556,35 @@ class SkillsUI:
         self.skillsets[row]["title"] = new_title
         self.win.combo_SkillSet.setItemText(row, new_title)
 
-    def show_skill_set(self, _set, _index=0, trigger=False):
+    def show_skill_set(self, _index=0, trigger=False):
         """
         Show a set of skills.
 
-        :param _set: ElementTree.Element. This set of skills
         :param _index: int: set the current socket group active at the end of the function
-        :param trigger: if True, this is called from a trigger, so don't disconnect/reconnect triggers
+        :param trigger: bool:  if True, this is called from a trigger, so don't disconnect/reconnect triggers
         :return: N/A
         """
         # print("show_skill_set", _index, self.win.combo_SkillSet.currentText(), _set)
         if not trigger:
             self.disconnect_skill_triggers()
 
-        self.current_skill_set = _set
-        # Find all Socket Groups and add them to the Socket Group list
-        socket_groups = self.current_skill_set["SGroups"]
+        if 0 <= _index < len(self.skillsets):
+            self.current_skill_set = self.skillsets[_index]
+            # Find all Socket Groups and add them to the Socket Group list
+            socket_groups = self.current_skill_set["SGroups"]
 
-        self.win.list_SocketGroups.clear()
-        for idx, group in enumerate(socket_groups):
-            self.win.list_SocketGroups.addItem(self.define_socket_group_label(None, group))
+            self.win.list_SocketGroups.clear()
+            for idx, group in enumerate(socket_groups):
+                self.win.list_SocketGroups.addItem(self.define_socket_group_label(None, group))
 
-        # Load the left hand socket group (under "Main Skill") widgets
-        self.load_main_skill_combo()
+            # Load the left hand socket group (under "Main Skill") widgets
+            self.load_main_skill_combo()
 
-        if not trigger:
-            self.connect_skill_triggers()
-        # Trigger the filling out of the right hand side UI elements using change_socket_group -> load_socket_group
-        self.win.list_SocketGroups.setCurrentRow(0)
-        # Use change_socket_group using mainActiveSkill -1
+            if not trigger:
+                self.connect_skill_triggers()
+            # Trigger the filling out of the right hand side UI elements using change_socket_group -> load_socket_group
+            self.win.list_SocketGroups.setCurrentRow(0)
+            # Use change_socket_group using mainActiveSkill -1
 
     def delete_skill_set(self, itemset_num):
         """
@@ -787,7 +787,7 @@ class SkillsUI:
         :return: N/A
         """
         # print("delete_all_socket_groups")
-        if len(list(self.current_skill_set)) == 0:
+        if self.current_skill_set is None or len(list(self.current_skill_set)) == 0:
             return
         tr = self.pob_config.app.tr
         if not prompt or yes_no_dialog(
@@ -1138,8 +1138,8 @@ class SkillsUI:
             self.delete_all_socket_groups(False)
             self.delete_all_skill_sets(False)
 
-        json_character = json_items.get("character")
         # Make a new skill set
+        json_character = json_items.get("character")
         self.current_skill_set = self.new_skill_set(f"Imported {json_character.get('name', '')}")
         self.delete_all_socket_groups(False)
 
@@ -1186,6 +1186,8 @@ class SkillsUI:
                     # _gem["qualityId"] = quality_id[q]
 
                 self.check_socket_group_for_an_active_gem(current_socket_group)
+        self.win.combo_SkillSet.setCurrentIndex(0)
+        self.show_skill_set(0, True)
 
     def import_from_poep_json(self, json_skills, skillset_name):
         """
@@ -1233,6 +1235,8 @@ class SkillsUI:
                 # _gem["qualityId"] = quality_id[q]
 
             self.check_socket_group_for_an_active_gem(current_socket_group)
+        self.win.combo_SkillSet.setCurrentIndex(0)
+        self.show_skill_set(0, True)
 
 
 # def test() -> None:

@@ -22,7 +22,6 @@ class Spec:
         self.tr = self.build.settings.app.tr
 
         self.spec = type(new_spec) is dict and new_spec or deepcopy(empty_spec_dict)
-        self.title = self.spec["title"]
         self.nodes = set()
         self.ascendancy_nodes = []
         self.extended_hashes = []
@@ -96,6 +95,14 @@ class Spec:
         # Do not remove the leading \. despite what python grammar checkers might say.
         tmp_list = re.split(r"[._/]", new_version)
         self.spec["treeVersion"] = f"{tmp_list[0]}_{tmp_list[1]}"
+
+    @property
+    def title(self):
+        return self.spec.get("title", "")
+
+    @title.setter
+    def title(self, new_value):
+        self.spec["title"] = new_value
 
     @property
     def URL(self):
@@ -542,6 +549,7 @@ class Spec:
         #             xml_sockets.append(ET.fromstring(f'<Socket nodeId="{node_id}" itemId="{self.sockets[node_id]}"/>'))
         #     return self.title, xml_spec
         # else:
+        # print("save", self.title, self.spec)
         return self.title, self.spec
 
     # def save(self):
@@ -562,18 +570,24 @@ class Spec:
         Import the tree (and later the jewels)
 
         :param json_tree: json import of tree and jewel data
-        :param json_character: json import of the character information
+        :param json_character: json import of the character items
         :return: N/A
         """
+        # print("load_from_ggg_json", json_character)
+        # print("load_from_ggg_json", json_tree)
         self.nodes = set(json_tree.get("hashes", "0"))
+        # print(self.nodes)
         self.extended_hashes = json_tree.get("hashes_ex", [])
         # for the json import, this is a list of large ints (https://www.pathofexile.com/developer/docs/reference)
         #   with the modulo remainder being "the string value of the mastery node skill hash"
         #   with the quotient being "the value is the selected effect hash"
         for effect in json_tree.get("mastery_effects", []):
             self.masteryEffects[int(effect) % 65536] = int(effect) // 65536
-        self.classId = json_character.get("classId", 0)
-        self.ascendClassId = json_character.get("ascendancyClass", 0)
+        self.classId = json_tree.get("character", 0)
+        self.ascendClassId = json_tree.get("ascendancy", 0)
+        # ToDo: investigate jewel_data
+        # self.jewel_data = json_tree.get("jewel_data", 0)
+
         # write nodes and stuff to xml
         self.save()
 

@@ -474,22 +474,22 @@ class Build:
 
         write_json(self.filename, self.json)
 
-    def save_to_xml(self):
-        """
-        Save the build to the filename recorded in the build Class
-        :param:version: str. 1 for version 1 xml data,  2 for updated.
-        :return: N/A
-        """
-        self.xml_import_field.set("lastAccountHash", self.last_account_hash)
-        self.xml_import_field.set("lastCharacterHash", self.last_character_hash)
-        self.xml_import_field.set("lastRealm", self.last_realm)
-        self.xml_import_field.set("lastLeague", self.last_league)
-        for spec in self.specs:
-            # ToDo: Need to find sockets parent, clear it and append save's output
-            spec.save(True)
-        # ensure these get updated to match last tree shown.
-        self.className = self.current_spec.classId_str()
-        self.ascendClassName = self.current_spec.ascendClassId_str()
+        # def save_to_xml(self):
+        #     """
+        #     Save the build to the filename recorded in the build Class
+        #     :param:version: str. 1 for version 1 xml data,  2 for updated.
+        #     :return: N/A
+        #     """
+        #     self.xml_import_field.set("lastAccountHash", self.last_account_hash)
+        #     self.xml_import_field.set("lastCharacterHash", self.last_character_hash)
+        #     self.xml_import_field.set("lastRealm", self.last_realm)
+        #     self.xml_import_field.set("lastLeague", self.last_league)
+        #     for spec in self.specs:
+        #         # ToDo: Need to find sockets parent, clear it and append save's output
+        #         spec.save(True)
+        #     # ensure these get updated to match last tree shown.
+        #     self.className = self.current_spec.classId_str()
+        #     self.ascendClassName = self.current_spec.ascendClassId_str()
 
         """Debug Please leave until build is mostly complete"""
         # print("build")
@@ -677,10 +677,12 @@ class Build:
         # print(f"build.delete_spec: {index}")
         if index == "all":
             # Then remove all
-            for count in range(len(self.specs)):
-                spec = self.specs[0].spec
-                self.json_tree["Specs"].remove(spec)
-                del self.specs[count]
+            self.specs.clear()
+            self.json_tree["Specs"].clear()
+            # for count in range(len(self.specs)):
+            #     spec = self.specs[0].spec
+            #     self.json_tree["Specs"].remove(spec)
+            #     del self.specs[count]
         elif 0 <= index < len(self.specs):
             spec = self.specs[index].spec
             self.json_tree["Specs"].remove(spec)
@@ -688,20 +690,22 @@ class Build:
 
     """ ################################################### IMPORT ################################################### """
 
-    def import_passive_tree_jewels_ggg_json(self, json_tree, json_character):
+    def import_passive_tree_jewels_ggg_json(self, json_tree, json_character, delete_it_all):
         """
         Import the tree (and later the jewels)
 
         :param json_tree: json import of tree and jewel data
         :param json_character: json import of the character information
+        :param delete_it_all: bool: Delete all specs before importing ?
         :return: N/A
             character={ ascendancyClass=1, class="Inquisitor", classId=5, experience=1028062232,
                 league="Standard", level=82, name="Mirabel__Sentinel" },
         """
         # print("import_passive_tree_jewels_json", json_character)
         # print("import_passive_tree_jewels_json", json_tree)
-        new_spec = self.new_spec()
-        self.name = f"Imported {json_character.get('name', '')}"
+        if delete_it_all:
+            self.delete_spec("all")
+        new_spec = self.new_spec(f"Imported from {json_character.get('name', '')}")
         new_spec.load_from_ggg_json(json_tree, json_character)
         self.current_class = new_spec.classId
         self.ascendClassName = json_character.get("class", "")

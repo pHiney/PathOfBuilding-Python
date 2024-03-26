@@ -82,6 +82,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.refresh_tree = True
         self.triggers_connected = False
 
+        # information from an imported character
+        self.account_name = ""
+        self.import_character_name = ""
+        self.import_league = ""
+
         # The QAction representing the current theme (to turn off the menu's check mark)
         self.curr_theme = None
 
@@ -747,15 +752,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return: N/A
         """
-        # mydialog_ = QFileDialog()
-        # mydialog_.setNameFilter()
-        # cb_ = QComboBox()
-        # l = mydialog_.layout()
-        # print(type(l), l)
-        #     # .addWidget(cb_)
-        # mydialog_.exec()
-
+        # print(f"build_save_as: {self.account_name=}, {self.import_character_name=}")
         dlg = BrowseFileDlg(self.settings, self.build, "Save", self)
+        if dlg.save_as_text == "" and self.import_character_name != "":
+            if self.account_name:
+                dlg.save_as_text = f"{self.import_character_name}, {self.import_league} league, Imported from {self.account_name}"
+            else:
+                dlg.save_as_text = f"{self.import_character_name} imported from {self.import_league} league"
+
         if dlg.exec():
             # Selected file has been checked for existing and ok'd if it does
             filename = dlg.selected_file
@@ -1041,9 +1045,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # return
         dlg = ImportDlg(self.settings, self.build, self)
         dlg.exec()
+        self.account_name = ""
+        self.import_character_name = ""
+        self.import_league = ""
         if dlg.xml is not None:
             self.build_loader(load_from_xml(dlg.xml), "Imported")
         elif dlg.character_data is not None:
+            self.account_name = dlg.lineedit_Account.text()
+            self.import_character_name = dlg.character_data["character"]["name"]
+            self.import_league = dlg.character_data["character"]["league"]
             self.set_current_tab("CONFIG")
             self.combo_Bandits.showPopup()
         # If neither of those two were valid, then the user closed with no actions taken

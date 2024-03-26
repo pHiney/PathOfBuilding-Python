@@ -738,12 +738,11 @@ class ItemsUI:
         # Trigger showing the correct itemset
         self.win.combo_ItemSet.setCurrentIndex(self.activeItemSet)
 
-    def load_from_ggg_json(self, _items, itemset_name, delete_it_all):
+    def load_from_ggg_json(self, json_items, delete_it_all):
         """
         Load internal structures from the GGG build json.
 
-        :param _items: Reference to the downloaded json <Items> tag set
-        :param itemset_name: str: A potential new name for this itemset
+        :param json_items: json import of the item data
         :param delete_it_all: bool: delete all current items and itemsets
         :return: N/A
         """
@@ -753,11 +752,14 @@ class ItemsUI:
         if delete_it_all:
             self.delete_all_items()
             self.delete_all_itemsets()
-        self.new_itemset(itemset_name)
-        self.itemsets = self.items["ItemSets"]
+
+        # Make a new skill set
+        json_character = json_items.get("character")
+        self.current_itemset = self.new_itemset(f"Imported {json_character.get('name', '')}")
+        # self.itemsets = self.items["ItemSets"]
         id_base = len(self.itemlist_by_id) == 0 and 1 or max(self.itemlist_by_id.keys())
         # add the items to the list box
-        for idx, text_item in enumerate(_items["items"]):
+        for idx, text_item in enumerate(json_items["items"]):
             new_item = Item(self.settings, self.base_items)
             new_item.load_from_ggg_json(text_item)
             new_item.id = id_base + idx

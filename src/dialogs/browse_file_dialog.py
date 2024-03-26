@@ -56,12 +56,22 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         # for idx in range(0, self.hLayout_SaveAs.count()):
         #     self.hLayout_SaveAs.itemAt(idx).widget().setHidden(not self.save)
 
-        self.lineEdit_SaveAs.setText(_build.filename)
+        self.save_as_text = _build.filename
         self.list_Files.set_delegate()
         self.list_Files_width = self.list_Files.width()
         self.max_filename_width = 100
 
         self.change_dir(self.settings.build_path)  # connects triggers
+
+    @property
+    def save_as_text(self):
+        """Save As label text. Needed so we can have a setter"""
+        return self.lineEdit_SaveAs.text()
+
+    @save_as_text.setter
+    def save_as_text(self, text):
+        """Add to the SaveAs line edit"""
+        self.lineEdit_SaveAs.setText(text)
 
     # Overridden function
     def resizeEvent(self, event):
