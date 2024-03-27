@@ -675,11 +675,11 @@ def load_from_xml(filename_or_xml):
             except KeyError:
                 pass
         json_set["Slots"] = slots
-        for s_id in json_set.get("SocketIdURL", []):
-            name = s_id.get("name", "")
+        for s_id in xml_itemset.get("SocketIdURL", []):
+            name = s_id.get("@name", "")
             if name:
                 json_set.setdefault("SocketIdURL", []).append(
-                    {"name": name, "nodeId": int(s_id.get("nodeId", "")), "itemPbURL": s_id.get("itemPbURL", "")}
+                    {"name": name, "nodeId": int(s_id.get("@nodeId", "")), "itemPbURL": s_id.get("@itemPbURL", "")}
                 )
         json_PoB["Items"]["ItemSets"].append(json_set)
 
@@ -835,6 +835,20 @@ def save_to_xml(filename, build):
     xml_root.append(xml_skills)
 
     """Items"""
+    json_items = build["PathOfBuilding"]["Items"]
+    items = f'<ItemSet activeItemSet="{str(json_items["activeItemSet"]+1)}" />'
+    xml_items = ET.fromstring(items)
+    for _set in json_items["ItemSets"]:
+        xml_itemset = ET.fromstring(f'<ItemSet useSecondWeaponSet="{bool_to_str(_set["useSecondWeaponSet"])}" id="{str(_set["id"]+1)}" />')
+        xml_items.append(xml_itemset)
+        for slot, value in _set["Slots"].items():
+            xml_itemset.append(ET.fromstring(f'<Slot itemPbURL="{value["itemPbURL"]}" name="{slot}" itemId="{str(value["itemId"])}"/>'))
+        if _set.get("SocketIdURL", []):
+            for slot in _set["SocketIdURL"]:
+                xml_itemset.append(
+                    ET.fromstring(f'<SocketIdURL nodeId="{str(slot["nodeId"])}" name="{slot["name"]}" itemPbURL="{slot["itemPbURL"]}" />')
+                )
+    xml_root.append(xml_items)
 
     # # build.text = ""
     # print_a_xml_element(build_xml)
