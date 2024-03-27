@@ -48,7 +48,7 @@ from PoB.settings import Settings
 from PoB.pob_file import get_file_info
 from PoB.player import Player
 from PoB.utils import html_colour_text, format_number, print_call_stack, _debug
-from PoB.xml import load_from_xml
+from PoB.xml import load_from_xml, save_to_xml
 from dialogs.browse_file_dialog import BrowseFileDlg
 from dialogs.export_dialog import ExportDlg
 from dialogs.import_dialog import ImportDlg
@@ -723,6 +723,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Do calcs. Needs to be near last n this function
         self.alerting = True
         # self.do_calcs()
+        self.build.save()
+        save_to_xml("test.xml", self.build.json)
 
     @Slot()
     def build_save(self):

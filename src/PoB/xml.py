@@ -20,7 +20,7 @@ from PoB.constants import (
 
 # from PoB.item import Item
 from PoB.pob_file import read_xml_as_dict
-from PoB.utils import _debug, html_colour_text, str_to_bool, index_exists
+from PoB.utils import _debug, bool_to_str, html_colour_text, str_to_bool, index_exists
 
 """ ################################################### XML ################################################### """
 
@@ -38,7 +38,7 @@ enabled="true" quality="0" count="1" nameSpec=""/>"""
 
 empty_build_xml = f"""
 <PathOfBuilding>
-    <Build version="2" level="1" targetVersion="3_0" bandit="None" className="Scion" ascendClassName="None"
+    <Build level="1" targetVersion="3_0" bandit="None" className="Scion" ascendClassName="None"
      mainSocketGroup="1" viewMode="{default_view_mode}" pantheonMajorGod="None" pantheonMinorGod="None">
             <PlayerStat stat="AverageHit" value="0"/>
      </Build>
@@ -505,7 +505,7 @@ def load_from_xml(filename_or_xml):
     xml_import = xml_PoB["Import"]
     if xml_import is not None:
         json_PoB["Import"] = {
-            "exportParty": str_to_bool(xml_import.get("@lastAccountHash", "False")),
+            "exportParty": str_to_bool(xml_import.get("@lastAccountHash", "false")),
             "lastAccountHash": xml_import.get("@lastAccountHash", ""),
             "lastCharacterHash": xml_import.get("@lastCharacterHash", ""),
             "lastRealm": xml_import.get("@lastRealm", ""),
@@ -552,7 +552,7 @@ def load_from_xml(filename_or_xml):
             "ascendClassId": int(xml_spec.get("@ascendClassId", "0")),
             "nodes": xml_spec.get("@nodes", starting_scion_node),
             "masteryEffects": xml_spec.get("@masteryEffects", ""),
-            "URL": xml_spec.get("@URL", "https://www.pathofexile.com/passive-skill-tree/AAAABgAAAAAA"),
+            "URL": xml_spec.get("URL", "https://www.pathofexile.com/passive-skill-tree/AAAABgAAAAAA"),
             "Sockets": "",
             "Overrides": "",
         }
@@ -591,6 +591,7 @@ def load_from_xml(filename_or_xml):
             sgroup = {
                 "enabled": str_to_bool(get_param_value(xml_sgroup.get("@enabled", "True"), "True")),
                 "label": remove_lua_colours(xml_sgroup.get("@label", "")),
+                "source": remove_lua_colours(xml_sgroup.get("@source", "")),
                 "mainActiveSkill": int(get_param_value(xml_sgroup.get("@mainActiveSkill", "1"), "1")) - 1,
                 "mainActiveSkillCalcs": int(get_param_value(xml_sgroup.get("@mainActiveSkillCalcs", "1"), "1")) - 1,
                 "includeInFullDPS": str_to_bool(get_param_value(xml_sgroup.get("@includeInFullDPS", "False"), "False")),
@@ -621,18 +622,23 @@ def load_from_xml(filename_or_xml):
                         xml_gem["@skillId"] = ""
 
                     gem = {
-                        "enabled": str_to_bool(get_param_value(xml_sgroup.get("@enabled", "True"), "True")),
+                        "enabled": str_to_bool(get_param_value(xml_gem.get("@enabled", "True"), "True")),
                         "nameSpec": xml_gem.get("@nameSpec", ""),
                         "variantId": xml_gem.get("@variantId", ""),
                         "skillId": xml_gem.get("@skillId", ""),
-                        "level": int(get_param_value(xml_sgroup.get("@level", "1"), "1")),
+                        "level": int(get_param_value(xml_gem.get("@level", "1"), "1")),
                         "qualityId": xml_gem.get("@qualityId", ""),
-                        "quality": int(get_param_value(xml_sgroup.get("@quality", "0"), "0")),
-                        "count": int(get_param_value(xml_sgroup.get("@count", "1"), "1")),
-                        "enableGlobal1": str_to_bool(get_param_value(xml_sgroup.get("@enableGlobal1", "True"), "True")),
-                        "enableGlobal2": str_to_bool(get_param_value(xml_sgroup.get("@enableGlobal2", "True"), "True")),
+                        "quality": int(get_param_value(xml_gem.get("@quality", "0"), "0")),
+                        "count": int(get_param_value(xml_gem.get("@count", "1"), "1")),
+                        "enableGlobal1": str_to_bool(get_param_value(xml_gem.get("@enableGlobal1", "True"), "True")),
+                        "enableGlobal2": str_to_bool(get_param_value(xml_gem.get("@enableGlobal2", "True"), "True")),
                         # "gemId": xml_gem.get("@gemId", ""),
                     }
+                    if xml_gem.get("@skillMinion", ""):
+                        gem["skillMinion"] = xml_gem.get("@skillMinion")
+                        gem["skillMinionSkillCalcs"] = int(xml_gem.get("@skillMinionSkill", "1"))
+                        gem["skillMinionSkill"] = int(xml_gem.get("@skillMinionSkill", "1"))
+                        gem["skillMinionCalcs"] = xml_gem.get("@skillMinionCalcs")
                     sgroup["Gems"].append(gem)
             skillset["SGroups"].append(sgroup)
         skills["SkillSets"].append(skillset)
@@ -669,7 +675,6 @@ def load_from_xml(filename_or_xml):
             except KeyError:
                 pass
         json_set["Slots"] = slots
-        print(f"xml: {slots=}")
         for s_id in json_set.get("SocketIdURL", []):
             name = s_id.get("name", "")
             if name:
@@ -726,24 +731,134 @@ def save_to_xml(filename, build):
     :param build: Build() class
     :return: N/A
     """
-    # ToDo: Complete
-    xml_build = ET.fromstring(deepcopy(empty_build_xml))
-    xml_root = xml_build.getroot()
-    xml_import = xml_root.find("Import")
-    if xml_import is not None:
-        last_account_hash = xml_import.get("lastAccountHash", "")
-        last_character_hash = xml_import.get("lastCharacterHash", "")
-        last_realm = xml_import.get("lastRealm", "")
-        last_league = xml_import.get("lastLeague", "")
-    xml_calcs = xml_root.find("Calcs")
-    xml_skills = xml_root.find("Skills")
-    xml_tree = xml_root.find("Tree")
-    xml_notes = xml_root.find("Notes")
-    xml_notes_html = xml_root.find("NotesHTML")
-    # lua version doesn't have NotesHTML, expect it to be missing
-    if xml_notes_html is None:
-        xml_notes_html = ET.Element("NotesHTML")
-        xml_root.append(xml_notes_html)
-    xml_tree_view = xml_root.find("TreeView")
-    xml_items = xml_root.find("Items")
-    xml_config = xml_root.find("Config")
+    # print(f"save_to_xml: {filename}")
+
+    build_xml = ET.ElementTree(ET.fromstring("<PathOfBuilding></PathOfBuilding>"))
+    xml_root = build_xml.getroot()
+
+    json_config = build["PathOfBuilding"]["Config"]
+
+    """Build"""
+    json_build = build["PathOfBuilding"]["Build"]
+    _build = (
+        f'<Build level="{str(json_build["level"])}" targetVersion="{json_build["targetVersion"]}" '
+        f'pantheonMajorGod="{json_config["Input"]["pantheonMajorGod"]}" bandit="{json_config["Input"]["bandit"]}" '
+        f'className="{json_build["className"]}" ascendClassName="{json_build["ascendClassName"]}" '
+        f'characterLevelAutoMode="{bool_to_str(json_build["characterLevelAutoMode"])}" '
+        f'mainSocketGroup="{str(json_build["mainSocketGroup"]+1)}" viewMode="{json_build["viewMode"]}" '
+        f'pantheonMinorGod="{json_config["Input"]["pantheonMinorGod"]}" >'
+        f"</Build>"
+    )
+    xml_build = ET.fromstring(_build)
+    for stat, value in json_build["PlayerStat"].items():
+        xml_build.append(ET.fromstring(f'<PlayerStat stat="{stat}" value="{str(value)}"/>'))
+    for stat, value in json_build["MinionStat"].items():
+        xml_build.append(ET.fromstring(f'<MinionStat stat="{stat}" value="{str(value)}"/>'))
+    tld = json_build["TimelessData"]
+    xml_build.append(
+        ET.fromstring(
+            f'<TimelessData devotionVariant2="{str(tld["devotionVariant2"])}" searchListFallback="{tld["searchListFallback"]}" '
+            f'searchList="{tld["searchList"]}" socketFilterDistance="{str(tld["socketFilterDistance"])}" '
+            f'devotionVariant1="{str(tld["devotionVariant1"])}" />'
+        )
+    )
+    xml_root.append(xml_build)
+
+    """Import"""
+    json_import = build["PathOfBuilding"]["Import"]
+    xml_import = ET.fromstring(
+        f'<Import lastCharacterHash="{json_import.get("lastCharacterHash","")}" lastRealm="{json_import.get("lastRealm","")}"'
+        f' exportParty="{bool_to_str(json_import.get("exportParty","False"))}" lastAccountHash="{json_import.get("lastAccountHash","")}"/>'
+    )
+    xml_root.append(xml_import)
+
+    """Tree"""
+    json_tree = build["PathOfBuilding"]["Tree"]
+    xml_tree = ET.fromstring(f'<Tree activeSpec="{str(json_tree["activeSpec"]+1)}"> </Tree>')
+    for spec in json_tree["Specs"]:
+        _spec = (
+            f'<Spec masteryEffects="{str(spec["masteryEffects"])}" title="{spec["title"]}" ascendClassId="{str(spec["ascendClassId"])}" '
+            f'nodes="{str(spec["nodes"])}" secondaryAscendClassId="0" '
+            f'treeVersion="{spec["treeVersion"]}" classId="{str(spec["ascendClassId"])}" />'
+        )
+        xml_spec = ET.fromstring(_spec)
+        xml_spec.append(ET.fromstring(f'<URL>{spec["URL"]}</URL>'))
+        sockets = re.findall(r"{(\d+),(\d+)}", spec["Sockets"])
+        for socket in sockets:
+            xml_spec.append(ET.fromstring(f'<Socket nodeId="{str(socket[0])}" itemId="{str(socket[1])}"/>'))
+        # for nodeId, itemId in spec["Overrides"].items():
+        #     xml_spec.append(ET.fromstring(f'<Override nodeId="{str(nodeId)}" itemId="{str(itemId)}"/>'))
+        xml_tree.append(xml_spec)
+    xml_root.append(xml_tree)
+
+    """Notes"""
+    xml_root.append(ET.fromstring(f'<Notes>{build["PathOfBuilding"]["Notes"]}</Notes>'))
+
+    """Skills"""
+    json_skills = build["PathOfBuilding"]["Skills"]
+    skills = (
+        f'<Skills sortGemsByDPSField="{json_skills["sortGemsByDPSField"]}" activeSkillSet="{str(json_skills["activeSkillSet"]+1)}" '
+        f'sortGemsByDPS="{bool_to_str(json_skills["sortGemsByDPS"])}" defaultGemQuality="{str(json_skills["defaultGemQuality"])}" '
+        f'defaultGemLevel="{json_skills["defaultGemLevel"]}" showSupportGemTypes="{json_skills["showSupportGemTypes"]}" '
+        f'showAltQualityGems="{bool_to_str(json_skills["showAltQualityGems"])}" />'
+    )
+    xml_skills = ET.fromstring(skills)
+    for _set in json_skills["SkillSets"]:
+        xml_set = ET.fromstring(f'<SkillSet id="{str(_set["id"])}"/>')
+        for _sg in _set["SGroups"]:
+            text_sg = (
+                f'<Skill mainActiveSkillCalcs="{str(_sg["mainActiveSkillCalcs"]+1)}" '
+                f'includeInFullDPS="{bool_to_str(_sg["includeInFullDPS"])}" label="{_sg["label"]}" source="{_sg.get("source","")}" '
+                f' enabled="{bool_to_str(_sg["enabled"])}" mainActiveSkill="{str(_sg["mainActiveSkill"]+1)}" />'
+            )
+            xml_sg = ET.fromstring(text_sg)
+            for _gem in _sg["Gems"]:
+                if _gem.get("skillMinion", ""):
+                    text_gem = (
+                        f'<Gem enableGlobal2="{bool_to_str(_gem["enableGlobal2"])}" '
+                        f'skillMinionSkillCalcs="{str(_gem["skillMinionSkillCalcs"])}" '
+                        f'level="{str(_gem["level"])}" skillId="{_gem["skillId"]}" skillMinionSkill="{str(_gem["level"])}" '
+                        f'quality="{str(_gem["quality"])}" enableGlobal1="{bool_to_str(_gem["enableGlobal1"])}" '
+                        f'enabled="{bool_to_str(_gem["enabled"])}" count="{str(_gem["count"])}" nameSpec="{_gem["nameSpec"]}" '
+                        f'skillMinion="{_gem["skillMinion"]}" />'
+                    )
+                else:
+                    text_gem = (
+                        f'<Gem enableGlobal2="{bool_to_str(_gem["enableGlobal2"])}" level="{str(_gem["level"])}" '
+                        f'gemId="" variantId="{_gem["variantId"]}" skillId="{_gem["skillId"]}" quality="{str(_gem["quality"])}" '
+                        f' enableGlobal1="{bool_to_str(_gem["enableGlobal1"])}" enabled="{bool_to_str(_gem["enabled"])}" '
+                        f'count="{str(_gem["count"])}" nameSpec="{_gem["nameSpec"]}"/>'
+                    )
+                xml_sg.append(ET.fromstring(text_gem))
+            xml_set.append(xml_sg)
+        xml_skills.append(xml_set)
+    xml_root.append(xml_skills)
+
+    """Items"""
+
+    # # build.text = ""
+    # print_a_xml_element(build_xml)
+    # build_xml.append(build)
+    # print_a_xml_element(build_xml)
+
+    # xml_import = xml_root.find("Import")
+    # if xml_import is not None:
+    #     last_account_hash = xml_import.get("lastAccountHash", "")
+    #     last_character_hash = xml_import.get("lastCharacterHash", "")
+    #     last_realm = xml_import.get("lastRealm", "")
+    #     last_league = xml_import.get("lastLeague", "")
+    # xml_calcs = xml_root.find("Calcs")
+    # xml_skills = xml_root.find("Skills")
+    # xml_tree = xml_root.find("Tree")
+    # xml_notes = xml_root.find("Notes")
+    # xml_notes_html = xml_root.find("NotesHTML")
+    # # lua version doesn't have NotesHTML, expect it to be missing
+    # if xml_notes_html is None:
+    #     xml_notes_html = ET.Element("NotesHTML")
+    #     xml_root.append(xml_notes_html)
+    # xml_tree_view = xml_root.find("TreeView")
+    # xml_items = xml_root.find("Items")
+    # xml_config = xml_root.find("Config")
+
+    # print_a_xml_element(xml_root)
+    write_xml(filename, build_xml)

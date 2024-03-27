@@ -85,7 +85,7 @@ class Player:
         self.minion = minion
         # Strip all stats. They are only there for third party tools. We will do our own calcs and save them.
         stat_name = self.minion and "MinionStat" or "PlayerStat"
-        self.json_build[stat_name].clear()
+        # self.json_build[stat_name].clear()
 
     def save(self):
         """

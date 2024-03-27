@@ -396,7 +396,7 @@ class Build:
         :param build_obj: None: Trigger loading the default build (a real new build).
         :return: N/A
         """
-        print(f"build.new: {type(build_obj)}")
+        # print(f"build.new: {type(build_obj)}")
         if build_obj is None:
             build_obj = deepcopy(empty_build)
             self.name = "Default"
@@ -453,7 +453,7 @@ class Build:
         self.filename = filename
         self.name = Path(Path(filename).name).stem
 
-    def save_to_json(self):
+    def save(self):
         """
         Save the build to the filename recorded in the build Class
         :return: N/A
@@ -472,6 +472,8 @@ class Build:
         self.className = self.current_spec.classId_str()
         self.ascendClassName = self.current_spec.ascendClassId_str()
 
+    def save_to_json(self):
+        self.save()
         write_json(self.filename, self.json)
 
         # def save_to_xml(self):
