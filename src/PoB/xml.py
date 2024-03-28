@@ -18,9 +18,8 @@ from PoB.constants import (
     starting_scion_node,
 )
 
-# from PoB.item import Item
 from PoB.pob_file import read_xml_as_dict
-from PoB.utils import _debug, bool_to_str, html_colour_text, str_to_bool, index_exists
+from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, str_to_bool
 
 """ ################################################### XML ################################################### """
 
@@ -132,7 +131,8 @@ def read_v1_custom_mods(filename):
         try:
             with _fn.open("r") as xml_file:
                 string = xml_file.read()
-                m = re.findall(r'<Input (.*?)"/>', string, re.DOTALL | re.MULTILINE | re.IGNORECASE)
+                # Sometimes the customMods' string element end in a newline. add .? to account for this
+                m = re.findall(r'<Input (.*?)".?/>', string, re.DOTALL | re.MULTILINE | re.IGNORECASE)
                 if m:
                     inputs = [element for element in m if "customMods" in element]
                     # 'inputs' will be a list of one line or an empty list
@@ -142,6 +142,27 @@ def read_v1_custom_mods(filename):
                         # Get rid of unwanted bits
                         return inputs[0].replace('string="', "").replace('name="customMods"', "").strip()
 
+        except (EnvironmentError, FileNotFoundError, ET.ParseError):
+            print(f"Unable to open {_fn}")
+    return ""
+
+
+def write_v1_custom_mods(filename):
+    """
+    Read the v1 xml customMods and remove the ~^ and replace it with a newline.
+    These are linefeed separated and the linefeed(s) was lost when read from XML as a dict.
+    Reread the file as an text file and get the custom mods.
+    :param filename: Name of xml to be read
+    :return: str: with \n encoded in it.
+    """
+    custom_mods = []
+    _fn = Path(filename)
+    if _fn.exists():
+        try:
+            with _fn.open("r") as xml_file:
+                string = xml_file.read()
+            with _fn.open("w") as xml_file:
+                xml_file.write(string.replace("~^", "\n"))
         except (EnvironmentError, FileNotFoundError, ET.ParseError):
             print(f"Unable to open {_fn}")
     return ""
@@ -205,7 +226,7 @@ def load_item_from_xml(_xml, debug_lines=False):
         "Unique ID",
         "Upgrade",
     )
-    integers = ("Item Level", "Limited to" "Quality")
+    integers = ("Item Level", "Limited to", "Quality")
     floats = ("ArmourBasePercentile", "EnergyShieldBasePercentile", "EvasionBasePercentile")
 
     def get_attribute(n):
@@ -243,23 +264,23 @@ def load_item_from_xml(_xml, debug_lines=False):
             case "Prefix" | "Suffix":
                 json_item["Crafted"][tag].append(n.group(2))
             case "Has Alt Variant":
-                json_item["Alt Variants"][1] = 0
+                json_item["Alt Variants"][1] = True
             case "Selected Alt Variant":
                 json_item["Alt Variants"][1] = int(n.group(2))
             case "Has Alt Variant Two":
-                json_item["Alt Variants"][2] = 0
+                json_item["Alt Variants"][2] = True
             case "Selected Alt Variant Two":
                 json_item["Alt Variants"][2] = int(n.group(2))
             case "Has Alt Variant Three":
-                json_item["Alt Variants"][3] = 0
+                json_item["Alt Variants"][3] = True
             case "Selected Alt Variant Three":
                 json_item["Alt Variants"][3] = int(n.group(2))
             case "Has Alt Variant Four":
-                json_item["Alt Variants"][4] = 0
+                json_item["Alt Variants"][4] = True
             case "Selected Alt Variant Four":
                 json_item["Alt Variants"][4] = int(n.group(2))
             case "Has Alt Variant Five":
-                json_item["Alt Variants"][5] = 0
+                json_item["Alt Variants"][5] = True
             case "Selected Alt Variant Five":
                 json_item["Alt Variants"][5] = int(n.group(2))
 
@@ -362,14 +383,14 @@ def load_item_from_xml(_xml, debug_lines=False):
                 get_attribute(m)
 
     if debug_lines:
-        print("b", len(lines), lines)
+        print(f"b, {explicits_idx=}, {len(lines)=}, lines")
     # every thing that is left, from explicits_idx, is explicits ... and some other stuff
     # explicits_idx may not be zero. In some version of luaPoB, the type "eg: Tornado Wand" would appear twice.
     while len(lines) > explicits_idx:
         line = lines.pop(explicits_idx)
         # Corrupted is not a mod, but will get caught in explicits due to crap data design.
         # Some items have things like UniqueID in the middle of this too.
-        if "Corrupted" in line:
+        if line == "Corrupted":
             json_item["Corrupted"] = True
         else:
             m = re.search(r"(.*): ?(.*)?", line)
@@ -391,6 +412,7 @@ def load_item_from_xml(_xml, debug_lines=False):
         print("end", len(lines), lines)
         print()
 
+    # print(f"{json_item=}")
     return json_item
     # load_item_from_xml
 
@@ -427,10 +449,10 @@ def load_from_xml(filename_or_xml):
         :param _dst: dict
         :return:
         """
-        if _src and _dst:
+        if _src and _dst is not None:
+            if type(_src) is dict:
+                _src = [_src]
             for _dict in _src:
-                # _name = _dict["@name"]
-                # input.pop("@name")
                 _name = _dict.pop("@name")
                 _value = ""
                 try:
@@ -516,7 +538,7 @@ def load_from_xml(filename_or_xml):
     xml_calcs = xml_PoB["Calcs"]
     get_input_values(xml_calcs["Input"], json_PoB["Calcs"]["Input"])
     for section in xml_calcs["Section"]:
-        json_PoB["Calcs"]["Sections"][section["@subsection"]] = {"collapsed": section["@collapsed"], "id": section["@id"]}
+        json_PoB["Calcs"]["Sections"][section["@subsection"]] = {"collapsed": str_to_bool(section["@collapsed"]), "id": section["@id"]}
 
     """Notes"""
     json_PoB["Notes"] = xml_PoB["Notes"]
@@ -530,9 +552,6 @@ def load_from_xml(filename_or_xml):
     xml_tree_view = xml_PoB["TreeView"]
     json_PoB["TreeView"] = {
         "searchStr": xml_tree_view.get("@searchStr", ""),
-        # "zoomY": float(xml_tree_view.get("@zoomY", "0")),
-        # "zoomLevel": int(xml_tree_view.get("@zoomLevel", "3")),
-        # "zoomX": float(xml_tree_view.get("@zoomX", "0")),
         "showStatDifferences": str_to_bool(xml_tree_view.get("@showStatDifferences", "True")),
     }
 
@@ -692,35 +711,38 @@ def save_item_to_xml(_item):
 
     :return: xml.etree.ElementTree:
     """
-    text = f"Rarity: {_item.rarity}\n"
-    text += _item.title and f"{_item.title}\n{_item.base_name}\n" or f"{_item.base_name}\n"
-    text += f"Item Level: {_item.ilevel}\n"
-    text += f"Quality: {_item.quality}\n"
-    if _item.sockets:
-        text += f"Sockets: {_item.sockets}\n"
-    text += f"LevelReq: {_item.level_req}\n"
-    for influence in _item.influences:
+
+    text = f"Rarity: {_item['Rarity']}\n"
+    text += _item.get("title", "") and f"{_item['title']}\n{_item['base_name']}\n" or f"{_item['base_name']}\n"
+    for _var, _name in _item.get("Variant Entries", {}).get("base_name", {}).items():
+        text = f"{{variant:{str(_var)}}}{_name}\n"
+    for influence in _item.get("Influences", []):
         text += f"{influence}\n"
-    for requirement in _item.requires.keys():
-        text += f"Requires {requirement} {_item.requires[requirement]}\n"
-    if type(_item.properties) is dict:
-        for prop in _item.properties.keys():
-            text += f"{prop}: {_item.properties[prop]}\n"
-    text += f"Implicits: {len(_item.implicitMods)}\n"
-    for mod in _item.implicitMods:
-        text += f"{mod.text_for_xml}\n"
-    for mod in _item.full_explicitMods_list:
-        text += f"{mod.text_for_xml}\n"
-    for mod in _item.crucibleMods:
-        text += f"{mod.text_for_xml}\n"
-    for mod in _item.fracturedMods:
-        text += f"{mod.text_for_xml}\n"
-    if _item.corrupted:
+    if _item.get("Selected Variant", 0):
+        for variant in _item.get("Variants", []):
+            text += f"Variant: {variant}\n"
+        text += f"Selected Variant: {str(_item['Selected Variant'])}\n"
+    for attrib, value in _item["Attribs"].items():
+        text += f"{attrib}: {str(value)}\n"
+    for attrib, value in _item["Requires"].items():
+        if attrib == "Level":
+            text += f"LevelReq: {str(value)}\n"
+        else:
+            text += f"{attrib}: {str(value)}\n"
+
+    text += f"Implicits: {len(_item['Implicits'])}\n"
+    for mod in _item["Implicits"]:
+        text += f"{mod}\n"
+    for mod in _item["Explicits"]:
+        text += f"{mod}\n"
+
+    if _item.get("Corrupted", False):
         text += "Corrupted"
 
-    # if debug_print:
-    #     print(f"{text}\n\n")
-    return ET.fromstring(f'<Item id="{_item.id}">{text}</Item>')
+    if _item.get("Selected Variant", 0):
+        return ET.fromstring(f'<Item variant="{str(_item["Selected Variant"])}" id="{str(_item["id"])}">{text}</Item>')
+    else:
+        return ET.fromstring(f'<Item id="{str(_item["id"])}">{text}</Item>')
     # save
 
 
@@ -731,8 +753,25 @@ def save_to_xml(filename, build):
     :param build: Build() class
     :return: N/A
     """
+
+    def get_value_s_type(_value):
+        match _value:
+            # bool() must come before int
+            case bool():
+                _type = "boolean"
+                _v = f"{_value}"
+            case int() | float():
+                _type = "number"
+                _v = f"{_value}"
+            case _:
+                _type = "string"
+                _v = _value
+        return _v, _type
+
     # print(f"save_to_xml: {filename}")
 
+    # Flag to reread the written file and change ~^ back to newlines.
+    customMods = False
     build_xml = ET.ElementTree(ET.fromstring("<PathOfBuilding></PathOfBuilding>"))
     xml_root = build_xml.getroot()
 
@@ -783,11 +822,15 @@ def save_to_xml(filename, build):
         )
         xml_spec = ET.fromstring(_spec)
         xml_spec.append(ET.fromstring(f'<URL>{spec["URL"]}</URL>'))
+        xml_sockets = ET.fromstring(f"<Sockets/>")
+        xml_overides = ET.fromstring(f"<Overrides/>")
         sockets = re.findall(r"{(\d+),(\d+)}", spec["Sockets"])
         for socket in sockets:
-            xml_spec.append(ET.fromstring(f'<Socket nodeId="{str(socket[0])}" itemId="{str(socket[1])}"/>'))
+            xml_sockets.append(ET.fromstring(f'<Socket nodeId="{str(socket[0])}" itemId="{str(socket[1])}"/>'))
         # for nodeId, itemId in spec["Overrides"].items():
-        #     xml_spec.append(ET.fromstring(f'<Override nodeId="{str(nodeId)}" itemId="{str(itemId)}"/>'))
+        #     xml_overides.append(ET.fromstring(f'<Override nodeId="{str(nodeId)}" itemId="{str(itemId)}"/>'))
+        xml_spec.append(xml_sockets)
+        xml_spec.append(xml_overides)
         xml_tree.append(xml_spec)
     xml_root.append(xml_tree)
 
@@ -806,9 +849,13 @@ def save_to_xml(filename, build):
     for _set in json_skills["SkillSets"]:
         xml_set = ET.fromstring(f'<SkillSet id="{str(_set["id"])}"/>')
         for _sg in _set["SGroups"]:
+            source_text = ""
+            if _sg.get("source", ""):
+                # we cannot have a 'source=""' in socket group. luaPoB will reject the whole socket group
+                source_text = f'source="{_sg.get("source","")}" '
             text_sg = (
                 f'<Skill mainActiveSkillCalcs="{str(_sg["mainActiveSkillCalcs"]+1)}" '
-                f'includeInFullDPS="{bool_to_str(_sg["includeInFullDPS"])}" label="{_sg["label"]}" source="{_sg.get("source","")}" '
+                f'includeInFullDPS="{bool_to_str(_sg["includeInFullDPS"])}" label="{_sg["label"]}" {source_text}'
                 f' enabled="{bool_to_str(_sg["enabled"])}" mainActiveSkill="{str(_sg["mainActiveSkill"]+1)}" />'
             )
             xml_sg = ET.fromstring(text_sg)
@@ -834,10 +881,32 @@ def save_to_xml(filename, build):
         xml_skills.append(xml_set)
     xml_root.append(xml_skills)
 
+    """Calcs"""
+    json_calcs = build["PathOfBuilding"]["Calcs"]
+    xml_calcs = ET.fromstring(f"<Calcs/>")
+    for _name, _value in json_calcs["Input"].items():
+        _value, value_type = get_value_s_type(_value)
+        xml_calcs.append(ET.fromstring(f'<Input name="{_name}" {value_type}="{_value}"/>'))
+    for _name, _value in json_calcs["Sections"].items():
+        xml_calcs.append(
+            ET.fromstring(f'<Section subsection="{_name}" collapsed="{bool_to_str(_value["collapsed"])}" id="{_value["id"]}"/>')
+        )
+    xml_root.append(xml_calcs)
+
+    """TreeView"""
+    json_tv = build["PathOfBuilding"]["TreeView"]
+    tv = (
+        f'<TreeView searchStr="{json_tv["searchStr"]}" zoomY="0" zoomLevel="3" '
+        f'showStatDifferences="{bool_to_str(json_tv["showStatDifferences"])}" zoomX="0" />'
+    )
+    xml_root.append(ET.fromstring(tv))
+
     """Items"""
     json_items = build["PathOfBuilding"]["Items"]
-    items = f'<ItemSet activeItemSet="{str(json_items["activeItemSet"]+1)}" />'
+    items = f'<Items activeItemSet="{str(json_items["activeItemSet"]+1)}" />'
     xml_items = ET.fromstring(items)
+    for _item in json_items["Items"]:
+        xml_items.append(save_item_to_xml(_item))
     for _set in json_items["ItemSets"]:
         xml_itemset = ET.fromstring(f'<ItemSet useSecondWeaponSet="{bool_to_str(_set["useSecondWeaponSet"])}" id="{str(_set["id"]+1)}" />')
         xml_items.append(xml_itemset)
@@ -849,6 +918,21 @@ def save_to_xml(filename, build):
                     ET.fromstring(f'<SocketIdURL nodeId="{str(slot["nodeId"])}" name="{slot["name"]}" itemPbURL="{slot["itemPbURL"]}" />')
                 )
     xml_root.append(xml_items)
+
+    """Config"""
+    json_config = build["PathOfBuilding"]["Config"]
+    xml_config = ET.fromstring(f"<Config/>")
+    for _name, _value in json_config["Input"].items():
+        if _name == "customMods":
+            xml_config.append(ET.fromstring(f'<Input name="customMods" string="{_value}"/>'))
+            customMods = True
+        else:
+            _value, value_type = get_value_s_type(_value)
+            xml_config.append(ET.fromstring(f'<Input name="{_name}" {value_type}="{_value}"/>'))
+    for _name, _value in json_config["Placeholder"].items():
+        _value, value_type = get_value_s_type(_value)
+        xml_config.append(ET.fromstring(f'<Placeholder name="{_name}" {value_type}="{_value}"/>'))
+    xml_root.append(xml_config)
 
     # # build.text = ""
     # print_a_xml_element(build_xml)
@@ -876,3 +960,6 @@ def save_to_xml(filename, build):
 
     # print_a_xml_element(xml_root)
     write_xml(filename, build_xml)
+    # rewrite ~^ to newlines
+    if customMods:
+        write_v1_custom_mods(filename)

@@ -110,6 +110,7 @@ empty_item_dict = {
     "Implicits": [],
     "Explicits": [],
     "Requires": {},
+    # Re: conversation 2022/09/16
     # Ignoring "ModRange": {},  # dict {"<id num>": <range num>, ...}
 }
 
@@ -211,15 +212,6 @@ empty_build = {
                 "bandit": "None",
                 "pantheonMajorGod": "None",
                 "pantheonMinorGod": "None",
-                "igniteMode": "AVERAGE",
-                "EHPUnluckyWorstOf": 1,
-                "usePowerCharges": False,
-                "overridePowerCharges": 3,
-                "useFrenzyCharges": False,
-                "overrideFrenzyCharges": 3,
-                "useEnduranceCharges": True,
-                "overrideEnduranceCharges": 5,
-                "customMods": "+1 to Maximum Endurance Charges~^+14% increased maximum Life",
             },
             "Placeholder": {
                 "enemySpeed": 700,
@@ -234,7 +226,7 @@ empty_build = {
             },
         },
         "Calcs": {
-            "Input": {"misc_buffMode": "EFFECTIVE", "skill_number": 1},
+            "Input": {},
             "Sections": {
                 "ViewSkillDetails": {"collapsed": False, "id": "SkillSelect"},
                 "SkillHitDamage": {"collapsed": False, "id": "HitDamage"},
