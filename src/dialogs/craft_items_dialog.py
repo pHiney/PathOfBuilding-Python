@@ -118,7 +118,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         # go via text so we get a unique python object
         self._item.load_from_json(deepcopy(newitem.pob_item))
         self.fill_widgets()
-        self.update_status_bar(f"Loaded {newitem.coloured_name}")
+        self.update_status_bar(f"Loaded {newitem.coloured_text}")
 
     def fill_widgets(self):
         """Fill the widgets with default values. Called when setting self.item"""

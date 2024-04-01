@@ -350,6 +350,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def setup_ui(self):
         """Called after show(). Call setup_ui for all UI classes that need it"""
         self.items_ui.setup_ui()
+        self.skills_ui.setup_ui()
 
     def connect_widget_triggers(self):
         """re-connect widget triggers that need to be disconnected during loading and other processing"""

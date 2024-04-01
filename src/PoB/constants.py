@@ -110,7 +110,7 @@ empty_item_dict = {
     "Implicits": [],
     "Explicits": [],
     "Requires": {},
-    # Re: conversation 2022/09/16
+    # Re: discord conversation 2022/09/16
     # Ignoring "ModRange": {},  # dict {"<id num>": <range num>, ...}
 }
 

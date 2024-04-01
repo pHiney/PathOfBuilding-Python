@@ -7,8 +7,8 @@ from pathlib import Path
 import re
 from random import randint
 
-from PySide6.QtCore import Qt, Slot
-from PySide6.QtWidgets import QListWidgetItem
+from PySide6.QtCore import QSize, Qt, Slot
+from PySide6.QtWidgets import QLabel, QListWidgetItem, QSizePolicy, QSpacerItem
 
 from PoB.constants import (
     ColourCodes,
@@ -80,7 +80,7 @@ class SkillsUI:
         self.current_socket_group = None
         # list of gems from gems.json
         self.gems_by_name_or_id = {}
-        self.base_gems = self.load_base_gems_json()
+        self.base_gems, self.hidden_skills = self.load_base_gems_json()
         # tracks the state of the triggers, to stop setting triggers more than once or disconnecting when not connected
         self.triggers_connected = False
         self.internal_clipboard = None
@@ -121,6 +121,12 @@ class SkillsUI:
         self.win.list_Skills.model().rowsMoved.connect(self.skill_gem_row_moved)  # , Qt.QueuedConnection)
         self.win.list_Skills.model().rowsAboutToBeMoved.connect(self.skill_gem_row_about_to_be_moved)  # , Qt.QueuedConnection
 
+        self.list_label = QLabel(self.win.frame_SkillsRight)
+        self.list_label.setWordWrap(True)
+        self.list_label.setTextFormat(Qt.RichText)
+        self.list_label.setAlignment(Qt.AlignLeading | Qt.AlignLeft | Qt.AlignTop)
+        self.vSpacer_list_label = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
         # Do NOT turn on skill triggers here
 
     # def __repr__(self) -> str:
@@ -129,6 +135,11 @@ class SkillsUI:
     #         if self.ascendancy.value is not None
     #         else "\n"
     #     )
+
+    def setup_ui(self):
+        self.list_label.setMinimumSize(QSize(0, 250))
+        self.win.vlayout_SkillsRight.addWidget(self.list_label)
+        self.list_label.hide()
 
     @property
     def activeSkillSet(self) -> int:
@@ -228,86 +239,6 @@ class SkillsUI:
         # active_skill_set = min(self.activeSkillSet, len(self.skill_gems_list) - 1)
         self.win.combo_SkillSet.setCurrentIndex(self.activeSkillSet)
 
-    # def load_from_xml(self, _skills):
-    #     """
-    #     Load internal structures from the build object.
-    #
-    #     :param _skills: Reference to the xml <Skills> tag set
-    #     :return: N/A
-    #     """
-    #     """
-    #     Load internal structures from the build object.
-    #
-    #     :param _skills: Reference to the xml <Skills> tag set
-    #     :return: N/A
-    #     """
-    #     xml_skills = _skills
-    #     self.disconnect_skill_triggers()
-    #     # clean up
-    #     self.change_skill_set(-1)
-    #
-    #     self.win.check_SortByDPS.setChecked(str_to_bool(xml_skills.get("sortGemsByDPS", "True")))
-    #     set_combo_index_by_data(self.win.combo_SortByDPS, xml_skills.get("sortGemsByDPSField", "FullDPS"))
-    #     self.win.check_ShowGemQualityVariants.setChecked(str_to_bool(xml_skills.get("showAltQualityGems", "False")))
-    #     set_combo_index_by_data(self.win.combo_ShowSupportGems, xml_skills.get("showSupportGemTypes", "ALL"))
-    #     quality = xml_skills.get("defaultGemQuality", 0)
-    #     if quality == "nil":
-    #         quality = 0
-    #     self.win.spin_DefaultGemQuality.setValue(int(quality))
-    #
-    #     # matchGemLevelToCharacterLevel deprecated/defaultGemLevel changed. Check for it and use it if it exists
-    #     level = xml_skills.get("defaultGemLevel", "normalMaximum")
-    #     m = re.search(r"(\d+)$", level)
-    #     if level == "nil" or m is None:
-    #         level = "normalMaximum"
-    #     else:
-    #         if int(m.group(1)) == 20:
-    #             level = "normalMaximum"
-    #         else:
-    #             level = "characterLevel"
-    #     set_combo_index_by_data(self.win.combo_DefaultGemLevel, level)
-    #
-    #     value = xml_skills.get("matchGemLevelToCharacterLevel", "NotFound")
-    #     if value != "NotFound":
-    #         if str_to_bool(value):
-    #             set_combo_index_by_data(self.win.combo_DefaultGemLevel, "characterLevel")
-    #
-    #     # self.win.spin_DefaultGemLevel.setValue(int(level))
-    #     # self.win.check_MatchToLevel.setChecked(
-    #     #     str_to_bool(xml_skills.get("matchGemLevelToCharacterLevel", "False"))
-    #     # )
-    #
-    #     self.win.combo_SkillSet.clear()
-    #     self.skillsets.clear()
-    #     _sets = xml_skills.findall("SkillSet")
-    #     if len(_sets) == 0:
-    #         # The lua version won't create a <skillset> (socket group) if there is only one skill set.
-    #         # let's create one so we have code compatibility in all circumstances
-    #         _set = deepcopy(empty_skillset_dict)
-    #         self.skillsets.append(_set)
-    #         # Move skills to the new socket group
-    #         # ToDo: Fix this
-    #         xml_socket_groups = xml_skills.findall("Skill")
-    #         for group in xml_socket_groups:
-    #             _set.append(group)
-    #             xml_skills.remove(group)
-    #
-    #     for idx, xml_set in enumerate(xml_skills.findall("SkillSet")):
-    #         # ToDo: Fix this
-    #         _set = deepcopy(empty_skillset_dict)
-    #         self.skillsets.append(_set)
-    #         self.win.combo_SkillSet.addItem(_set.get("title", f"Default{idx}"), idx)
-    #     # set the SkillSet ComboBox dropdown width.
-    #     self.win.combo_SkillSet.view().setMinimumWidth(self.win.combo_SkillSet.minimumSizeHint().width())
-    #
-    #     self.connect_skill_triggers()
-    #     # make sure this is loaded after the skillset's
-    #     # self.activeSkillSet = xml_skills.get("activeSkillSet", len(self.skill_gems_list))
-    #
-    #     # activate trigger to run change_skill_set
-    #     # active_skill_set = min(self.activeSkillSet, len(self.skill_gems_list) - 1)
-    #     self.win.combo_SkillSet.setCurrentIndex(self.activeSkillSet)
-
     def save_to_json(self):
         """
         Save internal structures back to the build's skills object.
@@ -360,7 +291,7 @@ class SkillsUI:
             """
             Define the coloured_text for this gem instance.
 
-            :param colour: int:
+            :param this_gem: json_dict:
             :return: N/A
             """
             tags = this_gem["tags"]
@@ -374,11 +305,30 @@ class SkillsUI:
                     colour = ColourCodes.INTELLIGENCE.value
             return colour
 
+        def get_coloured_int(this_gem):
+            """
+            Define the coloured_text for this gem instance.
+
+            :param this_gem: json_dict:
+            :return: N/A
+            """
+            _colour = this_gem.get("colour", 0)
+            match _colour:
+                case 2:
+                    colour = ColourCodes.DEXTERITY.value
+                case 1:
+                    colour = ColourCodes.STRENGTH.value
+                case 3:
+                    colour = ColourCodes.INTELLIGENCE.value
+                case _:
+                    colour = ColourCodes.NORMAL.value
+            return colour
+
         # read in all gems but remove all invalid/unreleased ones
         # "Afflictions" will be removed by this (no display_name), so maybe a different list for them
         gems = read_json(Path(self.pob_config.data_dir, "base_gems.json"))
         if gems is None:
-            return None
+            return None, None
         # make a list by name and skillId. Index supports using the full name (Faster Attacks Support)
         #  and the display name (Faster Attacks)
         for variantId, _gem in gems.items():
@@ -394,7 +344,12 @@ class SkillsUI:
             if _gem.get("support", False):
                 self.gems_by_name_or_id[f"{name} Support"] = _gem  # name = "Added Chaos Damage" + " Support"
 
-        return gems
+        hidden = read_json(Path(self.pob_config.data_dir, "hidden_skills.json"))
+        for _id, _gem in hidden.items():
+            _gem["colour"] = get_coloured_int(_gem)
+            _gem["coloured_text"] = html_colour_text(_gem["colour"], _gem["name"])
+
+        return gems, hidden
         # load_base_gems_json
 
     def load_base_gems_json_v1(self):
@@ -526,10 +481,6 @@ class SkillsUI:
         return new_skillset
 
     @Slot()
-    # NUITKA error:
-    # File "C:\Users\Peter\AppData\Local\Temp\PoB_8880\PySide6\QtCore-postLoad.py", line 12, in patched_connect
-    # TypeError: 'PySide6.QtCore.QObject.connect' called with wrong argument types:
-    #     PySide6.QtCore.QObject.connect(QComboBox, str, compiled_frame, ConnectionType)
     def change_skill_set(self, new_index):
         """
         This triggers when the user changes skill sets using the combobox. (self.load calls it too)
@@ -881,15 +832,52 @@ class SkillsUI:
             # assign and setup new group
             self.current_socket_group = sgroups[_index]
             if self.current_socket_group is not None:
+                self.win.vlayout_SkillsRight.removeItem(self.vSpacer_list_label)
                 self.build.check_socket_group_for_an_active_gem(self.current_socket_group)
                 self.win.lineedit_SkillLabel.setText(self.current_socket_group.get("label"))
                 set_combo_index_by_text(self.win.combo_SocketedIn, self.current_socket_group.get("slot"))
                 self.win.check_SocketGroupEnabled.setChecked(self.current_socket_group.get("enabled", False))
                 self.win.check_SocketGroup_FullDPS.setChecked(self.current_socket_group.get("includeInFullDPS", False))
-                for idx, gem in enumerate(self.current_socket_group["Gems"]):
-                    self.create_gem_ui(idx, gem)
-                # Create an empty gem at the end
-                self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
+                if len(self.current_socket_group["Gems"]) > 0:
+                    gem0 = self.current_socket_group["Gems"][0]
+                    source = self.current_socket_group.get("source", "")
+                    self.win.list_Skills.setHidden(source != "")
+                    self.list_label.setHidden(source == "")
+                    if gem0 and source:
+                        # Gem provided by an item or tree
+                        t = re.search(r"Tree:(\d+)$", source)
+                        i = re.search(r"Item:(\d+):(.*)$", source)
+                        hskill = self.hidden_skills[gem0["variantId"]]
+                        if t and int(t.group(1)) in self.build.current_spec.nodes:
+                            tree_node = self.build.current_tree.nodes.get(int(t.group(1)), None)
+                            if tree_node:
+                                label = (
+                                    f"This is a special group created for the {hskill['coloured_text']} skill, which is being provided by "
+                                    f"{tree_node.name}.<br>You cannot delete this group, but it will disappear if you un-allocate the node."
+                                )
+                                # print(label)
+                                self.list_label.setText(label)
+                                self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
+                        elif i:
+                            _item = self.win.items_ui.itemlist_by_id.get(int(i.group(1)), 0)
+                            if _item:
+                                label = (
+                                    f"This is a special group created for the {hskill['coloured_text']} skill, which is being provided by "
+                                    f"{_item.coloured_text}. You cannot delete this group, but it will disappear if you un-equip "
+                                    f"the item.<br><br>You cannot add support gems to this group, but support gems in any other group "
+                                    f"socketed into {_item.coloured_text} will automatically apply to the skill."
+                                )
+                                print(label)
+                                self.list_label.setText(label)
+                                self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
+                    else:
+                        for idx, gem in enumerate(self.current_socket_group["Gems"]):
+                            self.create_gem_ui(idx, gem)
+                        # Create an empty gem at the end
+                        self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
+                else:
+                    # Create an empty gem at the end
+                    self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
 
         self.connect_skill_triggers()
 

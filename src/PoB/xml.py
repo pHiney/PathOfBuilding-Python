@@ -851,12 +851,13 @@ def save_to_xml(filename, build):
         for _sg in _set["SGroups"]:
             source_text = ""
             if _sg.get("source", ""):
-                # we cannot have a 'source=""' in socket group. luaPoB will reject the whole socket group
+                # we cannot have a 'source=""' in socket group. luaPoB will reject the whole socket group.
                 source_text = f'source="{_sg.get("source","")}" '
             text_sg = (
                 f'<Skill mainActiveSkillCalcs="{str(_sg["mainActiveSkillCalcs"]+1)}" '
-                f'includeInFullDPS="{bool_to_str(_sg["includeInFullDPS"])}" label="{_sg["label"]}" {source_text}'
-                f' enabled="{bool_to_str(_sg["enabled"])}" mainActiveSkill="{str(_sg["mainActiveSkill"]+1)}" />'
+                f'includeInFullDPS="{bool_to_str(_sg["includeInFullDPS"])}" label="{_sg["label"]}" {source_text} '
+                f'enabled="{bool_to_str(_sg["enabled"])}" slot="{_sg["slot"]}" '
+                f'mainActiveSkill="{str(_sg["mainActiveSkill"]+1)}" />'
             )
             xml_sg = ET.fromstring(text_sg)
             for _gem in _sg["Gems"]:

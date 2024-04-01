@@ -95,6 +95,8 @@ class Item:
         self.crafted_item = {"Prefix": [], "Sufffix": []}
         self.alt_variants = {}
 
+        self.rarity_colour = ""
+
     @property
     def id(self) -> int:
         return self.pob_item.get("id", 0)
@@ -172,6 +174,7 @@ class Item:
     @rarity.setter
     def rarity(self, new_value):
         self.pob_item["Rarity"] = new_value
+        self.rarity_colour = ColourCodes[new_value].value
 
     @property
     def sockets(self) -> str:
@@ -210,8 +213,8 @@ class Item:
         return [char for char in " " + self.sockets if char == "A"]
 
     @property
-    def coloured_name(self) -> str:
-        return html_colour_text(ColourCodes[self.rarity].value, f"{self.name}")
+    def coloured_text(self) -> str:
+        return html_colour_text(self.rarity_colour, f"{self.name}")
 
     @property
     def type(self):
@@ -565,6 +568,7 @@ class Item:
 
         # mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods if mod.line_with_range
         self.all_stats = [mod for mod in self.implicitMods + self.explicitMods if mod.line_with_range]
+        self.rarity_colour = ColourCodes[self.rarity].value  # needed as this function does need to set self.rarity
         self.tooltip()
         return True
         # load_from_json
@@ -804,17 +808,16 @@ class Item:
         """
         if not force and self.base_tooltip_text != "":
             return
-        rarity_colour = f"{ColourCodes[self.rarity].value};"
         tip = (
             f"<style>"
-            f"table, th, td {{border: 1px solid {rarity_colour}; border-collapse: collapse;}}"
+            f"table, th, td {{border: 1px solid {self.rarity_colour}; border-collapse: collapse;}}"
             f"td {{text-align: center;}}"
             f"</style>"
             f'<table width="425">'
             f"<tr><th>"
         )
         item_id = self.settings.pob_debug and f"#{self.id}" or ""
-        tip += html_colour_text(rarity_colour, f"{self.name}   {item_id}")
+        tip += html_colour_text(self.rarity_colour, f"{self.name}   {item_id}")
         for influence in self.influences:
             tip += f"<br/>{html_colour_text(influence_colours[influence], influence)}"
         tip += "</th></tr>"
