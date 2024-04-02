@@ -48,7 +48,7 @@ from PoB.settings import Settings
 from PoB.pob_file import get_file_info
 from PoB.player import Player
 from PoB.utils import html_colour_text, format_number, print_call_stack, _debug
-from PoB.xml import load_from_xml, save_to_xml
+from PoB.pob_xml import load_from_xml, save_to_xml
 from dialogs.browse_file_dialog import BrowseFileDlg
 from dialogs.export_dialog import ExportDlg
 from dialogs.import_dialog import ImportDlg

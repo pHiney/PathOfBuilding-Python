@@ -19,7 +19,7 @@ from PoB.constants import ColourCodes, empty_item_dict, empty_itemset_dict, empt
 from PoB.item import Item
 from PoB.pob_file import read_json
 from PoB.utils import _debug, bool_to_str, html_colour_text, print_call_stack, str_to_bool
-from PoB.xml import print_a_xml_element, read_xml, write_xml
+from PoB.pob_xml import print_a_xml_element, read_xml, write_xml
 from dialogs.craft_items_dialog import CraftItemsDlg
 from dialogs.itemsets_dialog import ManageItemsDlg
 from widgets.item_slot_ui import ItemSlotUI

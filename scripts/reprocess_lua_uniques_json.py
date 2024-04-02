@@ -1,3 +1,4 @@
+import re
 import sys
 
 """
@@ -22,7 +23,7 @@ to get uniques_flat.xml do the following in luaPoB
     Run luaPoB as you normally would. For now ignore the 'update available' message.
     Check you have uniques_flat.xml in your normal luaPob directory.
     In luaPoB, accept the update to remove the code in main.lua
-    Move uniques_flat.xml into the <directory that you cloned pyPoB>/Scripts
+    Move uniques_flat.xml into the <directory that you cloned pyPoB/Scripts
     Open a command prompt in that directory and activate your environment. For me that is :
         ..\\.venv.\\Scripts\\activate.bat
     Then run :
@@ -37,48 +38,32 @@ to get uniques_flat.xml do the following in luaPoB
 sys.path.insert(1, "../src/")
 sys.path.insert(1, "../src/PoB")
 
-import xml.etree.ElementTree as ET
+from PoB.pob_file import read_json, write_json
+from PoB.pob_xml import load_item_from_xml
 
-from PoB.item import Item
-from PoB.settings import Settings
-from PoB.pob_file import read_xml, write_xml, read_json
-
-_settings = Settings(None, None)
-_settings.reset()
 base_items = read_json("../src/data/base_items.json")
 
 # Some items have a smaller number of variants than the actual variant lists. Whilst these need to be fixed, this will get around it.
 max_variants = {"Precursor's Emblem": "7"}
 
-uniques = {}
-u_xml = read_xml("uniques_flat.xml")
-for item_type in list(u_xml.getroot()):
-    # print(item_type.tag)
-    uniques[item_type.tag] = []
-    for _item in item_type.findall("Item"):
-        new_item = Item(_settings, base_items)
-        new_item.load_from_xml(_item)
-        new_item.rarity = "UNIQUE"
-        if new_item.base_name == "Unset Ring" and new_item.sockets == "":
-            new_item.sockets = "W"
-        uniques[item_type.tag].append(new_item)
-
-new_xml = ET.ElementTree(ET.fromstring("<?xml version='1.0' encoding='utf-8'?><Uniques></Uniques>"))
-new_root = new_xml.getroot()
-for child_tag in uniques:
-    # print(child_tag)
-    child_xml = ET.fromstring(f"<{child_tag} />")
-    item_type = uniques[child_tag]
-    for item in item_type:
-        # we don't want to add extra work for when we are manually updating uniques.xml
-        item.curr_variant = ""
-        if item.title in max_variants.keys():
-            item.max_variant = max_variants[item.title]
-        item_xml = item.save_v2()
-        item_xml.attrib.pop("rarity", None)
-        child_xml.append(item_xml)
-    new_root.append(child_xml)
-write_xml("../src/data/uniques.xml.new", new_xml)
+new_uniques = {}
+u_json = read_json("lua_json/uniques.json")
+lua_total=0
+py_total=0
+for key in sorted(u_json.keys()):
+    print(f"{key}: {len(u_json[key])}")
+    lua_total += len(u_json[key])
+    new_uniques[key] = []
+    for v1_item in u_json[key]:
+        char2013=u'\u2013'
+        item = load_item_from_xml(f"Rarity: UNIQUE\n{v1_item.replace(char2013,'-')}")
+        item.pop("id")
+        if item["title"] in max_variants.keys():
+            item["Max Variants"] = max_variants[item["title"]]
+        new_uniques[key].append(item)
+    py_total += len(new_uniques[key])
+print(f"lua: {lua_total}, py: {py_total}")
+write_json("../src/data/uniques.new.json", new_uniques)
 
 # templates = []
 # t_xml = read_xml("rare_templates_flat.xml"))

@@ -10,7 +10,7 @@ from PoB.constants import ColourCodes, bad_text, empty_item_dict, influencers, i
 from PoB.settings import Settings
 from PoB.mod import Mod
 from PoB.utils import _debug, html_colour_text, index_exists, str_to_bool, bool_to_str
-from PoB.xml import print_a_xml_element
+from PoB.pob_xml import print_a_xml_element
 from widgets.ui_utils import search_stats_list_for_regex
 
 

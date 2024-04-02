@@ -204,11 +204,12 @@ def remove_lua_colours(text):
     return text
 
 
-def load_item_from_xml(_xml, debug_lines=False):
+def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
     """
     Load internal structures from the free text version of item's xml
 
-    :param _xml: ET.element: xml of the item
+    :param items_free_text: str: contents of the item's xml
+    :param _id: int: id of the item for builds, 0 for uniques import
     :param debug_lines: Temporary to debug the process
     :return: boolean
     """
@@ -219,6 +220,7 @@ def load_item_from_xml(_xml, debug_lines=False):
         "Energy Shield",
         "Evasion",
         "League",
+        "Limited to",
         "Radius",
         "Sockets",
         "Source",
@@ -226,7 +228,7 @@ def load_item_from_xml(_xml, debug_lines=False):
         "Unique ID",
         "Upgrade",
     )
-    integers = ("Item Level", "Limited to", "Quality")
+    integers = ("Item Level", "Quality")
     floats = ("ArmourBasePercentile", "EnergyShieldBasePercentile", "EvasionBasePercentile")
 
     def get_attribute(n):
@@ -251,13 +253,6 @@ def load_item_from_xml(_xml, debug_lines=False):
                 json_item["Requires"]["Level"] = int(n.group(2))
             case "Variant":
                 json_item["Variants"].append(n.group(2))
-            case "{variant":
-                # variant entries found before the Implicit line are always base_name variants
-                v = re.search(r"{variant:([\d,]+)}(.*)", line)
-                _variant_numbers = v.group(1).split(",")
-                # _variant_numbers is always a list (of str), even if it contains one entry.
-                for _var in _variant_numbers:
-                    json_item.setdefault("Variant Entries", {}).setdefault("base_name", {})[_var] = v.group(2)
             case "Selected Variant":
                 """variants are numbered from 1, so 0 is no selection. !!! don't add -1"""
                 json_item["Selected Variant"] = int(n.group(2))
@@ -283,15 +278,29 @@ def load_item_from_xml(_xml, debug_lines=False):
                 json_item["Alt Variants"][5] = True
             case "Selected Alt Variant Five":
                 json_item["Alt Variants"][5] = int(n.group(2))
+            case "Requires":
+                _m = re.search(r"Requires: (.*)", line)
+                for req in _m.group(1).split(","):
+                    req = req.lower().strip()
+                    if "level" in req.lower():
+                        # some entries have 'Level: ' and others 'Level '
+                        _r = re.search(r"(\w+):? (\d+)", f"{req}")
+                        json_item["Requires"]["Level"] = int(_r.group(2))
+                    elif "class" in req.lower():
+                        _r = re.search(r"(\w+) (\w+)", f"{req}")
+                        json_item["Requires"]["Class"] = _r.group(2)
+                    else:
+                        # Str nnn, etc
+                        _r = re.search(r"(\d+) (\w+)", f"{req}")
+                        json_item["Requires"][_r.group(2)] = int(_r.group(1))
 
     # Deep copy or else we end up editing the constant
     json_item = deepcopy(empty_item_dict)
 
     # debug_lines = True
-    items_free_text = _xml["#text"]
     if debug_lines:
         print(f"{items_free_text=}")
-    json_item["id"] = int(_xml.get("@id", "0"))
+    json_item["id"] = _id
     if "Alt Variant" in items_free_text:
         json_item["Alt Variants"] = {}
     if "Variant:" in items_free_text:
@@ -301,7 +310,8 @@ def load_item_from_xml(_xml, debug_lines=False):
 
     # split lines into a list, removing any blank lines, leading & trailing spaces.
     #   stolen from https://stackoverflow.com/questions/7630273/convert-multiline-into-list
-    lines = [y for y in (x.strip(" \t\r\n") for x in items_free_text.splitlines()) if y]
+    # No colon for Requires, so add one.
+    lines = [y for y in (x.strip(" \t\r\n") for x in items_free_text.replace("Requires ", "Requires: ").splitlines()) if y]
     # The first line has to be rarity !!!!
     line = lines.pop(0).strip()
     if "rarity" not in line.lower():
@@ -316,28 +326,36 @@ def load_item_from_xml(_xml, debug_lines=False):
     else:
         json_item["title"] = line
         line = lines.pop(0)
-        if "{variant" not in line:
-            json_item["base_name"] = line
-        # if "{variant" in line:
-        #     while "{variant" in line:
-        #         v = re.search(r"{variant:([\d,]+)}(.*)", line)
-        #         _variant_numbers = v.group(1).split(",")
-        #         # _variant_numbers is always a list (of str), even if it contains one entry.
-        #         for _var in _variant_numbers:
-        #             json_item["Variants"].setdefault("base_name", {})[int(_var)] = v.group(2)
-        #         if "{variant" in lines[0]:
-        #             line = lines.pop(0)
-        # else:
+        # if "{variant" not in line:
         #     json_item["base_name"] = line
+        if "{variant" in line:
+            while "{variant" in line:
+                v = re.search(r"{variant:([\d,]+)}(.*)", line)
+                _variant_numbers = v.group(1).split(",")
+                # _variant_numbers is always a list (of str), even if it contains one entry.
+                for _var in _variant_numbers:
+                    json_item.setdefault("Variant Entries", {}).setdefault("base_name", {})[int(_var)] = v.group(2)
+                # if "{variant" in lines[0]:
+                line = lines.pop(0)
+            json_item["base_name"] = "variant"
+        else:
+            json_item["base_name"] = line
 
     if debug_lines:
         print("a", len(lines), lines)
+
+    # Check for no Implicits: 0
+    if "Implicits: " not in items_free_text:
+        idx = 0
+        while idx < len(lines) and re.search(r"(.*): ?(.*)?", lines[idx]):
+            idx += 1
+        lines.insert(idx, "Implicits: 0")
 
     """ So the first three lines/Entries are gone, so it's game on. They can come in almost any order """
     # lets get all the colon(:) separated variables first and remove them from the lines list
     # stop when we get to implicits, or the end (eg: Tabula Rasa)
     line_idx, implicits_idx, explicits_idx = (0, -1, -1)
-    # We can't use enumerate as we are changing the list as we move through
+    # We can't use enumerate as we are changing the list as we move through.
     while index_exists(lines, line_idx):
         if debug_lines:
             print("while", len(lines), lines)
@@ -349,21 +367,6 @@ def load_item_from_xml(_xml, debug_lines=False):
                 print("m is None", line)
             if lines[line_idx] in influencers:
                 json_item.setdefault("Influences", []).append(line)
-                lines.pop(line_idx)
-            elif line.startswith("Requires"):
-                # No colon for Requires
-                m = re.search(r"Requires (.*)", line)
-                for req in m.group(1).split(","):
-                    if "level" in req.lower():
-                        r = re.search(r"(\w+) (\d+)", f"{req}")
-                        json_item["Requires"]["Level"] = int(r.group(2))
-                    elif "class" in req.lower():
-                        r = re.search(r"(\w+) (\w+)", f"{req}")
-                        json_item["Requires"]["Class"] = r.group(2)
-                    else:
-                        # Str nnn, etc
-                        r = re.search(r"(\w+) (\d+)", f"{req}")
-                        json_item["Requires"][r.group(1)] = int(r.group(2))
                 lines.pop(line_idx)
             else:
                 # skip this line
@@ -411,6 +414,9 @@ def load_item_from_xml(_xml, debug_lines=False):
     if debug_lines:
         print("end", len(lines), lines)
         print()
+
+    if json_item["base_name"] == "Unset Ring" and json_item["Attribs"].get("sockets", "") == "" and "Has 1 Socket" in items_free_text:
+        json_item["Attribs"]["sockets"] = "W"
 
     # print(f"{json_item=}")
     return json_item
@@ -671,7 +677,7 @@ def load_from_xml(filename_or_xml):
     if type(xml_items["Item"]) is dict:  # list or dict if only one
         xml_items["Item"] = [xml_items["Item"]]
     for xml_item in xml_items["Item"]:
-        json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item))
+        json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item["#text"], xml_item.get("@id", 0)))
     # ItemSets
     json_PoB["Items"]["ItemSets"].clear()  # get rid of the default itemset
     if type(xml_items["ItemSet"]) is dict:  # list or dict if only one

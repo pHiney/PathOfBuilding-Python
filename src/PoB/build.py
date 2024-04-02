@@ -33,7 +33,7 @@ from PoB.settings import Settings
 from PoB.tree import Tree
 from PoB.spec import Spec
 from PoB.pob_file import read_json, write_json
-from PoB.xml import read_v1_custom_mods, read_xml, write_xml
+from PoB.pob_xml import read_v1_custom_mods, read_xml, write_xml
 from dialogs.popup_dialogs import critical_dialog, yes_no_dialog
 from widgets.ui_utils import set_combo_index_by_data
 from PoB.utils import (

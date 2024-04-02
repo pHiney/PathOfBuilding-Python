@@ -17,10 +17,10 @@ from PySide6.QtCore import QSize, Slot
 from PySide6.QtWidgets import QFileDialog, QDialogButtonBox
 from PySide6.QtUiTools import QUiLoader
 
-from PoB.xml import read_xml, write_xml, print_a_xml_element
+from PoB.pob_xml import read_xml, write_xml, print_a_xml_element
 from PoB.constants import ColourCodes, pob_debug, def_theme, default_settings, locale
 from PoB.utils import html_colour_text, str_to_bool
-from PoB.xml import html_colour_text, str_to_bool
+from PoB.pob_xml import html_colour_text, str_to_bool
 
 from dialogs.settings_dialog import SettingsDlg
 

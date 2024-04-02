@@ -81,16 +81,16 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
         return "", ""
 
 
-def json_to_et(json_content):
-    """
-    Convert a json string into a ET.ElementTree
-    :param json_content: String: the json content
-    :return: xml.etree.ElementTree
-    """
-    # convert via a dictionary
-    _dict = json.loads(json_content)
-    xml_content = xmltodict.unparse(_dict, pretty=True)
-    return ET.ElementTree(ET.fromstring(xml_content))
+# def json_to_et(json_content):
+#     """
+#     Convert a json string into a ET.ElementTree
+#     :param json_content: String: the json content
+#     :return: xml.etree.ElementTree
+#     """
+#     # convert via a dictionary
+#     _dict = json.loads(json_content)
+#     xml_content = xmltodict.unparse(_dict, pretty=True)
+#     return ET.ElementTree(ET.fromstring(xml_content))
 
 
 def read_json(filename):
@@ -102,7 +102,7 @@ def read_json(filename):
     _fn = Path(filename)
     if _fn.exists():
         try:
-            with _fn.open("r") as json_file:
+            with _fn.open("r", -1, "utf-8") as json_file:
                 _dict = json.load(json_file)
                 return _dict
         # parent of IOError, OSError *and* WindowsError where available
@@ -137,7 +137,7 @@ def write_json(filename, _dict):
     """
     _fn = Path(filename)
     try:
-        with _fn.open("w") as json_file:
+        with _fn.open("w", -1, "utf-8") as json_file:
             json.dump(_dict, json_file, indent=2)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
         print(f"Unable to write to {_fn}")

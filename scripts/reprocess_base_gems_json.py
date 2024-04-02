@@ -7,46 +7,15 @@ base_gems.json and mods.json come from https://github.com/brather1ng/RePoE/tree/
 
 from pathlib import Path
 import json
-import shutil
+import sys
+
+sys.path.insert(1, "../src/")
+sys.path.insert(1, "../src/PoB")
+
+from PoB.pob_file import read_xml, read_json, write_json
 
 
-def read_json(filename):
-    """
-    Reads a json file
-    :param filename: Name of xml to be read
-    :returns: A dictionary of the contents of the file
-    """
-    _fn = Path(filename)
-    if _fn.exists():
-        try:
-            with _fn.open("r") as json_file:
-                _dict = json.load(json_file)
-                return _dict
-        except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-            print(f"Unable to open {_fn}")
-    return None
-
-
-def write_json(filename, _dict, indent=0):
-    """
-    Write a json file
-    :param filename: Name of json to be written
-    :param _dict: New contents of the file
-    :param indent: int Default indent
-    :returns: N/A
-    """
-    _fn = Path(filename)
-    try:
-        with _fn.open("w") as json_file:
-            if indent:
-                json.dump(_dict, json_file, indent=indent)
-            else:
-                json.dump(_dict, json_file)
-    except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-        print(f"Unable to write to {_fn}")
-
-
-# reindex the Skill types to be a list address by [number], for ease of lookup.
+# reindex the Skill types to be a list addressed by [number], for ease of lookup.
 skill_types = ["0"]
 SkillType_json = read_json("lua_json/SkillType.json")
 # Resort by the numeric value. Add the key into a list.

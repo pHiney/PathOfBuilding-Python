@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(1, "../src/")
 from PoB.pob_file import read_json, read_xml_as_dict, write_json
-from PoB.xml import load_from_xml, read_xml
+from PoB.pob_xml import load_from_xml, read_xml
 
 
 file = "stats"
