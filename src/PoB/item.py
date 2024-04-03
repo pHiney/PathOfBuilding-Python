@@ -178,11 +178,27 @@ class Item:
 
     @property
     def sockets(self) -> str:
-        return self.attribs.get("Sockets", "")
+        return self.get_attrib("Sockets", "")
 
     @sockets.setter
     def sockets(self, new_value):
         self.set_attrib("Sockets", new_value)
+
+    @property
+    def league(self) -> str:
+        return self.get_attrib("League", "")
+
+    @league.setter
+    def league(self, new_value):
+        self.set_attrib("League", new_value)
+
+    @property
+    def source(self) -> str:
+        return self.pob_item.get("Source", "")
+
+    @source.setter
+    def source(self, new_value):
+        self.set_attrib("Source", new_value)
 
     @property
     def corrupted(self) -> bool:
@@ -495,6 +511,8 @@ class Item:
         """
 
         self.pob_item = json
+        if default_rarity != bad_text:
+            self.rarity = default_rarity
         # print(f"item: load_from_json: {self.pob_item=}")
         self.attribs = self.pob_item["Attribs"]
         self.requires = self.pob_item["Requires"]

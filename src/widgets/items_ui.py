@@ -323,18 +323,18 @@ class ItemsUI:
 
     def load_unique_items(self):
         item_leagues = set()
-        u_xml = read_xml(Path(self.settings.data_dir, "uniques.xml"))
-        for xml_item_type in list(u_xml.getroot()):
-            for xml_item in xml_item_type.findall("Item"):
+        u_json = read_json(Path(self.settings.data_dir, "uniques.json"))
+        for key in u_json.keys():
+            for _item in u_json[key]:
                 new_item = Item(self.settings, self.base_items)
-                new_item.load_from_xml_v2(xml_item, "UNIQUE")
+                new_item.load_from_json(_item, "UNIQUE")
                 new_item.quality = 20
                 self.uniques_items.append(new_item)
                 if new_item.type:
                     self.item_types.add(new_item.type)
                     self.item_types.add(new_item.sub_type)
-                if new_item.get_attrib("league", ""):
-                    item_leagues.update(new_item.get_attrib("league", "").split(", "))
+                if new_item.league:
+                    item_leagues.update(new_item.league.split(", "))
 
         # Update the Import items type combo
         self.item_types = sorted(self.item_types)
@@ -348,10 +348,10 @@ class ItemsUI:
         self.win.combo_ItemsImportLeague.view().setMinimumWidth(self.win.combo_ItemsImportLeague.minimumSizeHint().width())
 
     def load_rare_template_items(self):
-        t_xml = read_xml(Path(self.settings.data_dir, "rare_templates.xml"))
-        for xml_item in t_xml.getroot().findall("Item"):
+        t_json = read_json(Path(self.settings.data_dir, "rare_templates.json"))
+        for _item in t_json:
             new_item = Item(self.settings, self.base_items)
-            new_item.load_from_xml_v2(xml_item, "RARE")
+            new_item.load_from_json(_item, "RARE")
             self.rare_template_items.append(new_item)
 
     def add_item_to_itemlist_widget(self, _item):
@@ -1197,7 +1197,7 @@ class ItemsUI:
             temp_list = []
             # mod_list = []
             for item in items:
-                # mod_list is just long string to search in (includes variants)
+                # mod_list is just a long string to search in (includes variants)
                 mod_list = " ".join(mod.line.lower() for mod in item.full_implicitMods_list)
                 mod_list += "".join(mod.line.lower() for mod in item.full_explicitMods_list)
                 match self.win.combo_ItemsImportSearchSource.currentText():

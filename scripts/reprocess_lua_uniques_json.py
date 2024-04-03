@@ -39,7 +39,7 @@ sys.path.insert(1, "../src/")
 sys.path.insert(1, "../src/PoB")
 
 from PoB.pob_file import read_json, write_json
-from PoB.pob_xml import load_item_from_xml
+from PoB.pob_xml import load_item_from_xml, read_xml
 
 base_items = read_json("../src/data/base_items.json")
 
@@ -58,6 +58,7 @@ for key in sorted(u_json.keys()):
         char2013=u'\u2013'
         item = load_item_from_xml(f"Rarity: UNIQUE\n{v1_item.replace(char2013,'-')}")
         item.pop("id")
+        item.pop("Rarity")
         if item["title"] in max_variants.keys():
             item["Max Variants"] = max_variants[item["title"]]
         new_uniques[key].append(item)
@@ -65,18 +66,12 @@ for key in sorted(u_json.keys()):
 print(f"lua: {lua_total}, py: {py_total}")
 write_json("../src/data/uniques.new.json", new_uniques)
 
-# templates = []
-# t_xml = read_xml("rare_templates_flat.xml"))
-# _xml_root = t_xml.getroot()
-# for xml_item in t_xml.getroot().findall("Item"):
-#     new_item = Item(base_items)
-#     new_item.load_from_xml(xml_item)
-#     new_item.rarity = "RARE"
-#     templates.append(new_item)
-# new_xml = ET.ElementTree(ET.fromstring("<?xml version='1.0' encoding='utf-8'?><RareTemplates></RareTemplates>"))
-# new_root = new_xml.getroot()
-# for item in templates:
-#     item_xml = item.save_v2()
-#     item_xml.attrib.pop("rarity", None)
-#     new_root.append(item_xml)
-# write_xml("../src/data/rare_templates.xml.new", new_xml)
+templates = []
+t_xml = read_xml("rare_templates_flat.xml")
+_xml_root = t_xml.getroot()
+for v1_item in _xml_root:
+    item = load_item_from_xml(v1_item.text.replace(char2013,'-'))
+    item.pop("id")
+    item.pop("Rarity")
+    templates.append(item)
+write_json("../src/data/rare_templates.new.json", templates)

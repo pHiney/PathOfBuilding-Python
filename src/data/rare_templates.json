@@ -1,0 +1,4288 @@
+[
+  {
+    "title": "Armour/Evasion Helmet",
+    "base_name": "Penitent Mask",
+    "Attribs": {
+      "Armour": "254",
+      "Evasion": "254",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 75
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEvasionRating3",
+        "LocalIncreasedArmourAndEvasion5",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Helmet",
+    "base_name": "Blizzard Crown",
+    "Attribs": {
+      "Evasion": "254",
+      "Energy Shield": "52",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 75
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseEvasionRatingAndEnergyShield3",
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Helmet",
+    "base_name": "Archdemon Crown",
+    "Attribs": {
+      "Armour": "254",
+      "Energy Shield": "52",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 75
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEnergyShield3",
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Helmet",
+    "base_name": "Eternal Burgonet",
+    "Attribs": {
+      "Armour": "515",
+      "Quality": 20,
+      "Sockets": "R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating3",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Helmet",
+    "base_name": "Lion Pelt",
+    "Attribs": {
+      "Evasion": "524",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRating3",
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Helmet",
+    "base_name": "Hubris Circlet",
+    "Attribs": {
+      "Energy Shield": "110",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife7",
+        "LocalIncreasedEnergyShieldPercent5",
+        "LocalIncreasedEnergyShield7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Evasion Helmet",
+    "base_name": "Nightmare Bascinet",
+    "Attribs": {
+      "Armour": "224",
+      "Evasion": "322",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 67
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEvasionRating3",
+        "LocalIncreasedArmourAndEvasion5",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Helmet",
+    "base_name": "Praetor Crown",
+    "Attribs": {
+      "Armour": "222",
+      "Energy Shield": "70",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEnergyShield3",
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Helmet",
+    "base_name": "Bone Helmet",
+    "Attribs": {
+      "Armour": "272",
+      "Energy Shield": "55",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 73
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEnergyShield3",
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Helmet",
+    "base_name": "Deicide Mask",
+    "Attribs": {
+      "Evasion": "263",
+      "Energy Shield": "65",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 67
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseEvasionRatingAndEnergyShield3",
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ward Helmet",
+    "base_name": "Runic Crown",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedWardPercent3",
+        "LocalIncreasedWard5___",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Gloves",
+    "base_name": "Sinistral Gloves",
+    "Attribs": {
+      "Evasion": "325",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating2",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Gloves",
+    "base_name": "Nexus Gloves",
+    "Attribs": {
+      "Energy Shield": "65",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife6",
+        "LocalIncreasedEnergyShieldPercent5",
+        "LocalIncreasedEnergyShield6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Gloves",
+    "base_name": "Debilitation Gauntlets",
+    "Attribs": {
+      "Armour": "325",
+      "Quality": 20,
+      "Sockets": "R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating2",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Gloves",
+    "base_name": "Apothecary's Gloves",
+    "Attribs": {
+      "Armour": "149",
+      "Energy Shield": "40",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEnergyShield2_",
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Gloves",
+    "base_name": "Titan Gauntlets",
+    "Attribs": {
+      "Armour": "334",
+      "Quality": 20,
+      "Sockets": "R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating2",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Gloves",
+    "base_name": "Spiked Gloves",
+    "Attribs": {
+      "Armour": "304",
+      "Quality": 20,
+      "Sockets": "R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating2",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Gloves",
+    "base_name": "Slink Gloves",
+    "Attribs": {
+      "Evasion": "334",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRating2",
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Gloves",
+    "base_name": "Gripped Gloves",
+    "Attribs": {
+      "Evasion": "304",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRating2",
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Gloves",
+    "base_name": "Sorcerer Gloves",
+    "Attribs": {
+      "Energy Shield": "68",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife6",
+        "LocalIncreasedEnergyShieldPercent5",
+        "LocalIncreasedEnergyShield6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Gloves",
+    "base_name": "Fingerless Silk Gloves",
+    "Attribs": {
+      "Energy Shield": "62",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife6",
+        "LocalIncreasedEnergyShieldPercent5",
+        "LocalIncreasedEnergyShield6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Evasion Gloves",
+    "base_name": "Dragonscale Gauntlets",
+    "Attribs": {
+      "Armour": "167",
+      "Evasion": "167",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 67
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEvasionRating2",
+        "LocalIncreasedArmourAndEvasion5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Gloves",
+    "base_name": "Crusader Gloves",
+    "Attribs": {
+      "Armour": "167",
+      "Energy Shield": "34",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 66
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEnergyShield2_",
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Gloves",
+    "base_name": "Murder Mitts",
+    "Attribs": {
+      "Evasion": "167",
+      "Energy Shield": "34",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 67
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseEvasionRatingAndEnergyShield2",
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife6"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ward Gloves",
+    "base_name": "Runic Gauntlets",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedWardPercent3",
+        "LocalIncreasedWard5___",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Chest",
+    "base_name": "Glorious Plate",
+    "Attribs": {
+      "Armour": "1070",
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating5",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Chest",
+    "base_name": "Astral Plate",
+    "Attribs": {
+      "Armour": "938",
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 62
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating5",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Chest",
+    "base_name": "Assassin's Garb",
+    "Attribs": {
+      "Evasion": "973",
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRating5",
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Chest",
+    "base_name": "Zodiac Leather",
+    "Attribs": {
+      "Evasion": "1178",
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 65
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRating5",
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Chest",
+    "base_name": "Vaal Regalia",
+    "Attribs": {
+      "Energy Shield": "236",
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife9",
+        "LocalIncreasedEnergyShieldPercent5",
+        "LocalIncreasedEnergyShield10"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Evasion Chest",
+    "base_name": "Triumphant Lamellar",
+    "Attribs": {
+      "Armour": "524",
+      "Evasion": "659",
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEvasionRating5",
+        "LocalIncreasedArmourAndEvasion5",
+        "IncreasedLife9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Chest",
+    "base_name": "Saintly Chainmail",
+    "Attribs": {
+      "Armour": "553",
+      "Energy Shield": "132",
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEnergyShield5",
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Chest",
+    "base_name": "Carnal Armour",
+    "Attribs": {
+      "Evasion": "466",
+      "Energy Shield": "136",
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 71
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseEvasionRatingAndEnergyShield5_",
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Boots",
+    "base_name": "Fugitive Boots",
+    "Attribs": {
+      "Evasion": "155",
+      "Energy Shield": "44",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "ChaosResist4",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Boots",
+    "base_name": "Stormrider Boots",
+    "Attribs": {
+      "Evasion": "325",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Boots",
+    "base_name": "Dreamquest Slippers",
+    "Attribs": {
+      "Energy Shield": "68",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEnergyShieldPercent5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Boots",
+    "base_name": "Brimstone Treads",
+    "Attribs": {
+      "Armour": "325",
+      "Quality": 20,
+      "Sockets": "R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Boots",
+    "base_name": "Titan Greaves",
+    "Attribs": {
+      "Armour": "334",
+      "Quality": 20,
+      "Sockets": "R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Boots",
+    "base_name": "Slink Boots",
+    "Attribs": {
+      "Evasion": "340",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Boots",
+    "base_name": "Sorcerer Boots",
+    "Attribs": {
+      "Energy Shield": "71",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 67
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife6",
+        "LocalIncreasedEnergyShieldPercent5",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Evasion Boots",
+    "base_name": "Dragonscale Boots",
+    "Attribs": {
+      "Armour": "167",
+      "Evasion": "167",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 65
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedArmourAndEvasion5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Evasion Boots",
+    "base_name": "Two-Toned Boots (Armour/Evasion)",
+    "Attribs": {
+      "Armour": "174",
+      "Evasion": "174",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedArmourAndEvasion5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Boots",
+    "base_name": "Crusader Boots",
+    "Attribs": {
+      "Armour": "167",
+      "Energy Shield": "34",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 64
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Boots",
+    "base_name": "Two-Toned Boots (Armour/Energy Shield)",
+    "Attribs": {
+      "Armour": "174",
+      "Energy Shield": "36",
+      "Quality": 20,
+      "Sockets": "B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Boots",
+    "base_name": "Murder Boots",
+    "Attribs": {
+      "Evasion": "256",
+      "Energy Shield": "25",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Boots",
+    "base_name": "Two-Toned Boots (Evasion/Energy Shield)",
+    "Attribs": {
+      "Evasion": "174",
+      "Energy Shield": "36",
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife6",
+        "MovementVelocity5"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ward Boots",
+    "base_name": "Runic Sabatons",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedWardPercent3",
+        "LocalIncreasedWard5___",
+        "IncreasedLife7"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Shield",
+    "base_name": "Transfer-attuned Spirit Shield",
+    "Attribs": {
+      "Energy Shield": "77",
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife8",
+        "LocalIncreasedEnergyShieldPercent5",
+        "LocalIncreasedEnergyShield9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Shield",
+    "base_name": "Cold-attuned Buckler",
+    "Attribs": {
+      "Evasion": "418",
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRating5",
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife8"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Shield",
+    "base_name": "Heat-attuned Tower Shield",
+    "Attribs": {
+      "Armour": "455",
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating5",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife8"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour Shield",
+    "base_name": "Pinnacle Tower Shield",
+    "Attribs": {
+      "Armour": "644",
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamageReductionRating5",
+        "LocalIncreasedPhysicalDamageReductionRatingPercent5",
+        "IncreasedLife8"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion Shield",
+    "base_name": "Imperial Buckler",
+    "Attribs": {
+      "Evasion": "607",
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedEvasionRating5",
+        "LocalIncreasedEvasionRatingPercent5",
+        "IncreasedLife8"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Shield",
+    "base_name": "Titanium Spirit Shield",
+    "Attribs": {
+      "Energy Shield": "92",
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife8",
+        "LocalIncreasedEnergyShieldPercent5",
+        "LocalIncreasedEnergyShield9"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Evasion Shield",
+    "base_name": "Elegant Round Shield",
+    "Attribs": {
+      "Armour": "204",
+      "Evasion": "204",
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEvasionRating5",
+        "LocalIncreasedArmourAndEvasion5",
+        "IncreasedLife8"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Armour/Energy Shield Shield",
+    "base_name": "Archon Kite Shield",
+    "Attribs": {
+      "Armour": "215",
+      "Energy Shield": "44",
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseArmourAndEnergyShield5",
+        "LocalIncreasedArmourAndEnergyShield5",
+        "IncreasedLife8"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Evasion/Energy Shield Shield",
+    "base_name": "Supreme Spiked Shield",
+    "Attribs": {
+      "Evasion": "334",
+      "Energy Shield": "68",
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalBaseEvasionRatingAndEnergyShield5_",
+        "LocalIncreasedEvasionAndEnergyShield5_",
+        "IncreasedLife8"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Amulet",
+    "base_name": "Seaglass Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 74
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedEnergyShield7",
+        "IncreasedEnergyShieldPercent5",
+        "None"
+      ],
+      "Suffix": [
+        "Intelligence5",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Amber Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 5
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Strength5",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Jade Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 5
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Dexterity5",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Lapis Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 5
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Intelligence5",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Onyx Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 20
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "AllAttributes5",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Agate Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 16
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Strength5",
+        "Intelligence5",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Turquoise Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 16
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Dexterity5",
+        "Intelligence5",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Citrine Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 16
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Dexterity5",
+        "Strength5",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Mana Amulet",
+    "base_name": "Paua Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "IncreasedMana7",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Intelligence5",
+        "ManaRegeneration4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Marble Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 74
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Mana Amulet",
+    "base_name": "Blue Pearl Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 77
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedMana7",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Intelligence5",
+        "ManaRegeneration4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Influence Amulet",
+    "base_name": "Astrolabe Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Amulet",
+    "base_name": "Simplex Amulet",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 24
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ring",
+    "base_name": "Geodesic Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 24
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Resistance Ring",
+    "base_name": "Cogwork Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 24
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "FireResist4",
+        "ColdResist4",
+        "LightningResist4"
+      ]
+    }
+  },
+  {
+    "title": "Mana Ring",
+    "base_name": "Paua Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "IncreasedMana7",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Intelligence5",
+        "ManaRegeneration4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Ring",
+    "base_name": "Moonstone Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 20
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedEnergyShield6",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Intelligence5",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ring",
+    "base_name": "Diamond Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 20
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Resistance Ring",
+    "base_name": "Ruby Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 16
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "FireResist4",
+        "ColdResist4",
+        "LightningResist4"
+      ]
+    }
+  },
+  {
+    "title": "Resistance Ring",
+    "base_name": "Sapphire Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 8
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "FireResist4",
+        "ColdResist4",
+        "LightningResist4"
+      ]
+    }
+  },
+  {
+    "title": "Resistance Ring",
+    "base_name": "Topaz Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 12
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "FireResist4",
+        "ColdResist4",
+        "LightningResist4"
+      ]
+    }
+  },
+  {
+    "title": "Chaos Resistance Ring",
+    "base_name": "Amethyst Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 30
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "ChaosResist4",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Resistance Ring",
+    "base_name": "Ruby Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 16
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "FireResist4",
+        "ColdResist4",
+        "LightningResist4"
+      ]
+    }
+  },
+  {
+    "title": "Life Ring",
+    "base_name": "Coral Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Strength6",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Resistance Ring",
+    "base_name": "Prismatic Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 30
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "FireResist4",
+        "ColdResist4",
+        "LightningResist4"
+      ]
+    }
+  },
+  {
+    "title": "Resistance Ring",
+    "base_name": "Two-Stone Ring",
+    "Attribs": {},
+    "Implicits": [
+      "{variant:1}{range:0.5}+(12-16)% to Fire and Cold Resistances",
+      "{variant:2}{range:0.5}+(12-16)% to Cold and Lightning Resistances",
+      "{variant:3}{range:0.5}+(12-16)% to Fire and Lightning Resistances"
+    ],
+    "Explicits": [],
+    "Requires": {
+      "Level": 20
+    },
+    "Variants": [
+      "Fire and Cold",
+      "Cold and Lightning",
+      "Fire and Lightning"
+    ],
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "FireResist4",
+        "ColdResist4",
+        "LightningResist4"
+      ]
+    },
+    "Selected Variant": 3
+  },
+  {
+    "title": "Ring",
+    "base_name": "Unset Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 5
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreaseSocketedGemUnsetRing2",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ring",
+    "base_name": "Steel Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "AddedPhysicalDamage4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "IncreasedAccuracyNew3",
+        "IncreasedAttackSpeed1",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ring",
+    "base_name": "Iolite Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Ring",
+    "base_name": "Opal Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Mana Ring",
+    "base_name": "Cerulean Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedMana7",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Intelligence5",
+        "ManaRegeneration4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Life Ring",
+    "base_name": "Vermillion Ring",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 80
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Strength6",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Belt",
+    "base_name": "Rustic Sash",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Belt",
+    "base_name": "Chain Belt",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "IncreasedEnergyShield6",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Belt",
+    "base_name": "Leather Belt",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 8
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Strength6",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Belt",
+    "base_name": "Heavy Belt",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 8
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedLife4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "Strength6",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Energy Shield Belt",
+    "base_name": "Crystal Belt",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 79
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedEnergyShield6",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Belt",
+    "base_name": "Vanguard Belt",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 78
+    },
+    "Crafted": {
+      "Prefix": [
+        "IncreasedPhysicalDamageReductionRating5",
+        "IncreasedLife5",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Flask Belt",
+    "base_name": "Micro-Distillery Belt",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 24
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "BeltReducedFlaskChargesUsed1",
+        "BeltIncreasedFlaskDuration1",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Belt",
+    "base_name": "Mechalarm Belt",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 56
+    },
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Quiver",
+    "base_name": "Spike-Point Arrow Quiver",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 40
+    },
+    "Crafted": {
+      "Prefix": [
+        "AddedPhysicalDamage3",
+        "IncreasedLife7",
+        "WeaponElementalDamage3"
+      ],
+      "Suffix": [
+        "IncreasedAttackSpeed1",
+        "CriticalStrikeChanceWithBows4",
+        "CriticalMultiplierWithBows3"
+      ]
+    }
+  },
+  {
+    "title": "Quiver",
+    "base_name": "Artillery Quiver",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 74
+    },
+    "Crafted": {
+      "Prefix": [
+        "AddedPhysicalDamage3",
+        "IncreasedLife7",
+        "WeaponElementalDamage3"
+      ],
+      "Suffix": [
+        "IncreasedAttackSpeed1",
+        "CriticalStrikeChanceWithBows4",
+        "CriticalMultiplierWithBows3"
+      ]
+    }
+  },
+  {
+    "title": "Physical 1H Axe",
+    "base_name": "Runic Hatchet",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 71
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 1H Axe",
+    "base_name": "Vaal Hatchet",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 65
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 1H Axe",
+    "base_name": "Psychotic Axe",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 1H Axe",
+    "base_name": "Psychotic Axe",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 2H Axe",
+    "base_name": "Fleshripper",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 2H Axe",
+    "base_name": "Despot Axe",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 66
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 2H Axe",
+    "base_name": "Apex Cleaver",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 2H Axe",
+    "base_name": "Apex Cleaver",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Bow",
+    "base_name": "Harbinger Bow",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Bow",
+    "base_name": "Thicket Bow",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 56
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Fire Bow",
+    "base_name": "Solarine Bow",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalAddedFireDamageRanged6",
+        "WeaponElementalDamageOnWeapons4",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "+3 Bow",
+    "base_name": "Thicket Bow",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 56
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreaseSocketedGemLevel1",
+        "LocalIncreaseSocketedBowGemLevel2",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Physical Claw",
+    "base_name": "Gemini Claw",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 72
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Claw",
+    "base_name": "Imperial Claw",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Chaos Claw",
+    "base_name": "Void Fangs",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalAddedChaosDamage1",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Dagger",
+    "base_name": "Ambusher",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 60
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Dagger",
+    "base_name": "Ambusher",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 60
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Dagger",
+    "base_name": "Platinum Kris",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 64
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Dagger",
+    "base_name": "Pneumatic Dagger",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Dagger",
+    "base_name": "Pneumatic Dagger",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Dagger",
+    "base_name": "Infernal Blade",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Vagan Dagger",
+    "base_name": "Royal Skean",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [
+      "{custom}Hits can't be Evaded"
+    ],
+    "Requires": {
+      "Level": 50
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Spell Sceptre",
+    "base_name": "Void Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Sceptre",
+    "base_name": "Void Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Sceptre",
+    "base_name": "Void Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Sceptre",
+    "base_name": "Oscillating Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 30
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Sceptre",
+    "base_name": "Oscillating Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 30
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Sceptre",
+    "base_name": "Stabilising Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 50
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Sceptre",
+    "base_name": "Stabilising Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 50
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Sceptre",
+    "base_name": "Alternating Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Sceptre",
+    "base_name": "Alternating Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Sceptre",
+    "base_name": "Alternating Sceptre",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 1H Mace",
+    "base_name": "Behemoth Mace",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 1H Mace",
+    "base_name": "Behemoth Mace",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 1H Mace",
+    "base_name": "Boom Mace",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 1H Mace",
+    "base_name": "Boom Mace",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 2H Mace",
+    "base_name": "Coronal Maul",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 2H Mace",
+    "base_name": "Coronal Maul",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 69
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 2H Mace",
+    "base_name": "Impact Force Propagator",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 2H Mace",
+    "base_name": "Impact Force Propagator",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "R-R-R-R-R-R"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Staff",
+    "base_name": "Maelstrom Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 64
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Staff",
+    "base_name": "Maelstrom Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 64
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon6",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Staff",
+    "base_name": "Eventuality Rod",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Staff",
+    "base_name": "Eventuality Rod",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon6",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Staff",
+    "base_name": "Eclipse Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnTwoHandWeapon5",
+        "SpellDamageAndManaOnTwoHandWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Physical Staff",
+    "base_name": "Eclipse Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalPhysicalSpellGemsLevelTwoHand2_",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Fire Staff",
+    "base_name": "Eclipse Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalFireSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Cold Staff",
+    "base_name": "Eclipse Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalColdSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Lightning Staff",
+    "base_name": "Eclipse Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalLightningSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Chaos Staff",
+    "base_name": "Eclipse Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalChaosSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Spell Staff",
+    "base_name": "Battery Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnTwoHandWeapon5",
+        "SpellDamageAndManaOnTwoHandWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Physical Staff",
+    "base_name": "Battery Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalPhysicalSpellGemsLevelTwoHand2_",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Fire Staff",
+    "base_name": "Battery Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalFireSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Cold Staff",
+    "base_name": "Battery Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalColdSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Lightning Staff",
+    "base_name": "Battery Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalLightningSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "+5 Chaos Staff",
+    "base_name": "Battery Staff",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B-B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "GlobalSpellGemsLevelTwoHand1",
+        "GlobalChaosSpellGemsLevelTwoHand2",
+        "SpellDamageOnTwoHandWeapon5"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Physical 1H Sword",
+    "base_name": "Tiger Hook",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 1H Sword",
+    "base_name": "Jewelled Foil",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 1H Sword",
+    "base_name": "Eternal Sword",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 66
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 1H Sword",
+    "base_name": "Anarchic Spiritblade",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 1H Sword",
+    "base_name": "Anarchic Spiritblade",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 1H Sword",
+    "base_name": "Jewelled Foil",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical 2H Sword",
+    "base_name": "Exquisite Blade",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamageTwoHand6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 2H Sword",
+    "base_name": "Reaver Sword",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 59
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental 2H Sword",
+    "base_name": "Banishing Blade",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "G-G-G-G-G-G"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnTwohandWeapon4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed3",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Physical Wand",
+    "base_name": "Imbued Wand",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 59
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Wand",
+    "base_name": "Imbued Wand",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 59
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Wand",
+    "base_name": "Prophecy Wand",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 68
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Physical Wand",
+    "base_name": "Accumulator Wand",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "LocalIncreasedPhysicalDamagePercent5",
+        "LocalIncreasedPhysicalDamagePercentAndAccuracyRating5",
+        "LocalAddedPhysicalDamage6"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Elemental Wand",
+    "base_name": "Accumulator Wand",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "WeaponElementalDamageOnWeapons4",
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "LocalIncreasedAttackSpeed2",
+        "LocalCriticalStrikeChance3",
+        "LocalCriticalMultiplier4"
+      ]
+    }
+  },
+  {
+    "title": "Spell Wand",
+    "base_name": "Accumulator Wand",
+    "Attribs": {
+      "Quality": 20,
+      "Sockets": "B-B-B"
+    },
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {
+      "Level": 70
+    },
+    "Crafted": {
+      "Prefix": [
+        "SpellDamageOnWeapon5",
+        "SpellDamageAndManaOnWeapon4",
+        "None"
+      ],
+      "Suffix": [
+        "SpellCriticalStrikeChance3",
+        "LocalCriticalMultiplier4",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Jewel",
+    "base_name": "Crimson Jewel",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Jewel",
+    "base_name": "Viridian Jewel",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Jewel",
+    "base_name": "Cobalt Jewel",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Cluster Jewel",
+    "base_name": "Large Cluster Jewel",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Cluster Jewel",
+    "base_name": "Medium Cluster Jewel",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None"
+      ]
+    }
+  },
+  {
+    "title": "Cluster Jewel",
+    "base_name": "Small Cluster Jewel",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    "Crafted": {
+      "Prefix": [
+        "None",
+        "None"
+      ],
+      "Suffix": [
+        "None",
+        "None"
+      ]
+    }
+  }
+]

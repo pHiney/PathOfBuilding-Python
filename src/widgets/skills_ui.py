@@ -66,7 +66,6 @@ class SkillsUI:
         :param _settings: A pointer to the settings
         :param _win: A pointer to MainWindowUI
         """
-        self.pob_config = _settings
         self.settings = _settings
         self.build = _build
         self.win = _win
@@ -91,7 +90,7 @@ class SkillsUI:
 
         self.win.list_SocketGroups.set_delegate()
 
-        tr = self.pob_config.app.tr
+        tr = self.settings.app.tr
         self.win.combo_SortByDPS.addItem(tr("Full DPS"), "FullDPS")
         self.win.combo_SortByDPS.addItem(tr("Combined DPS"), "CombinedDPS")
         self.win.combo_SortByDPS.addItem(tr("Total DPS"), "TotalDPS")
@@ -326,7 +325,7 @@ class SkillsUI:
 
         # read in all gems but remove all invalid/unreleased ones
         # "Afflictions" will be removed by this (no display_name), so maybe a different list for them
-        gems = read_json(Path(self.pob_config.data_dir, "base_gems.json"))
+        gems = read_json(Path(self.settings.data_dir, "base_gems.json"))
         if gems is None:
             return None, None
         # make a list by name and skillId. Index supports using the full name (Faster Attacks Support)
@@ -344,7 +343,7 @@ class SkillsUI:
             if _gem.get("support", False):
                 self.gems_by_name_or_id[f"{name} Support"] = _gem  # name = "Added Chaos Damage" + " Support"
 
-        hidden = read_json(Path(self.pob_config.data_dir, "hidden_skills.json"))
+        hidden = read_json(Path(self.settings.data_dir, "hidden_skills.json"))
         for _id, _gem in hidden.items():
             _gem["colour"] = get_coloured_int(_gem)
             _gem["coloured_text"] = html_colour_text(_gem["colour"], _gem["name"])
@@ -378,7 +377,7 @@ class SkillsUI:
 
         # read in all gems but remove all invalid/unreleased ones
         # "Afflictions" will be removed by this (no display_name), so maybe a different list for them
-        gems = read_json(Path(self.pob_config.data_dir, "gems.json"))
+        gems = read_json(Path(self.settings.data_dir, "gems.json"))
         if gems is None:
             return None
         gems_list = list(gems.keys())
@@ -559,7 +558,7 @@ class SkillsUI:
         :return: N/A
         """
         # print("delete_all_skill_sets")
-        tr = self.pob_config.app.tr
+        tr = self.settings.app.tr
         if not prompt or yes_no_dialog(
             self.win,
             tr("Delete all Skill Sets"),
@@ -619,7 +618,7 @@ class SkillsUI:
         """
         # Ctrl-M (from MainWindow) won't know if there is another window open, so stop opening another instance.
         if self.dlg is None:
-            self.dlg = ManageSkillsDlg(self, self.pob_config, self.win)
+            self.dlg = ManageSkillsDlg(self, self.settings, self.win)
             self.dlg.exec()
             self.dlg = None
 
@@ -740,7 +739,7 @@ class SkillsUI:
         # print("delete_all_socket_groups")
         if self.current_skill_set is None or len(list(self.current_skill_set)) == 0:
             return
-        tr = self.pob_config.app.tr
+        tr = self.settings.app.tr
         if not prompt or yes_no_dialog(
             self.win,
             tr("Delete all Socket Groups"),
