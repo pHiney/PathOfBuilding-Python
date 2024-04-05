@@ -4,11 +4,10 @@ This Class manages all the elements and owns some elements of the "ITEMS" tab
 Abyssal sockets are precreated and are made visble or hidden based on what is in them.
 """
 
+from copy import deepcopy
 from pathlib import Path
 import enum
 import re
-import time
-import xml.etree.ElementTree as ET
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import QListWidgetItem
@@ -16,27 +15,22 @@ from PySide6.QtWidgets import QListWidgetItem
 from ui.PoB_Main_Window import Ui_MainWindow
 from PoB.settings import Settings
 from PoB.build import Build
-from PoB.pob_file import read_xml, write_xml, read_json
-from PoB.constants import slot_map, ColourCodes, slot_names
+from PoB.constants import ColourCodes, empty_item_dict, empty_itemset_dict, empty_item_slots_dict, influencers, slot_map, slot_names
 from PoB.item import Item
+from PoB.pob_file import read_json
+from PoB.utils import _debug, bool_to_str, html_colour_text, print_call_stack, str_to_bool
+from PoB.pob_xml import print_a_xml_element, read_xml, write_xml
 from dialogs.craft_items_dialog import CraftItemsDlg
 from dialogs.itemsets_dialog import ManageItemsDlg
 from widgets.item_slot_ui import ItemSlotUI
-from widgets.ui_utils import (
-    _debug,
-    bool_to_str,
-    html_colour_text,
-    print_a_xml_element,
-    print_call_stack,
-    set_combo_index_by_text,
-    str_to_bool,
-)
+from widgets.ui_utils import set_combo_index_by_text
 
+# Classes of items that can be pasted in from in game/Trade site
 import_classes = (
     "Abyss Jewels, Amulets, Belts, Body Armours, Boots, Bows, Claws, Daggers, Gloves, Helmets, "
     "Hybrid Flasks, Jewels, Life Flasks, Mana Flasks, One Hand Axes, One Hand Maces, One Hand Swords, "
     "Quivers, Rings, Rune Daggers, Sceptres, Shields, Staves, Thrusting One Hand Swords, Trinkets, "
-    "Two Hand Axes, Two Hand Maces, Two Hand Swords, Utility Flasks, Wands, Warstaves,"
+    "Two Hand Axes, Two Hand Maces, Two Hand Swords, Utility Flasks, Wands, Warstaves"
 )
 
 
@@ -54,10 +48,10 @@ class ItemsUI:
         self.tree_ui = tree_ui
         self.build = _build
         self.win = _win
-        # dictionary of Items() indexed by id. This is the same order in the xml
+        # dictionary of Items() indexed by id. This is the same order as in the dict
         self.itemlist_by_id = {}
-        self.xml_items = None
-        self.xml_current_itemset = None
+        self.items = None
+        self.current_itemset = None
         self.itemsets = None
         self.triggers_connected = False
         self.internal_clipboard = None
@@ -65,9 +59,8 @@ class ItemsUI:
         # Flag to stop some actions happening in triggers during loading
         self.alerting = False
 
-        self.base_items = read_json(Path(self.settings.data_dir, "base_items.json"))
-        self.mods = read_json(Path(self.settings.data_dir, "mods.json"))
-        # print(self.mods.keys())
+        self.base_items = read_json(Path(self.settings._data_dir, "base_items.json"))
+        self.mods = read_json(Path(self.settings._data_dir, "mods.json"))
 
         # set the key_event - handler - self.item_list_keypressed
         self.win.list_Items.key_press_handler = self.item_list_keypressed
@@ -135,15 +128,12 @@ class ItemsUI:
         self.win.list_ImportItems.set_delegate()
 
     @property
-    def activeItemSet(self):
-        # return: int
-        # Use a property to ensure the correct +/- 1
-        return max(int(self.xml_items.get("activeItemSet", 1)) - 1, 0)
+    def activeItemSet(self) -> int:
+        return self.items.get("activeItemSet", 0)
 
     @activeItemSet.setter
-    # Use a property to ensure the correct +/- 1
     def activeItemSet(self, new_set):
-        self.xml_items.set("activeItemSet", f"{new_set + 1}")
+        self.items["activeItemSet"] = new_set
 
     def connect_item_triggers(self):
         """re-connect widget triggers that need to be disconnected during loading and other processing"""
@@ -256,7 +246,6 @@ class ItemsUI:
         :param item: Item(): the item to be added.
         :return: N/A
         """
-        # print_a_xml_element(self.xml_current_itemset)
         for slot_name in item.slots:
             match slot_name:
                 case "":
@@ -306,10 +295,11 @@ class ItemsUI:
             slot_ui.jewel_node_id = node_id
             self.jewel_slot_ui_list.append(slot_ui)
 
-        # Fill all those slots with jewels
+        # Fill all those slots with jewels. sockets={socket['@nodeId']},{socket['@itemId']}
         # ToDo: Determine if a cluster jewel is allowed in slot
+        # print(f"{self.build.current_spec.sockets=}")
         for j_id in self.build.current_spec.sockets.values():
-            # accomodate data errors, or people fiddling.
+            # accommodate data errors, or people fiddling.
             try:
                 item = self.itemlist_by_id[j_id]
                 for slot in self.jewel_slot_ui_list:
@@ -333,11 +323,11 @@ class ItemsUI:
 
     def load_unique_items(self):
         item_leagues = set()
-        u_xml = read_xml(Path(self.settings.data_dir, "uniques.xml"))
-        for xml_item_type in list(u_xml.getroot()):
-            for xml_item in xml_item_type.findall("Item"):
+        u_json = read_json(Path(self.settings._data_dir, "uniques.json"))
+        for key in u_json.keys():
+            for _item in u_json[key]:
                 new_item = Item(self.settings, self.base_items)
-                new_item.load_from_xml_v2(xml_item, "UNIQUE")
+                new_item.load_from_json(_item, "UNIQUE")
                 new_item.quality = 20
                 self.uniques_items.append(new_item)
                 if new_item.type:
@@ -358,10 +348,10 @@ class ItemsUI:
         self.win.combo_ItemsImportLeague.view().setMinimumWidth(self.win.combo_ItemsImportLeague.minimumSizeHint().width())
 
     def load_rare_template_items(self):
-        t_xml = read_xml(Path(self.settings.data_dir, "rare_templates.xml"))
-        for xml_item in t_xml.getroot().findall("Item"):
+        t_json = read_json(Path(self.settings._data_dir, "rare_templates.json"))
+        for _item in t_json:
             new_item = Item(self.settings, self.base_items)
-            new_item.load_from_xml_v2(xml_item, "RARE")
+            new_item.load_from_json(_item, "RARE")
             self.rare_template_items.append(new_item)
 
     def add_item_to_itemlist_widget(self, _item):
@@ -421,8 +411,7 @@ class ItemsUI:
 
         if not self.alerting:
             return
-
-        # Further functionality that requires a loaded system
+        # Any other functionality that requires a loaded system
 
     @Slot()
     def weapon_swap2(self, checked):
@@ -551,9 +540,14 @@ class ItemsUI:
         :return: bool: success
         """
 
-        def find_line(text, return_index=False):
-            i = [i for i, l in enumerate(lines) if text in l]
+        def find_line(text, return_index=False, debug=False):
+            # i = [i for i, l in enumerate(lines) if text in l]
+            i = [i for i, l in enumerate(lines) if re.search(rf"^{text}", l)]
+            if debug:
+                print(f"find_line: {text=} {i=}")
             if i and i[0] != 0:
+                if debug:
+                    print(f"find_line: {i[0]=}")
                 if return_index:
                     return i[0]
                 else:
@@ -576,110 +570,132 @@ class ItemsUI:
                 index += 1
             return _l
 
+        new_item = deepcopy(empty_item_dict)
         lines = [y for y in (x.strip(" \t\r\n") for x in data.splitlines()) if y]
         # print("lines", lines)
         item_class = lines.pop(0)
         m = re.search(r"(.*): (.*)", item_class)
         if m.group(2) not in import_classes:
-            print(
-                "Error: Dave, I don't know what to do with this:\nUnknown 'Item Class'\n",
-                data,
-            )
+            print("Error: Dave, I don't know what to do with this:\nUnknown 'Item Class'\n", data)
+            self.win.update_status_bar(f"Item Paste: Wrong item class -> {m.group(2)}.", 10, "RED")
             return False
         line = lines.pop(0).upper()  # should be rarity
         if "RARITY" not in line:
             print("Error: Dave, I don't know what to do with this:\nNo 'Rarity'\n", data)
+            self.win.update_status_bar("Item Paste: No Rarity data.", 10, "RED")
             return False
+
         m = re.search(r"(.*): (.*)", line)
-        rarity = m.group(2)
-        new_item = f"Rarity: {rarity}\n"
+        new_item["Rarity"] = m.group(2)
         # next one or two lines should be name and base name of item
         names = get_all_lines_between_delimiters(0)
         if not names:
-            print(
-                "Error: Dave, I don't know what to do with this:\nNo 'Name Data'\n",
-                data,
-            )
+            print("Error: Dave, I don't know what to do with this:\nNo 'Name Data'\n", data)
+            self.win.update_status_bar("Item Paste: No Name data", 10, "RED")
             return False
-        for name in names:
-            new_item += f"{name}\n"
+        if len(names) == 1:
+            new_item["base_name"] = names[0]
+        elif len(names) == 2:
+            new_item["title"] = names[0]
+            new_item["base_name"] = names[1]
+        else:
+            print("Error: Dave, I don't know what to do with this:\nNo item base and/or item title\n", data)
+            self.win.update_status_bar("Item Paste: No item base and/or item title", 10, "RED")
+            return False
 
-        line = find_line("Quality:")
-        if line != "":
-            m = re.search(r"Quality: [\+-](\d+)", line)
-            new_item += f"Quality: {m.group(1)}\n"
-
+        # ToDo: Add flasks direct to items list.
         idx = find_line("Requirements:", True)
         if idx > 0:
             reqs = get_all_lines_between_delimiters(idx + 1)
             if reqs:
-                requires = ""
-                for idx, req in enumerate(reqs):
-                    if idx == 0:
-                        requires = req.replace(":", "").replace(" (augmented)", "")
-                    else:
-                        requires += f', {req.replace(":", "").replace(" (augmented)", "")}'
-                new_item += f"Requires {requires}\n"
+                for req in reqs:
+                    m = re.search(r"(.*): ([+-]?\d+)", req)
+                    if m:
+                        new_item["Requires"][m.group(1)] = int(m.group(2))
 
-        line = find_line("Talisman Tier:")
-        if line != "":
-            new_item += f"{line}\n"
+        for search_term in ("Talisman Tier", "Item Level", "Quality"):
+            line = find_line(search_term)
+            if line:
+                m = re.search(r"(.*): ([+-]?\d+)", line)
+                if m:
+                    new_item["Attribs"][search_term] = int(m.group(2))
 
-        # influences
-        influences = [x for x in lines if re.search(r" Item$", x)]
-        if influences:
-            for line in influences:
-                new_item += f"{line}\n"
-
-        for search_term in ("Sockets:", "Item Level:"):
+        for search_term in ("Sockets",):
             line = find_line(search_term)
             if line != "":
-                new_item += f"{line}\n"
+                m = re.search(r"(.*): (.*)", line)
+                if m:
+                    new_item["Attribs"][search_term] = m.group(2)
+
+        # influences
+        for search_term in influencers:
+            line = find_line(f"{search_term}$")
+            if line != "":
+                new_item.setdefault("Influences", []).append(line)
 
         # Assume that implicits and explicits are after "Item Level:"
         # Some White items have no implicits or explicits
-        idx = find_line("Item Level:", True) + 2
-        plicits = get_all_lines_between_delimiters(idx)
-        if plicits:
-            # Enchants. PoB treats them as implicit crafts
-            # print("1. plicits", plicits)
-            implicits = ""
-            if " (enchant)" in plicits[0]:
-                for plicit in plicits:
-                    implicits += f'{{crafted}}{plicit.replace(" (enchant)", "")}\n'
-                    # get the next stanza
-                idx += len(plicits) + 1
-                plicits = get_all_lines_between_delimiters(idx)
-            # print("2. plicits", plicits)
-            if " (implicit)" in plicits[0]:
-                for plicit in plicits:
-                    if " (crafted)" in plicit:
-                        plicit = f'{{crafted}}{plicit.replace(" (crafted)", "")}'
-                    implicits += f'{plicit.replace(" (implicit)", "")}\n'
-                    # get the next stanza, as these will be explicits
-                plicits = get_all_lines_between_delimiters(idx + len(plicits) + 1)
-            implicits_len = len([y for y in (x.strip(" \t\r\n") for x in implicits.splitlines()) if y])
-            new_item += f"Implicits: {implicits_len}\n"
-            if implicits_len > 0:
-                new_item += f"{implicits}\n"
-            # Explicits
-            # print("3. plicits", plicits)
-            for plicit in plicits:
-                if " (crafted)" in plicit:
-                    plicit = f'{{crafted}}{plicit.replace(" (crafted)", "")}'
-                if " (fractured)" in plicit:
-                    plicit = f'{{fractured}}{plicit.replace(" (fractured)", "")}'
-                new_item += f"{plicit}\n"
+        idx = find_line("Item Level", True) + 2
+        implicits = get_all_lines_between_delimiters(idx)
+        # print(f"1. {implicits=}")
+        for implicit in implicits:
+            if " (enchant)" in implicit:
+                implicit = f'{{crafted}}{implicit.replace(" (enchant)", "")}'
+            if " (crafted)" in implicit:
+                implicit = f'{{crafted}}{implicit.replace(" (crafted)", "")}'
+            new_item["Implicits"].append(f'{implicit.replace(" (implicit)", "")}')
+
+        explicits = get_all_lines_between_delimiters(idx + len(implicits) + 1)
+        # print(f"2. {explicits=}")
+        for explicit in explicits:
+            if " (fractured)" in explicit:
+                explicit = f'{{fractured}}{explicit.replace(" (fractured)", "")}'
+            if " (crafted)" in explicit:
+                explicit = f'{{crafted}}{explicit.replace(" (crafted)", "")}'
+            new_item["Explicits"].append(f'{explicit.replace(" (enchant)", "")}')
+
+        # if plicits:
+        #     # Enchants. PoB treats them as implicit crafts
+        #     print("1. plicits", plicits)
+        #     implicits = ""
+        #     if " (enchant)" in plicits[0]:
+        #         for plicit in plicits:
+        #             implicits += f'{{crafted}}{plicit.replace(" (enchant)", "")}\n'
+        #             # get the next stanza
+        #         idx += len(plicits) + 1
+        #         plicits = get_all_lines_between_delimiters(idx)
+        #     print("2. plicits", plicits)
+        #     if " (implicit)" in plicits[0]:
+        #         for plicit in plicits:
+        #             if " (crafted)" in plicit:
+        #                 plicit = f'{{crafted}}{plicit.replace(" (crafted)", "")}'
+        #             implicits += f'{plicit.replace(" (implicit)", "")}\n'
+        #             # get the next stanza, as these will be explicits
+        #         plicits = get_all_lines_between_delimiters(idx + len(plicits) + 1)
+        #     implicits_len = len([y for y in (x.strip(" \t\r\n") for x in implicits.splitlines()) if y])
+        #     new_item += f"Implicits: {implicits_len}\n"
+        #     if implicits_len > 0:
+        #         new_item += f"{implicits}\n"
+        #     # Explicits
+        #     print("3. plicits", plicits)
+        #     for plicit in plicits:
+        #         if " (crafted)" in plicit:
+        #             plicit = f'{{crafted}}{plicit.replace(" (crafted)", "")}'
+        #         if " (fractured)" in plicit:
+        #             plicit = f'{{fractured}}{plicit.replace(" (fractured)", "")}'
+        #         new_item += f"{plicit}\n"
         # end plicits
 
         if find_line("Corrupted") != "":
-            new_item += f"Corrupted\n"
+            new_item["Corrupted"] = new_item != ""
 
         # print("new_item", new_item)
         dlg = CraftItemsDlg(self.settings, self.base_items, self.mods, "add", self.win)
         item = Item(self.settings, self.base_items)
-        item.load_from_xml(ET.fromstring(f"<Item>{new_item}</Item>"))
-        # dlg.item is a property that triggers internal procedures. Don't set it to an empty Item and expect it work.
+        print(f"1. {item.sockets=}")
+        item.load_from_json(new_item)
+        print(f"2. {item.sockets=}")
+        # dlg.item is a property that triggers internal procedures. Don't set it to an empty Item and expect it to work.
         dlg.item = item
         _return = dlg.exec()
         if _return:
@@ -689,54 +705,44 @@ class ItemsUI:
             print(f"Discarded: {dlg.item.name}")
         return True
 
-    def load_from_xml(self, _items):
+    def load_from_json(self, _items):
         """
         Load internal structures from the build object.
 
-        :param _items: Reference to the xml <Items> tag set
+        :param _items: Reference to build's json_items
         :return: N/A
         """
-        # print("items_ui.load_from_xml")
+        # print("items_ui.load_from_json", _items)
         self.disconnect_item_triggers()
         self.alerting = False
-        self.xml_items = _items
+        self.items = _items
         self.clear_controls(True)
         self.win.combo_ItemSet.clear()
-        # Remove <Slot /> entries under <Items /> only - deprecated setting
-        for _item in self.xml_items.findall("Slot"):
-            self.xml_items.remove(_item)
         # add the items to the list box
-        for _item in self.xml_items.findall("Item"):
+        for _item in self.items["Items"]:
             new_item = Item(self.settings, self.base_items)
-            # new_item.curr_variant = _item.get("variant", "")
-            new_item.load_from_xml(_item)
-            new_item.id = int(_item.get("id", 0))
+            new_item.load_from_json(_item)
             self.add_item_to_itemlist_widget(new_item)
             self.itemlist_by_id[new_item.id] = new_item
             if "Jewel" in new_item.base_name:
                 self.jewels[new_item.id] = new_item
 
         active_set_title = "Default"
-        str_active_itemset = str(self.activeItemSet + 1)
-        self.itemsets = self.xml_items.findall("ItemSet")
-        for _item_set in self.itemsets:
-            self.win.combo_ItemSet.addItem(_item_set.get("title", "Default"), _item_set)
-            # Itemset numbers are not related to the order they are presented in luaPoB. We'll set the active set by using it's title.
-            if _item_set.get("id") == str_active_itemset:
-                active_set_title = _item_set.get("title", "Default")
+        self.itemsets = self.items["ItemSets"]
+        titles = [item["title"] for item in self.itemsets]
+        self.win.combo_ItemSet.addItems(titles)
         self.fill_item_slot_uis()
         self.fill_jewel_slot_uis()
         self.alerting = True
         self.connect_item_triggers()
         # Trigger showing the correct itemset
-        set_combo_index_by_text(self.win.combo_ItemSet, active_set_title)
+        self.win.combo_ItemSet.setCurrentIndex(self.activeItemSet)
 
-    def load_from_ggg_json(self, _items, itemset_name, delete_it_all):
+    def load_from_ggg_json(self, json_items, delete_it_all):
         """
         Load internal structures from the GGG build json.
 
-        :param _items: Reference to the downloaded json <Items> tag set
-        :param itemset_name: str: A potential new name for this itemset
+        :param json_items: json import of the item data
         :param delete_it_all: bool: delete all current items and itemsets
         :return: N/A
         """
@@ -746,11 +752,14 @@ class ItemsUI:
         if delete_it_all:
             self.delete_all_items()
             self.delete_all_itemsets()
-        self.new_itemset(itemset_name)
-        self.itemsets = self.xml_items.findall("ItemSet")
+
+        # Make a new skill set
+        json_character = json_items.get("character")
+        self.current_itemset = self.new_itemset(f"Imported {json_character.get('name', '')}")
+        # self.itemsets = self.items["ItemSets"]
         id_base = len(self.itemlist_by_id) == 0 and 1 or max(self.itemlist_by_id.keys())
         # add the items to the list box
-        for idx, text_item in enumerate(_items["items"]):
+        for idx, text_item in enumerate(json_items["items"]):
             new_item = Item(self.settings, self.base_items)
             new_item.load_from_ggg_json(text_item)
             new_item.id = id_base + idx
@@ -779,14 +788,14 @@ class ItemsUI:
         equippedItems is simple EG:
             { "buildItemIndex": 0, "slot": "WEAPON" },
             { "buildItemIndex": 10, "slot": "OFFHAND" },
-        buildItems is a zero indexed array of entries that will suit converting to xml v2 easily
+        buildItems is a zero indexed array of entries
 
         """
         self.disconnect_item_triggers()
         self.alerting = False
         self.delete_all_items()
         self.delete_all_itemsets()
-        self.xml_current_itemset = self.new_itemset(itemset_name)
+        self.current_itemset = self.new_itemset(itemset_name)
 
         # get the slots and add them to the main buildItems array
         for idx, text_item in enumerate(json_items["equippedItems"]):
@@ -812,46 +821,77 @@ class ItemsUI:
         self.alerting = True
         self.connect_item_triggers()
 
-    def save(self, version="2"):
+    def save(self):
         """
-        Save the *current itemset* back to a xml object.
-        This is called by import_from_poep_json, the main SaveAs routines and the change itemset,
-        prior to showing the new set.
+        Save the *current itemset* back to a object.
+        This is called by import_from_poep_json, the main SaveAs routines and change itemset, prior to showing the new set.
 
-        :param:version: str. 1 for version 1 xml data,  2 for updated.
-        :return: xml.etree.ElementTree
+        :return: the json dict for Items
         """
-        if self.win.list_Items.count() > 0:
-            # leave this here for a bit to pick out one item
-            # self.itemlist[items[0]].save(0, true)
-            # delete any items present in the xml and readd them with the current data and order
-            for child in list(self.xml_items.findall("Item")):
-                self.xml_items.remove(child)
-            for _id in self.itemlist_by_id:
-                match version:
-                    case "1":
-                        self.xml_items.append(self.itemlist_by_id[_id].save())
-                    case "2":
-                        self.xml_items.append(self.itemlist_by_id[_id].save_v2())
+        # if self.win.list_Items.count() > 0:
+        # leave this here for a bit to pick out one item
+        # self.itemlist[items[0]].save(0, true)
+        # json_items = self.items["Items"]
+        # for child in list(json_items):
+        #     json_items.remove(child)
+        # for _id in self.itemlist_by_id:
+        #     json_items.append(self.itemlist_by_id[_id].save_v2())
 
-        # As these entries do not overwrite, remove the old entries, and add the new ones.
-        for child in list(self.xml_current_itemset.findall("Slot")):
-            self.xml_current_itemset.remove(child)
-
-        # Add current set slot information
+        # As these entries do not delete if not used, remove the old entries, and add the new ones.
+        # self.current_itemset["Slots"] = deepcopy(empty_item_slots_dict)
+        self.items["Items"].clear()
+        for _id in self.itemlist_by_id:
+            self.items["Items"].append(self.itemlist_by_id[_id].save())
+        self.current_itemset["Slots"].clear()
         for slot_ui_name in self.item_slot_ui_list:
             slot_ui = self.item_slot_ui_list[slot_ui_name]
-            item_id = slot_ui.current_item_id
-            slot_xml = ET.fromstring(f'<Slot name="{slot_ui_name}" itemId="{item_id}"/>')
-            if "Flask" in slot_ui_name:
-                slot_xml.set("active", bool_to_str(slot_ui.active))
-            slot_xml.set("itemPbURL", slot_ui.itemPbURL)
-            self.xml_current_itemset.append(slot_xml)
+            if slot_ui.current_item_id != 0:
+                json_self_slot_ui = {"itemId": slot_ui.current_item_id, "itemPbURL": slot_ui.itemPbURL}
+                if "Flask" in slot_ui_name:
+                    json_self_slot_ui["active"] = slot_ui.active
+                self.current_itemset["Slots"][slot_ui_name] = json_self_slot_ui
         self.activeItemSet = self.win.combo_ItemSet.currentIndex()
         # Renumber skillsets in case they have been moved, created or deleted.
-        for idx, _set in enumerate(self.xml_items.findall("ItemSet"), 1):
-            _set.set("id", str(idx))
-        return self.xml_items
+        for idx, _set in enumerate(self.items["ItemSets"]):
+            _set["id"] = idx
+        return self.items
+
+    # def save_to_xml(self):
+    #     """
+    #     Save the *current itemset* back to a xml object.
+    #     This is called by import_from_poep_json, the main SaveAs routines and the change itemset,
+    #     prior to showing the new set.
+    #
+    #     :param:version: str. 1 for version 1 xml data,  2 for updated.
+    #     :return: xml.etree.ElementTree
+    #     """
+    #     if self.win.list_Items.count() > 0:
+    #         # leave this here for a bit to pick out one item
+    #         # self.itemlist[items[0]].save(0, true)
+    #         # delete any items present in the xml and readd them with the current data and order
+    #         for child in list(self.items.findall("Item")):
+    #             self.items.remove(child)
+    #         for _id in self.itemlist_by_id:
+    #             self.items.append(self.itemlist_by_id[_id].save())
+    #
+    #     # As these entries do not overwrite, remove the old entries, and add the new ones.
+    #     for child in list(self.current_itemset.findall("Slot")):
+    #         self.current_itemset.remove(child)
+    #
+    #     # Add current set slot information
+    #     for slot_ui_name in self.item_slot_ui_list:
+    #         slot_ui = self.item_slot_ui_list[slot_ui_name]
+    #         item_id = slot_ui.current_item_id
+    #         slot_xml = ET.fromstring(f'<Slot name="{slot_ui_name}" itemId="{item_id}"/>')
+    #         if "Flask" in slot_ui_name:
+    #             slot_xml.set("active", bool_to_str(slot_ui.active))
+    #         slot_xml.set("itemPbURL", slot_ui.itemPbURL)
+    #         self.current_itemset.append(slot_xml)
+    #     self.activeItemSet = self.win.combo_ItemSet.currentIndex()
+    #     # Renumber skillsets in case they have been moved, created or deleted.
+    #     for idx, _set in enumerate(self.items.findall("ItemSet"), 1):
+    #         _set.set("id", str(idx))
+    #     return self.items
 
     def clear_controls(self, loading=False):
         """
@@ -871,49 +911,73 @@ class ItemsUI:
         self.win.frame_SocketedJewels.setHidden(True)
         self.win.btn_DeleteItem.setEnabled(False)
 
-    def show_itemset(self, _itemset, initial=False):
+    def show_itemset(self, itemset_num, initial=False):
         """
         Show the nominated Item Set
 
-        :param _itemset: int:
+        :param itemset_num: int:
         :param initial: bool: Only set during loading
         :return:
         """
-        # _debug(f"show_itemset, {_itemset}, {self.xml_current_itemset}, {self.itemsets}")
-        if 0 <= _itemset < len(self.itemsets):
-            if self.xml_current_itemset is not None:
+        # _debug(f"show_itemset, {_itemset}, {self.current_itemset}, {self.itemsets}")
+        if 0 <= itemset_num < len(self.itemsets):
+            if self.current_itemset is not None:
                 self.save()
                 # self.clear_controls()
-            self.xml_current_itemset = self.itemsets[_itemset]
+            self.current_itemset = self.itemsets[itemset_num]
 
             for slot_ui in self.abyssal_item_slot_ui_list:
                 slot_ui.setHidden(True)
 
             """ Process the Slot entries and set default items"""
-            slots = self.xml_current_itemset.findall("Slot")
-            if len(slots) > 0:
-                for slot_xml in slots:
-                    # The regex is for a data error: 1Swap -> 1 Swap
-                    slot_name = re.sub(r"([12])Swap", "\\1 Swap", slot_xml.get("name", ""))
-                    item_id = int(slot_xml.get("itemId", "-1"))
-                    if slot_name != "" and item_id >= 0:
-                        # There are illegal entries in PoB xmls, like 'Belt Abyssal Socket 3'.
-                        # They will create a KeyError. By absorbing them, we'll remove them from the xml.
-                        try:
-                            slot_ui: ItemSlotUI = self.item_slot_ui_list[slot_name]
+            slots = self.current_itemset.get("Slots", {})
+            if slots:
+                # for _name, value in slots.items():
+                for slot_name in empty_item_slots_dict.keys():
+                    slot_ui: ItemSlotUI = self.item_slot_ui_list.get(slot_name, None)
+                    slot = slots.get(slot_name, {})
+                    if slot:
+                        item_id = slot.get("itemId", -1)
+                        # check for bad naming, like "Belt Abyssal Socket 6"
+                        if item_id >= 0:
                             # Clear the slot if not used
                             if item_id == 0:
                                 slot_ui.clear_default_item()
                             else:
                                 item = self.itemlist_by_id[item_id]
                                 slot_ui.set_default_by_text(item.name)
-                                slot_ui.itemPbURL = slot_xml.get("itemPbURL", "")
+                                slot_ui.itemPbURL = slot.get("itemPbURL", "")
                                 if item.type == "Flask":
-                                    slot_ui.active = str_to_bool(slot_xml.get("active", "False"))
+                                    slot_ui.active = slot.get("active", False)
                                 if "Abyssal" in slot_name:
                                     slot_ui.setHidden(False)
-                        except KeyError:
-                            pass
+                    else:
+                        slot_ui.clear_default_item()
+
+                # slots = self.current_itemset["Slots"]
+                # if len(slots) > 0:
+                #     for slot_xml in slots:
+                #         # The regex is for a data error: 1Swap -> 1 Swap
+                #         slot_name = re.sub(r"([12])Swap", "\\1 Swap", slot_xml.get("name", ""))
+                #         item_id = int(slot_xml.get("itemId", "-1"))
+                #         if slot_name != "" and item_id >= 0:
+                #             # There are illegal entries in PoB xmls, like 'Belt Abyssal Socket 3'.
+                #             # They will create a KeyError. By absorbing them, we'll remove them from the xml.
+                #             try:
+                #                 slot_ui: ItemSlotUI = self.item_slot_ui_list[slot_name]
+                #                 # Clear the slot if not used
+                #                 if item_id == 0:
+                #                     slot_ui.clear_default_item()
+                #                 else:
+                #                     item = self.itemlist_by_id[item_id]
+                #                     slot_ui.set_default_by_text(item.name)
+                #                     slot_ui.itemPbURL = slot_xml.get("itemPbURL", "")
+                #                     if item.type == "Flask":
+                #                         slot_ui.active = str_to_bool(slot_xml.get("active", "False"))
+                #                     if "Abyssal" in slot_name:
+                #                         slot_ui.setHidden(False)
+                #             except KeyError:
+                #                 pass
             else:
                 # Have a guess at what could be - used for imports
                 for slot_name in self.item_slot_ui_list:
@@ -926,18 +990,17 @@ class ItemsUI:
         :return: XML: The new Itemset
         """
         # print("new_itemset", itemset_name, len(self.itemsets))
-        new_set_xml = ET.fromstring(f'<ItemSet useSecondWeaponSet="false" id="{len(self.itemsets)+1}"/>')
-        new_set_xml.set("title", itemset_name)
-        self.itemsets.append(new_set_xml)
-        self.xml_items.append(new_set_xml)
-        self.win.combo_ItemSet.addItem(itemset_name, new_set_xml)
+        new_itemset = deepcopy(empty_itemset_dict)
+        new_itemset["title"] = itemset_name
+        self.itemsets.append(new_itemset)
+        self.win.combo_ItemSet.addItem(itemset_name, new_itemset)
         # Add slot information
-        for slot_ui_name in self.item_slot_ui_list:
-            slot_ui = self.item_slot_ui_list[slot_ui_name]
-            item_id = slot_ui.current_item_id
-            slot_xml = ET.fromstring(f'<Slot name="{slot_ui_name}" itemId="0"/>')
-            new_set_xml.append(slot_xml)
-        return new_set_xml
+        # for slot_ui_name in self.item_slot_ui_list:
+        #     slot_ui = self.item_slot_ui_list[slot_ui_name]
+        #     item_id = slot_ui.current_item_id
+        #     slot_xml = ET.fromstring(f'<Slot name="{slot_ui_name}" itemId="0"/>')
+        #     new_itemset.append(slot_xml)
+        return new_itemset
 
     @Slot()
     def change_itemset(self, _index):
@@ -946,56 +1009,47 @@ class ItemsUI:
         if 0 <= _index < len(self.itemsets):
             self.show_itemset(_index)
 
-    def rename_set(self, row, new_title):
+    def rename_itemset(self, row, new_title):
         """
         Rename a set in all locations we have it set.
         :param row: int:
         :param new_title: str:
         :return: N/A
         """
-        xml_set = self.xml_items[row]
-        xml_set.set("title", new_title)
-        _set = self.itemsets[row]
-        _set.set("title", new_title)
+        _set = self.itemsets[row]["title"] = new_title
         self.win.combo_ItemSet.setItemText(row, new_title)
 
-    def delete_itemset(self, itemset):
+    def delete_itemset(self, itemset_num):
         """
-        Delete ONE itemset
-        :param: xml.etree.ElementTree: the item to be removed.
+        Delete ONE itemset. Called from Manage Itemsets Dialog.
+
+        :param: itemset: int: the itemset's number to be removed.
+        :return: N/A
         """
         # print("delete_itemset")
-        try:
-            index = self.itemsets.index(itemset)
-        except ValueError:
-            return
-        self.xml_items.remove(itemset)
-        self.itemsets.remove(itemset)
-        if self.xml_current_itemset == itemset:
-            if len(self.itemsets) == 0:
-                self.xml_current_itemset = None
+        if self.current_itemset == self.itemsets[itemset_num]:
+            if len(self.itemsets) == 1:
+                self.current_itemset = None
             else:
-                self.xml_current_itemset = self.xml_items[index == 0 and 0 or index - 1]
-        self.win.combo_ItemSet.removeItem(index)
+                self.current_itemset = self.items[itemset_num == 0 and 0 or itemset_num - 1]
+        self.itemsets.pop(itemset_num)
+        self.win.combo_ItemSet.removeItem(itemset_num)
 
     def move_itemset(self, start, destination):
         """
-        Move a set entry. This is called by the manage tree dialog.
+        Move a set entry. This is called by the Manage Itemsets Dialog.
 
-        :param start: int: the index of the spec to be moved
-        :param destination: the index where to insert the moved spec
-        :return:
+        :param start: int: The index of the spec to be moved.
+        :param destination: The index where to insert the moved spec.
+        :return: N/A
         """
-        _set = self.itemsets[start]
-        xml_set = self.xml_items[start]
+        # _set = self.itemsets[start]
         if start < destination:
-            # need to decrement dest by one as we are going to remove start first
+            # need to decrement dest by one as we are going to remove start first.
             destination -= 1
-        self.itemsets.remove(_set)
+        _set = self.itemsets.pop(start)
         self.itemsets.insert(destination, _set)
-        self.xml_items.remove(xml_set)
-        self.xml_items.insert(destination, xml_set)
-        # Turn off triggers whist moving the combobox to stop unnecessary updates)
+        # Turn off triggers whist moving the combobox to stop unnecessary updates.
         self.disconnect_item_triggers()
         curr_index = self.win.combo_ItemSet.currentIndex()
         self.win.combo_ItemSet.removeItem(start)
@@ -1008,39 +1062,33 @@ class ItemsUI:
 
     def copy_itemset(self, index, new_name):
         """
-        Copy a set and return the new copy
+        Copy a set and return the new copy. This is called by the Manage Itemsets Dialog.
+
         :param index: the row the current set is on.
         :param new_name: str: the new set's name
         :return: xml.etree.ElementTree: The new set
         """
-        _set = self.itemsets[index]
-        xml_set = self.xml_items[index]
+        new_set = deepcopy(self.itemsets[index])
         index += 1
-        new_set = ET.fromstring(ET.tostring(xml_set))
-        new_set.set("title", new_name)
+        new_set["title"] = new_name
         self.itemsets.insert(index, new_set)
-        self.xml_items.insert(index, new_set)
         self.disconnect_item_triggers()
-        self.win.combo_ItemSet.insertItem(index, new_set.get("title", "Default"), new_set)
+        self.win.combo_ItemSet.insertItem(index, new_name, new_set)
         self.connect_item_triggers()
         return new_set
 
     def delete_all_itemsets(self):
         """Delete ALL itemsets"""
         # print("delete_all_itemsets")
-        for itemset in list(self.xml_items.findall("ItemSet")):
-            self.xml_items.remove(itemset)
-        self.xml_current_itemset = None
-        if self.itemsets:
-            self.itemsets.clear()
+        self.current_itemset = None
+        self.itemsets.clear()
         # self.win.combo_ItemSet.clear()
         self.win.combo_ItemSet.clear()
 
     def delete_all_items(self):
         """Delete all items"""
         # print("delete_all_items")
-        for child in list(self.xml_items.findall("Item")):
-            self.xml_items.remove(child)
+        self.items["Items"].clear()
         self.clear_controls(True)
 
     @Slot()
@@ -1063,7 +1111,6 @@ class ItemsUI:
         :return:
         """
         # print(f"filter_items_list: {search_text}")
-
         self.win.list_Items.clear()
         if search_text == "":
             # Searching complete, put it all back
@@ -1150,7 +1197,7 @@ class ItemsUI:
             temp_list = []
             # mod_list = []
             for item in items:
-                # mod_list is just long string to search in (includes variants)
+                # mod_list is just a long string to search in (includes variants)
                 mod_list = " ".join(mod.line.lower() for mod in item.full_implicitMods_list)
                 mod_list += "".join(mod.line.lower() for mod in item.full_explicitMods_list)
                 match self.win.combo_ItemsImportSearchSource.currentText():

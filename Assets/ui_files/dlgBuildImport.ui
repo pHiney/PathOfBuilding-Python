@@ -240,14 +240,14 @@
    <widget class="QCheckBox" name="check_DeleteJewels">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>210</x>
       <y>90</y>
-      <width>151</width>
+      <width>60</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>Delete existing &amp;Jewels</string>
+     <string>&amp;Jewels</string>
     </property>
     <property name="checked">
      <bool>true</bool>
@@ -256,14 +256,14 @@
    <widget class="QCheckBox" name="check_DeleteItems">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>300</x>
       <y>90</y>
-      <width>150</width>
+      <width>60</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>&amp;Delete Existing Items</string>
+     <string>Items</string>
     </property>
     <property name="checked">
      <bool>true</bool>
@@ -272,14 +272,14 @@
    <widget class="QCheckBox" name="check_DeleteSkills">
     <property name="geometry">
      <rect>
-      <x>385</x>
+      <x>390</x>
       <y>90</y>
-      <width>150</width>
+      <width>60</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
-     <string>Delete E&amp;xisting Skills</string>
+     <string>Skills</string>
     </property>
     <property name="checked">
      <bool>true</bool>
@@ -369,6 +369,38 @@
      </property>
     </item>
    </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>90</y>
+      <width>91</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Delete e&amp;xisting :</string>
+    </property>
+    <property name="buddy">
+     <cstring>check_DeleteTrees</cstring>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="check_DeleteTrees">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>90</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&amp;Trees</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="grpbox_BuildSharing">
    <property name="geometry">
@@ -453,6 +485,7 @@
   <tabstop>combo_League</tabstop>
   <tabstop>combo_Import</tabstop>
   <tabstop>combo_CharList</tabstop>
+  <tabstop>check_DeleteTrees</tabstop>
   <tabstop>check_DeleteJewels</tabstop>
   <tabstop>check_DeleteItems</tabstop>
   <tabstop>check_DeleteSkills</tabstop>

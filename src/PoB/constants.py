@@ -1,5 +1,6 @@
 """Enumeration Data for Path of Exile constants."""
 
+from copy import deepcopy
 import enum
 import locale
 
@@ -22,6 +23,7 @@ tree_versions = {
     "3_21": "3.21",
     "3_22": "3.22",
     "3_23": "3.23",
+    "3_24": "3.24",
 }
 _VERSION_str = "3_23"
 _VERSION = tree_versions[_VERSION_str]
@@ -33,6 +35,9 @@ default_max_charges = 3
 
 # Default config incase the settings file doesn't exist
 def_theme = "dark"
+starting_scion_node = "58833"
+
+""" ################################################ SETTINGS ################################################# """
 default_settings = f"""<PathOfBuilding>
 <Misc theme="{def_theme}" slotOnlyTooltips="true" showTitlebarName="true" showWarnings="true" defaultCharLevel="1" 
 nodePowerTheme="0" connectionProtocol="0" thousandsSeparator="n" decimalSeparator="_" 
@@ -42,90 +47,200 @@ proxyURL="" buildPath="" open_build=""/>
    <recentBuilds/>
    <size width="800" height="600"/>
 </PathOfBuilding>"""
+empty_settings = {
+    "width": 800,
+    "height": 600,
+    "theme": "{def_theme}",
+    "slot_only_tooltips": True,
+    "show_titlebar_name": True,
+    "show_warnings": True,
+    "default_char_level": 1,
+    "node_power_theme": 0,
+    "connection_protocol": 0,
+    "thousands_separator": "n",
+    "decimal_separator": "_",
+    "show_thousands_separators": True,
+    "beta_mode": False,
+    "default_gem_quality": 0,
+    "build_sort_mode": "NAME",
+    "default_item_affix_quality": 0.5,
+    "colour_positive": "#33FF77",
+    "colour_negative": "#FF0022",
+    "colour_highlight": "#FF0000",
+    "proxy_url": "",
+    "open_build": "",
+    "build_path": "",
+    "pastebin": "",
+    "recent_builds": [],
+    "last_account_name": "",
+    "last_realm": "PC",
+    "accounts": [],
+}
 
-default_spec_xml = f"""<Spec title="Default" classId="0" ascendClassId="0" masteryEffects="" nodes="58833" 
-treeVersion="{_VERSION_str}"></Spec>"""
-default_skill_set_xml = """<SkillSet id="1" title="Default">
-  <Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label="" enabled="true" slot="" mainActiveSkill="1"></Skill>
-</SkillSet>"""
+""" ############################################### DICT / JSON ############################################### """
 
-empty_build_xml = f"""
-<PathOfBuilding>
-    <Build version="2" level="1" targetVersion="3_0" bandit="None" className="Scion" ascendClassName="None"
-     mainSocketGroup="1" viewMode="{default_view_mode}" pantheonMajorGod="None" pantheonMinorGod="None">
-            <PlayerStat stat="AverageHit" value="0"/>
-     </Build>
-    <Import/>
-    <Calcs/>
-    <Skills sortGemsByDPSField="CombinedDPS" matchGemLevelToCharacterLevel="false" activeSkillSet="1" 
-        sortGemsByDPS="true" defaultGemQuality="0" defaultGemLevel="normalMaximum" showSupportGemTypes="ALL" 
-        showAltQualityGems="false">
-        {default_skill_set_xml}
-    </Skills>
-    <Items activeItemSet="1">
-        <ItemSet useSecondWeaponSet="false" id="1"/>
-    </Items>
-    <Tree activeSpec="1">
-        {default_spec_xml}
-    </Tree>
-    <Notes/>
-    <NotesHTML/>
-    <TreeView searchStr="" zoomY="0" showHeatMap="nil" zoomLevel="3" showStatDifferences="true" zoomX="0"/>
-    <Config>
-        <Input name="resistancePenalty" number="-60"/>
-        <Input name="pantheonMinorGod" string="None"/>
-        <Input name="enemyIsBoss" string="None"/>
-        <Input name="pantheonMajorGod" string="None"/>
-        <Input name="bandit" string="None"/>
-    </Config>
-</PathOfBuilding>"""
+empty_spec_dict = {
+    "title": "Default",
+    "treeVersion": _VERSION_str,
+    "classId": 0,
+    "ascendClassId": 0,
+    "nodes": starting_scion_node,
+    "masteryEffects": "",
+    "URL": "https://www.pathofexile.com/passive-skill-tree/AAAABgAAAAAA",
+    "Sockets": "",
+    "Overrides": "",
+}
+
+empty_gem_dict = {
+    "enabled": True,
+    "nameSpec": "",
+    "skillId": "",
+    "variantId": "",
+    "level": 1,
+    # "qualityId": "Default",
+    "quality": 0,
+    "count": 1,
+    "enableGlobal1": True,
+    "enableGlobal2": True,
+    # "gemId": "", # gemID isn't used. If luaPoB opens an xml with it missing, it just adds it. It has no value.
+}
+empty_socket_group_dict = {
+    "enabled": True,
+    "label": "",
+    "mainActiveSkillCalcs": 0,
+    "includeInFullDPS": False,
+    "slot": "",
+    "mainActiveSkill": 0,
+    # "Gems": [empty_gem_dict],
+    "Gems": [],
+}
+empty_skillset_dict = {
+    "id": 0,
+    "title": "Default",
+    "SGroups": [empty_socket_group_dict],
+}
+empty_skill_dict = {
+    "activeSkillSet": 0,
+    "sortGemsByDPSField": "CombinedDPS",
+    "sortGemsByDPS": True,
+    "defaultGemQuality": 0,
+    "defaultGemLevel": "normalMaximum",
+    "showSupportGemTypes": "ALL",
+    "showAltQualityGems": True,
+    "SkillSets": [empty_skillset_dict],
+}
+
+empty_item_dict = {
+    "id": 0,
+    "title": "",
+    "base_name": "",
+    "Rarity": "",
+    "Attribs": {},
+    "Implicits": [],
+    "Explicits": [],
+    "Requires": {},
+    # Re: discord conversation 2022/09/16
+    # Ignoring "ModRange": {},  # dict {"<id num>": <range num>, ...}
+}
+
+empty_item_slots_dict = {
+    "Weapon 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap": {"itemId": 0, "itemPbURL": ""},
+    "Helmet": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour": {"itemId": 0, "itemPbURL": ""},
+    "Gloves": {"itemId": 0, "itemPbURL": ""},
+    "Boots": {"itemId": 2, "itemPbURL": ""},
+    "Amulet": {"itemId": 0, "itemPbURL": ""},
+    "Ring 1": {"itemId": 0, "itemPbURL": ""},
+    "Ring 2": {"itemId": 0, "itemPbURL": ""},
+    "Belt": {"itemId": 5, "itemPbURL": ""},
+    "Flask 1": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 2": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 3": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 4": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Flask 5": {"itemId": 0, "active": False, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 1 Swap Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Weapon 2 Swap Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 5": {"itemId": 0, "itemPbURL": ""},
+    "Body Armour Abyssal Socket 6": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Helmet Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Gloves Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 3": {"itemId": 0, "itemPbURL": ""},
+    "Boots Abyssal Socket 4": {"itemId": 0, "itemPbURL": ""},
+    "Belt Abyssal Socket 1": {"itemId": 0, "itemPbURL": ""},
+    "Belt Abyssal Socket 2": {"itemId": 0, "itemPbURL": ""},
+}
+empty_itemset_dict = {"title": "Default", "id": 0, "useSecondWeaponSet": False, "Slots": {}}  # empty_item_slots_dict}
 
 empty_build = {
     "PathOfBuilding": {
         "Build": {
             "level": 1,
-            "version": 2,
             "targetVersion": "3_0",
-            "pantheonMajorGod": "None",
-            "bandit": "None",
             "className": "Scion",
             "ascendClassName": "None",
             "characterLevelAutoMode": True,
-            "mainSocketGroup": 1,
+            "mainSocketGroup": 0,
             "viewMode": default_view_mode,
-            "pantheonMinorGod": "None",
+            "PlayerStat": {},
+            "MinionStat": {},
+            "TimelessData": {
+                "devotionVariant1": 1,
+                "devotionVariant2": 1,
+                "searchListFallback": "",
+                "searchList": "",
+                "socketFilterDistance": 0,
+            },
         },
-        "Calcs": {"Input": {"misc_buffMode": "EFFECTIVE", "skill_number": 1}, "Section": {}},
         "Import": {"exportParty": False, "lastAccountHash": "", "lastCharacterHash": "", "lastRealm": "", "lastLeague": ""},
-        "Items": {"activeItemSet": 1, "useSecondWeaponSet": False, "ItemSet": {}},
-        "Party": {"destination": "All", "ShowAdvanceTools": False, "append": False},
-        "Notes": None,
-        "Skills": {
-            "sortGemsByDPSField": "CombinedDPS",
-            "activeSkillSet": 1,
-            "sortGemsByDPS": True,
-            "defaultGemQuality": 0,
-            "defaultGemLevel": "normalMaximum",
-            "showSupportGemTypes": "ALL",
-            "showAltQualityGems": False,
-            "SkillSet": {},
+        "Items": {"activeItemSet": 0, "ItemSets": [empty_itemset_dict], "Items": []},
+        "Skills": empty_skill_dict,
+        "Tree": {
+            "activeSpec": 0,
+            "Specs": [empty_spec_dict],
         },
-        "TreeView": {"searchStr": "", "zoomY": 0, "zoomLevel": 3, "showStatDifferences": True, "zoomX": 0},
         "Config": {
             "Input": {
-                "useEnduranceCharges": True,
-                "customMods": "+1 to Maximum Endurance Charges\n+14% increased maximum Life",
-                "bandit": "None",
                 "resistancePenalty": -60,
+                "bandit": "None",
                 "pantheonMajorGod": "None",
                 "pantheonMinorGod": "None",
-                "igniteMode": "AVERAGE",
-                "EHPUnluckyWorstOf": 1,
-                "usePowerCharges": False,
-                "overridePowerCharges": 3,
-                "useFrenzyCharges": False,
-                "overrideFrenzyCharges": 3,
-                "overrideEnduranceCharges": 5,
             },
             "Placeholder": {
                 "enemySpeed": 700,
@@ -139,15 +254,64 @@ empty_build = {
                 "enemyPhysicalDamage": 1294,
             },
         },
-        "NotesHTML": None,
+        "Calcs": {
+            "Input": {},
+            "Sections": {
+                "ViewSkillDetails": {"collapsed": False, "id": "SkillSelect"},
+                "SkillHitDamage": {"collapsed": False, "id": "HitDamage"},
+                "ExertingWarcries": {"collapsed": False, "id": "Warcries"},
+                "SkillDamageoverTime": {"collapsed": False, "id": "Dot"},
+                "AttackCastRate": {"collapsed": False, "id": "Speed"},
+                "Crits": {"collapsed": False, "id": "Crit"},
+                "Impale": {"collapsed": False, "id": "Impale"},
+                "SkilltypespecificStats": {"collapsed": False, "id": "SkillTypeStats"},
+                "Accuracy": {"collapsed": False, "id": "HitChance"},
+                "Bleed": {"collapsed": False, "id": "Bleed"},
+                "Poison": {"collapsed": False, "id": "Poison"},
+                "Ignite": {"collapsed": False, "id": "Ignite"},
+                "Decay": {"collapsed": False, "id": "Decay"},
+                "LeechGainonHit": {"collapsed": False, "id": "LeechGain"},
+                "NonDamagingAilments": {"collapsed": False, "id": "EleAilments"},
+                "OtherEffects": {"collapsed": False, "id": "MiscEffects"},
+                "Attributes": {"collapsed": False, "id": "Attributes"},
+                "Life": {"collapsed": False, "id": "Life"},
+                "Mana": {"collapsed": False, "id": "Mana"},
+                "EnergyShield": {"collapsed": False, "id": "EnergyShield"},
+                "Ward": {"collapsed": False, "id": "Ward"},
+                "Resists": {"collapsed": False, "id": "Resists"},
+                "Armour": {"collapsed": False, "id": "Armour"},
+                "Evasion": {"collapsed": False, "id": "Evasion"},
+                "DamageAvoidance": {"collapsed": False, "id": "DamageAvoidance"},
+                "Block": {"collapsed": False, "id": "DamageAvoidance"},
+                "Dodge": {"collapsed": False, "id": "DamageAvoidance"},
+                "SpellSuppression": {"collapsed": False, "id": "DamageAvoidance"},
+                "Flasks": {"collapsed": False, "id": "Flasks"},
+                "UtilityFlasks": {"collapsed": False, "id": "Flasks"},
+                "LifeFlasks": {"collapsed": False, "id": "Flasks"},
+                "ManaFlasks": {"collapsed": False, "id": "Flasks"},
+                "Rage": {"collapsed": False, "id": "Rage"},
+                "Charges": {"collapsed": False, "id": "Charges"},
+                "Frenzy": {"collapsed": False, "id": "Charges"},
+                "Endurance": {"collapsed": False, "id": "Charges"},
+                "Power": {"collapsed": False, "id": "Charges"},
+                "OtherDefences": {"collapsed": False, "id": "MiscDefences"},
+                "StunDuration": {"collapsed": False, "id": "MiscDefences"},
+                "OtherAvoidance": {"collapsed": False, "id": "MiscDefences"},
+                "OtherAilmentDefences": {"collapsed": False, "id": "MiscDefences"},
+                "DamageTaken": {"collapsed": False, "id": "DamageTaken"},
+                "DamagingHits": {"collapsed": False, "id": "DamageTaken"},
+                "EffectiveHealthPool": {"collapsed": False, "id": "DamageTaken"},
+                "MaximumHitTaken": {"collapsed": False, "id": "DamageTaken"},
+                "DotsandDegens": {"collapsed": False, "id": "DamageTaken"},
+                "RecoupandHitTakenOverTime": {"collapsed": False, "id": "DamageTaken"},
+            },
+        },
+        "Party": {"destination": "All", "ShowAdvanceTools": False, "append": False},
+        "TreeView": {"searchStr": "", "showStatDifferences": True},
+        "Notes": "",
+        "NotesHTML": """&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"&gt;,""",
     },
 }
-
-empty_socket_group = """<Skill mainActiveSkillCalcs="1" includeInFullDPS="false" label="" 
-enabled="true" slot="" mainActiveSkill="1"/>"""
-
-empty_gem = """<Gem enableGlobal2="false" level="1" enableGlobal1="true" skillId="" qualityId="Default" 
-gemId="" enabled="true" quality="0" count="1" nameSpec=""/>"""
 
 resistance_penalty = {
     0: "None",
@@ -213,6 +377,8 @@ pantheon_minor_gods = {
         "tooltip": "50% less Duration of Poisons on you\n" "You cannot be Poisoned while there are at least 3 Poisons on you",
     },
 }
+
+quality_id = {"Anomalous": "Alternate1", "Divergent": "Alternate2", "Phantasmal": "Alternate3"}
 
 
 class Layers(enum.IntEnum):
@@ -312,6 +478,20 @@ class ColourCodes(enum.Enum):
     WARD = RARE
 
 
+colourEscapes = [
+    ColourCodes.BLACK,  # ^0
+    ColourCodes.RED,  # ^1
+    ColourCodes.GREEN,  # ^2
+    ColourCodes.BLUE,  # ^3
+    ColourCodes.YELLOW,  # ^4
+    ColourCodes.PURPLE,  # ^5
+    ColourCodes.AQUA,  # ^6
+    ColourCodes.WHITE,  # ^7
+    ColourCodes.GRAY,  # ^8
+    ColourCodes.DARKGRAY,  # ^9
+]
+
+
 @enum.unique
 class PlayerClasses(enum.IntEnum):
     SCION = 0
@@ -322,6 +502,21 @@ class PlayerClasses(enum.IntEnum):
     TEMPLAR = 5
     SHADOW = 6
 
+
+influence_colours = {
+    "Shaper Item": ColourCodes.SHAPER.value,
+    "Elder Item": ColourCodes.ELDER.value,
+    "Warlord Item": ColourCodes.ADJUDICATOR.value,
+    "Hunter Item": ColourCodes.BASILISK.value,
+    "Crusader Item": ColourCodes.CRUSADER.value,
+    "Redeemer Item": ColourCodes.EYRIE.value,
+    "Searing Exarch Item": ColourCodes.CLEANSING.value,
+    "Eater of Worlds Item": ColourCodes.TANGLE.value,
+    # these are ignored
+    # "Synthesised Item"
+    # "Fractured Item"
+}
+influencers = influence_colours.keys()
 
 # Background artwork behind the tree
 class_backgrounds = {
@@ -618,13 +813,13 @@ player_stats_list = {
     "EffectiveSpellSuppressionChance": {"label": "Spell Suppression Chance", "fmt": "%d%%"},
     "blankm": {},
     "FireResist": {"label": "Fire Resistance", "fmt": "%d%%", "colour": ColourCodes.FIRE.value},
-    "FireResistOverCap": {"label": "Fire Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "FireResistOverCap": {"label": "Fire Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "ColdResist": {"label": "Cold Resistance", "fmt": "%d%%", "colour": ColourCodes.COLD.value},
-    "ColdResistOverCap": {"label": "Cold Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "ColdResistOverCap": {"label": "Cold Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "LightningResist": {"label": "Lightning Resistance", "fmt": "%d%%", "colour": ColourCodes.LIGHTNING.value},
-    "LightningResistOverCap": {"label": "Lightning Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "LightningResistOverCap": {"label": "Lightning Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "ChaosResist": {"label": "Chaos Resistance", "fmt": "%d%%", "colour": ColourCodes.CHAOS.value},
-    "ChaosResistOverCap": {"label": "Chaos Res. Over Max", "fmt": "%d%%", "hideStat": "true"},
+    "ChaosResistOverCap": {"label": "Chaos Res. Over Max", "fmt": "%d%%", "hideStat": True},
     "blankn": {},
     "EffectiveMovementSpeedMod": {"label": "Movement Speed Modifier", "fmt": "+%d%%"},
     "blanko": {},
@@ -765,7 +960,7 @@ qss_template = """
     QAbstractItemView {{
         alternate-background-color: {alt_colour};
     }}
-    
+
     /* Put a box around control */
     ListBox:hover,
     QListWidget:hover,

@@ -1,0 +1,562 @@
+{
+ " ": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_es_cost": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_es_cost_%_per_minute": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_es_cost_per_minute": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_life_cost": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_life_cost_%": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_life_cost_%_per_minute": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_life_cost_per_minute": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_mana_cost": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_mana_cost_%": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_mana_cost_%_per_minute": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_mana_cost_per_minute": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_rage_cost": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ },
+ "base_unreserved_mana_cost_%": {
+  "levels": [
+   {
+    "levelRequirement": 1
+   }
+  ],
+  "variantId": "MeleeAtAnimationSpeed",
+  "baseEffectiveness": 0,
+  "statMap": [],
+  "id": "MeleeAtAnimationSpeed",
+  "stats": [
+   "skill_can_fire_arrows",
+   "skill_can_fire_wand_projectiles",
+   "action_attack_or_cast_time_uses_animation_length",
+   "projectile_uses_contact_position",
+   "use_scaled_contact_offset"
+  ],
+  "modSource": "Skill:MeleeAtAnimationSpeed",
+  "statDescriptionScope": "skill_stat_descriptions",
+  "castTime": 1,
+  "skillTypes": [
+   1,
+   3,
+   24,
+   25,
+   28,
+   47,
+   67,
+   68
+  ],
+  "hidden": true,
+  "baseFlags": {
+   "projectile": true,
+   "melee": true,
+   "attack": true
+  },
+  "name": "Default Attack",
+  "description": "Strike your foes down with a powerful blow.",
+  "colour": 4
+ }
+}

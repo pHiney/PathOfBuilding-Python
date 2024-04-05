@@ -1,4 +1,5 @@
 import atexit
+from copy import deepcopy
 import datetime
 import glob
 import os
@@ -33,8 +34,6 @@ from PoB.constants import (
     bandits,
     bad_text,
     def_theme,
-    empty_build,
-    empty_build_xml,
     pantheon_major_gods,
     pantheon_minor_gods,
     player_stats_list,
@@ -48,6 +47,8 @@ from PoB.build import Build
 from PoB.settings import Settings
 from PoB.pob_file import get_file_info
 from PoB.player import Player
+from PoB.utils import html_colour_text, format_number, print_call_stack, _debug
+from PoB.pob_xml import load_from_xml, save_to_xml
 from dialogs.browse_file_dialog import BrowseFileDlg
 from dialogs.export_dialog import ExportDlg
 from dialogs.import_dialog import ImportDlg
@@ -61,7 +62,7 @@ from widgets.player_stats import PlayerStats
 from widgets.skills_ui import SkillsUI
 from widgets.tree_ui import TreeUI
 from widgets.tree_view import TreeView
-from widgets.ui_utils import html_colour_text, format_number, set_combo_index_by_data, print_call_stack, _debug
+from widgets.ui_utils import set_combo_index_by_data
 
 from ui.PoB_Main_Window import Ui_MainWindow
 
@@ -69,6 +70,7 @@ from ui.PoB_Main_Window import Ui_MainWindow
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, _app) -> None:
         super(MainWindow, self).__init__()
+        self.last_message = ""
         print(f"{datetime.datetime.now()}. {program_title}, running on {platform.system()} {platform.release()};" f" {platform.version()}")
         self.app = _app
         self.tr = self.app.tr
@@ -79,6 +81,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # When False stop all the images being deleted and being recreated
         self.refresh_tree = True
         self.triggers_connected = False
+
+        # information from an imported character
+        self.account_name = ""
+        self.import_character_name = ""
+        self.import_league = ""
 
         # The QAction representing the current theme (to turn off the menu's check mark)
         self.curr_theme = None
@@ -91,6 +98,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.resize(self.settings.size)
 
         self.setupUi(self)
+        self.last_messages = []
 
         atexit.register(self.exit_handler)
         self.setWindowTitle(program_title)  # Do not translate
@@ -244,7 +252,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_igniteMode.addItem("Crits Only", "CRIT")
 
         self.menu_Builds.addSeparator()
-        self.set_recent_builds_menu_items(self.settings)
+        self.set_recent_builds_menu_items()
 
         # Collect original tooltip text for Actions (for managing the text color thru qss - switch_theme)
         # Must be before the first call to switch_theme
@@ -342,6 +350,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def setup_ui(self):
         """Called after show(). Call setup_ui for all UI classes that need it"""
         self.items_ui.setup_ui()
+        self.skills_ui.setup_ui()
 
     def connect_widget_triggers(self):
         """re-connect widget triggers that need to be disconnected during loading and other processing"""
@@ -365,7 +374,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_classes.currentTextChanged.disconnect(self.class_changed)
         self.combo_ascendancy.currentTextChanged.disconnect(self.ascendancy_changed)
 
-    def set_recent_builds_menu_items(self, config: Settings):
+    def set_recent_builds_menu_items(self):
         """
         Setup menu entries for all valid recent builds in the settings file
         Read the config for recent builds and create menu entries for them
@@ -381,13 +390,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             """
             _action.triggered.connect(lambda checked: self._open_previous_build(checked, _full_path))
 
-        os.chdir(config.build_path)
+        os.chdir(self.settings.build_path)
         max_length = 80
-        recent_builds = config.recent_builds()
+        recent_builds = self.settings.get_recent_builds()
         for idx, full_path in enumerate(recent_builds):
+
             if full_path is not None and full_path != "":
-                filename = Path(full_path).relative_to(self.settings.build_path)
-                text, class_name = get_file_info(self.settings, filename, max_length, 70, menu=True)
+                text, class_name = get_file_info(self.settings, full_path, max_length, 70, menu=True)
+                # print(f"set_recent_builds_menu_items: {class_name=}, {full_path=}")
                 ql = QLabel(text)
                 _action = QWidgetAction(self.menu_Builds)
                 _action.setDefaultWidget(ql)
@@ -399,40 +409,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Add this file (either Open or Save As) to the recent menu list. refreshing the menu if the name is a new one.
         :return: N/A
         """
+        # print(f"add_recent_build_menu_item: {self.build.filename=}")
         self.settings.add_recent_build(self.build.filename)
         for entry in self.menu_Builds.children():
             if type(entry) is QWidgetAction:
                 self.menu_Builds.removeAction(entry)
-        self.set_recent_builds_menu_items(self.settings)
-
-    def set_recent_builds_menu_items1(self, config: Settings):
-        """
-        Setup menu entries for all valid recent builds in the settings file
-        Read the config for recent builds and create menu entries for them
-        return: N/A
-        """
-
-        def make_connection(_idx, _filename):
-            """
-            Connect the menu item to _open_previous_build passing in extra information
-            Lambdas in python share the variable scope they're created in
-            so make a function containing just the lambda
-            :param _idx:
-            :param _filename:
-            :return: N/A
-            """
-            _action.triggered.connect(lambda checked: self._open_previous_build(checked, _idx, _filename))
-
-        os.chdir(self.settings.build_path)
-        max_length = 60
-        recent_builds = config.recent_builds()
-        for idx, value in enumerate(recent_builds):
-            if value is not None and value != "":
-                filename = Path(value).relative_to(self.settings.build_path)
-                text, class_name = get_file_info(self.settings, filename, max_length, 40, False)
-                _action = self.menu_Builds.addAction(f"&{idx}.  {text}")
-                _action.setFont(QFont(":Font/Font/NotoSans-Regular.ttf", 10))
-                make_connection(value, idx)
+        self.set_recent_builds_menu_items()
 
     def setup_theme_actions(self):
         """
@@ -451,7 +433,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             """
             _action.triggered.connect(lambda checked: self.switch_theme(name, _action))
 
-        themes = [os.path.basename(x) for x in glob.glob(f"{self.settings.data_dir}/qss/*.colours")]
+        themes = [os.path.basename(x) for x in glob.glob(f"{self.settings._data_dir}/qss/*.colours")]
         # print("setup_theme_actions", themes)
         for value in themes:
             _name = os.path.splitext(value)[0]
@@ -549,18 +531,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     #     self.curr_theme.setChecked(False)
         #     self.curr_theme.setChecked(True)
         # return
-        file = Path(self.settings.data_dir, "qss", f"{new_theme}.colours")
+        file = Path(self.settings._data_dir, "qss", f"{new_theme}.colours")
         new_theme = Path.exists(file) and new_theme or def_theme
         try:
-            with open(Path(self.settings.data_dir, "qss", "qss.template"), "r") as template_file:
+            with open(Path(self.settings._data_dir, "qss", "qss.template"), "r") as template_file:
                 template = template_file.read()
-            with open(Path(self.settings.data_dir, "qss", f"{new_theme}.colours"), "r") as colour_file:
+            with open(Path(self.settings._data_dir, "qss", f"{new_theme}.colours"), "r") as colour_file:
                 colours = colour_file.read().splitlines()
                 for line in colours:
                     line = line.split("~~")
                     if len(line) == 2:
                         if line[0] == "qss_background":
-                            self.settings.qss_background = line[1]
+                            self.settings._qss_background = line[1]
                         if line[0] == "qss_default_text":
                             self.settings.qss_default_text = line[1]
                             for tooltip_text in self.toolbar_buttons.keys():
@@ -573,7 +555,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Uncheck old entry. First time through, this could be None.
             if self.curr_theme is not None:
                 self.curr_theme.setChecked(False)
-            self.settings.theme = new_theme
+            self.settings.theme = new_theme.lower()
             self.curr_theme = selected_action
             if self.curr_theme is not None:
                 self.curr_theme.setChecked(True)
@@ -602,7 +584,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Logic for checking we need to save and save if needed, goes here...
         # if build.needs_saving:
         #     if yes_no_dialog(self.app.tr("Save build"), self.app.tr("build name goes here"))
-        if self.build.xml_build is not None:
+        if self.build.json_build is not None:
             if not self.build.ask_for_save_if_modified():
                 return
         self.build_loader("Default")
@@ -640,59 +622,84 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # open the file using the filename in the build.
         self.build_loader(full_path)
 
-    def build_loader(self, filename_or_xml=Union[str, Path, ET.ElementTree]):
+    def build_loader(self, filename_or_dict=Union[dict, str, Path], imported_name=""):
         """
         Common actions for UI components when we are loading a build.
 
-        :param filename_or_xml: Path: the filename of file to be loaded, or "Default" if called from the New action.
-        :param filename_or_xml: String: build name, commonly "Default" when called from the New action.
-        :param filename_or_xml: ET.ElementTree: the xml of a file that was loaded or downloaded.
+        :param filename_or_dict: dict: the dict of an imported build (called open_import_dialog)
+        :param filename_or_dict: String: the filename of file to be loaded, or "Default" if called from the New action.
+        :param filename_or_dict: Path: the filename of file to be loaded, or "Default" if called from the New action.
+        :param imported_name: str: The name of the build from the import dialog
         :return: N/A
         """
+        # print(f"build_loader: {filename_or_dict}, {imported_name=}")
         self.alerting = False
         self.player.clear()
         self.config_ui.initial_startup_setup()
-        new = True
+        new = filename_or_dict == "Default"
+        self.settings.open_build = ""
         self.build.filename = ""
-        if type(filename_or_xml) is ET.ElementTree:
-            self.build.new(filename_or_xml)
+        self.build.name = "Default"
+        if new:
+            self.build.new(None)
+        elif type(filename_or_dict) is dict:
+            self.build.new(filename_or_dict)
+            self.build.name = imported_name
         else:
-            new = filename_or_xml == "Default"
-            if not new:
-                # open the file
-                self.build.load_from_file(filename_or_xml)
-                self.build.filename = filename_or_xml
-                self.settings.open_build = self.build.filename
+            name, file_extension = os.path.splitext(filename_or_dict)
+            path, name = os.path.split(name)
+            xml = file_extension == ".xml"
+            if xml:
+                self.build.new(load_from_xml(filename_or_dict))
+                self.build.filename = filename_or_dict.replace(".xml", ".json")
+                self.build.name = name
             else:
-                self.build.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
-                self.settings.open_build = ""
+                # open the file and update names if the file was present
+                if self.build.load_from_file(filename_or_dict):
+                    self.settings.open_build = filename_or_dict
+                    self.build.filename = filename_or_dict
+                    self.add_recent_build_menu_item()
+                    self.build.name = name
 
         # if everything worked, lets update the UI
-        if self.build.xml_build is not None:
-            # _debug("build_loader")
-            if not new:
-                self.add_recent_build_menu_item()
+        if self.build.json_PoB is not None:
+
             # Config_UI needs to be set before the tree, as the change_tree function uses/sets it also.
-            self.config_ui.load(self.build.xml_config)
-            self.set_current_tab()
-            self.tree_ui.fill_current_tree_combo()
-            self.skills_ui.load(self.build.xml_skills)
-            self.items_ui.load_from_xml(self.build.xml_items)
-            self.notes_ui.load(self.build.xml_notes_html.text, self.build.xml_notes.text)
+            self.config_ui.load(self.build.json_config)
+            self.tree_ui.load(self.build.json_tree)
+            self.skills_ui.load_from_json(self.build.json_skills)
+            self.items_ui.load_from_json(self.build.json_items)
+            self.notes_ui.load(self.build.json_notes, self.build.json_notes_html)
             self.spin_level.setValue(self.build.level)
             self.combo_classes.setCurrentText(self.build.className)
             self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
-            self.update_status_bar(f"Loaded: {self.build.name}", 10)
-            # self.stats.load(self.build.xml_build)
-            self.player.load(self.build.xml_build)
+            self.player.load(self.build.json_build)
 
-        # This is needed to make the jewels show. Without it, you need to select or deselect a node.
+            self.set_current_tab()
+
+        #     # Config_UI needs to be set before the tree, as the change_tree function uses/sets it also.
+        #     self.config_ui.load(self.build.xml_config)
+        #     self.set_current_tab()
+        #     self.tree_ui.fill_current_tree_combo()
+        #     self.skills_ui.load(self.build.xml_skills)
+        #     self.items_ui.load_from_xml(self.build.xml_items)
+        #     self.notes_ui.load(self.build.xml_notes_html.text, self.build.xml_notes.text)
+        #     self.spin_level.setValue(self.build.level)
+        #     self.combo_classes.setCurrentText(self.build.className)
+        #     self.combo_ascendancy.setCurrentText(self.build.ascendClassName)
+        #     # self.stats.load(self.build.xml_build)
+        #     self.player.load(self.build.xml_build)
+
+        # # This is needed to make the jewels show. Without it, you need to select or deselect a node.
         self.gview_Tree.add_tree_images(True)
-        # Make sure the Main and Alt weapons are active and shown as appropriate
+        # # Make sure the Main and Alt weapons are active and shown as appropriate
         self.items_ui.weapon_swap2(self.btn_WeaponSwap.isChecked())
+        self.update_status_bar(f"Loaded: {self.build.name}", 10)
         # Do calcs. Needs to be near last n this function
         self.alerting = True
-        self.do_calcs()
+        # self.do_calcs()
+        self.build.save()
+        save_to_xml("test.xml", self.build.json)
 
     @Slot()
     def build_save(self):
@@ -701,24 +708,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return: N/A
         """
-        version = self.build.version
+        # version = self.build.version
         if self.build.filename == "":
-            self.build_save_as()  # this will then call build_save() again
+            self.build_save_as()  # this will then call build_save()
         else:
-            print(f"Saving to v{version} file: {self.build.filename}")
-            self.build.save_to_xml(version)
-            match version:
-                case "1":
-                    self.build.xml_notes.text, dummy_var = self.notes_ui.save(version)
-                case "2":
-                    self.build.xml_notes.text, self.build.xml_notes_html.text = self.notes_ui.save(version)
-            # self.win.stats.save(self.build)
-            self.player.save(self.build)
-            self.skills_ui.save()
-            self.items_ui.save(version)
+            print(f"Saving to file: {self.build.filename}")
+            name, file_extension = os.path.splitext(self.build.filename)
+            xml = file_extension == ".xml"
+            self.build.json_notes, self.build.json_notes_html = self.notes_ui.save()
+            self.player.save()
+            self.skills_ui.save_to_json()
+            self.items_ui.save()
             self.config_ui.save()
-            # write the file
-            self.build.save_build_to_file(self.build.filename)
+            if xml:
+                save_to_xml(self.build.filename, self.build.json)
+            else:
+                # write the file
+                self.build.save_to_json()
 
     @Slot()
     def build_save_as(self):
@@ -727,25 +733,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return: N/A
         """
-        # mydialog_ = QFileDialog()
-        # mydialog_.setNameFilter()
-        # cb_ = QComboBox()
-        # l = mydialog_.layout()
-        # print(type(l), l)
-        #     # .addWidget(cb_)
-        # mydialog_.exec()
-
+        # print(f"build_save_as: {self.account_name=}, {self.import_character_name=}")
         dlg = BrowseFileDlg(self.settings, self.build, "Save", self)
+        if dlg.save_as_text == "" and self.import_character_name != "":
+            if self.account_name:
+                dlg.save_as_text = f"{self.import_character_name}, {self.import_league} league, Imported from {self.account_name}"
+            else:
+                dlg.save_as_text = f"{self.import_character_name} imported from {self.import_league} league"
+
         if dlg.exec():
             # Selected file has been checked for existing and ok'd if it does
             filename = dlg.selected_file
             print("build_save_as, file_chosen", filename)
             if filename != "":
-                self.build.version = dlg.rBtn_v2.isChecked() and "2" or "1"
+                self.build.version = dlg.radioBtn_v2.isChecked() and 2 or 1
                 self.build.filename = filename
                 self.build_save()
                 self.add_recent_build_menu_item()
-                self.settings.open_build = self.build.filename
+                self.settings.open_build = self.build.version == 2 and self.build.filename or ""
 
     @Slot()
     def combo_item_manage_tree_changed(self, tree_label):
@@ -763,7 +768,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def change_tree(self, tree_label):
         """
-        Actions required when either combo_manage_tree widget changes (Tree_UI or Items_UI).
+        Actions required when either combo_manage_tree widget changes (Tree_UI and Items_UI).
+        This is here (instead of TreeUI) as the correct owner of Tree_UI and Items_UI is this class.
 
         :param tree_label: the name of the item just selected
                 "" will occur during a combobox clear
@@ -1020,17 +1026,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # return
         dlg = ImportDlg(self.settings, self.build, self)
         dlg.exec()
+        self.account_name = ""
+        self.import_character_name = ""
+        self.import_league = ""
         if dlg.xml is not None:
-            self.build_loader(dlg.xml)
+            self.build_loader(load_from_xml(dlg.xml), "Imported")
         elif dlg.character_data is not None:
+            self.account_name = dlg.lineedit_Account.text()
+            self.import_character_name = dlg.character_data["character"]["name"]
+            self.import_league = dlg.character_data["character"]["league"]
             self.set_current_tab("CONFIG")
             self.combo_Bandits.showPopup()
         # If neither of those two were valid, then the user closed with no actions taken
 
     @Slot()
     def open_export_dialog(self):
-        self.build.save_to_xml("1")
-        dlg = ExportDlg(self.settings, self.build, self)
+        xml_root = save_to_xml("", self.build.json)
+        dlg = ExportDlg(self.settings, xml_root, self)
         dlg.exec()
 
     def set_current_tab(self, tab_name=""):
@@ -1128,19 +1140,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.skills_ui.update_socket_group_labels()
 
     @Slot()
-    def update_status_bar(self, message="", timeout=2):
+    def update_status_bar(self, message="", timeout=5, colour=""):
         """
         Update the status bar. Use default text if no message is supplied.
         This triggers when the message is set and when it is cleared after the time out.
         :param message: str: the message.
         :param timeout: int: time for the message to be shown, in secs
+        :param colour: str: a colour code to colour the text in the tooltip (eg "RED").
         :return: N/A
         """
         # we only care for when the message clears
         if pob_debug and message == "":
+            # if message == "":
             process = psutil.Process(os.getpid())
             message = f"RAM: {'{:.2f}'.format(process.memory_info().rss / 1048576)}MB used:"
-            self.statusbar_MainWindow.showMessage(message, timeout * 1000)
+        # elif "RAM" not in message and [m for m in self.last_messages if message == m] == []:
+        elif "RAM" not in message and self.last_message != message:
+            self.last_message = message
+            if colour:
+                self.last_messages.insert(0, html_colour_text(colour, message))
+            else:
+                self.last_messages.insert(0, message)
+            if len(self.last_messages) > 5:
+                self.last_messages.pop()
+            self.statusbar_MainWindow.setToolTip("<br>".join(self.last_messages))
+        self.statusbar_MainWindow.showMessage(message, timeout * 1000)
 
     @Slot()
     def do_calcs(self, test_item=None, test_node=None):

@@ -3,12 +3,11 @@ A class to encapsulate one mod.
 Numeric values default to None so that they can be checked for non use. -1 or 0 could be legitimate values.
 """
 
-import xml.etree.ElementTree as ET
+from copy import deepcopy
 import re
 
-from PoB.pob_file import read_xml, write_xml
 from PoB.constants import slot_map, ColourCodes
-from widgets.ui_utils import _debug, html_colour_text, format_number, index_exists, str_to_bool, bool_to_str, print_call_stack
+from PoB.utils import _debug, html_colour_text, format_number, index_exists, str_to_bool, bool_to_str, print_call_stack
 
 
 class Mod:

@@ -550,7 +550,7 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QLabel" name="label_Variants">
+            <widget class="QLabel" name="label_Variants1">
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
@@ -563,14 +563,14 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="combo_Variants"/>
+            <widget class="QComboBox" name="combo_Variants1"/>
            </item>
           </layout>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <widget class="QLabel" name="label_2">
+            <widget class="QLabel" name="label_Variants2">
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
@@ -583,14 +583,14 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="combo_Mod1_2"/>
+            <widget class="QComboBox" name="combo_Variants2"/>
            </item>
           </layout>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
-            <widget class="QLabel" name="label_3">
+            <widget class="QLabel" name="label_Variants3">
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
@@ -603,7 +603,7 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="combo_Mod1_3"/>
+            <widget class="QComboBox" name="combo_Variants3"/>
            </item>
           </layout>
          </item>

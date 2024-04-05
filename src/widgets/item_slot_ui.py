@@ -2,14 +2,14 @@
 A class to show and manage the item slots ui on the left hand side of the Items tab.
 """
 
-import xml.etree.ElementTree as ET
+from copy import deepcopy
 
 from PySide6.QtCore import Slot, QSize, Qt
 from PySide6.QtGui import QColor, QBrush, QIcon
 from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QListWidgetItem, QSpinBox, QWidget
 
 from PoB.item import Item
-from widgets.ui_utils import _debug, print_a_xml_element, print_call_stack, set_combo_index_by_text
+from PoB.utils import _debug, print_call_stack
 
 
 class ItemSlotUI(QWidget):
@@ -81,7 +81,7 @@ class ItemSlotUI(QWidget):
             self.cb_active = None
 
     @property
-    def current_item_id(self):
+    def current_item_id(self) -> int:
         """Get the id number of the combo's current entry"""
         item = self.combo_item_list.currentData()
         if item == 0:  # "None"

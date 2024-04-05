@@ -11,6 +11,7 @@ associated with a Player.
 """
 
 import builtins
+from copy import deepcopy
 import re
 import xml.etree.ElementTree as ET
 from pprint import pprint
@@ -22,27 +23,26 @@ from PoB.constants import (
     _VERSION,
     _VERSION_str,
     bandits,
+    default_view_mode,
     empty_build,
-    empty_build_xml,
-    empty_gem,
-    empty_socket_group,
+    empty_spec_dict,
     program_title,
     tree_versions,
 )
 from PoB.settings import Settings
 from PoB.tree import Tree
 from PoB.spec import Spec
-from PoB.pob_file import read_v1_custom_mods, read_json, read_xml, write_xml
+from PoB.pob_file import read_json, write_json
+from PoB.pob_xml import read_v1_custom_mods, read_xml, write_xml
 from dialogs.popup_dialogs import critical_dialog, yes_no_dialog
-from widgets.ui_utils import (
+from widgets.ui_utils import set_combo_index_by_data
+from PoB.utils import (
     _debug,
     is_str_a_boolean,
     is_str_a_number,
     str_to_bool,
     bool_to_str,
-    print_a_xml_element,
     print_call_stack,
-    set_combo_index_by_data,
 )
 
 from ui.PoB_Main_Window import Ui_MainWindow
@@ -52,42 +52,56 @@ class Build:
     def __init__(self, _settings: Settings, _win: Ui_MainWindow) -> None:
         self.settings = _settings
         self.win = _win
-        self.tr = self.settings.app.tr
+        self.tr = self.settings._app.tr
         self._name = "Default"
-        # self.player = player.Player()
         self.filename = ""
         self.search_text = ""
         self.need_saving = True
-        # self.current_tab = "TREE"
         # An dict of tree versions used in the build. Load the default tree first.
         self.trees = {_VERSION_str: Tree(self.settings, _VERSION_str)}
         self.current_tree = self.trees.get(_VERSION_str)
-        # list of xml specs in this build
+
+        # list of Spec() in this build
         self.specs = []
-        self.activeSpec = 0
-        self._current_spec = None
-        self.compare_spec = None
+        # Currently chosen Spec() class
+        self._current_spec: Spec = None
+        # Spec() class to compare against
+        self.compare_spec: Spec = None
 
         # variables from the xml
-        self.json = False
-        self.xml_PoB = None
-        self.xml_root = None
-        self.xml_build = None
-        self.xml_import_field = None
-        self.xml_calcs = None
-        self.xml_skills = None
-        self.xml_tree = None
-        self.xml_notes = None
-        self.xml_notes_html = None
-        self.xml_tree_view = None
-        self.xml_items = None
+        # self.xml_PoB = None
+        # xml_root = None
+        # self.xml_build = None
+        # self.xml_import_field = None
+        # self.xml_calcs = None
+        # self.xml_skills = None
+        # self.json_tree["Specs"] = None
+        # self.xml_notes = None
+        # self.xml_notes_html = None
+        # self.json_tree["Specs"]_view = None
+        # self.xml_items = None
         self.xml_config = None
+
+        self.json = self.json_PoB = self.json_build = self.json_import_field = self.json_items = None
+        self.json_skills = self.json_tree = self.json_config = self.json_calcs = self.json_tree_view = None
+        self.json_notes = self.json_notes_html = None
+        # self.json = deepcopy(empty_build)
+        # self.json_PoB = self.json["PathOfBuilding"]
+        # self.json_build = self.json_PoB["Build"]
+        # self.json_import_field = self.json_PoB["Import"]
+        # self.json_items = self.json_PoB["Items"]
+        # self.json_skills = self.json_PoB["Skills"]
+        # self.json_tree = self.json_PoB["Tree"]
+        # self.json_config = self.json_PoB["Config"]
+        # self.json_calcs = self.json_PoB["Calcs"]
+        # self.json_tree_view = self.json_PoB["TreeView"]
+        # self.json_notes = self.json_PoB["Notes"]
+        # self.json_notes_html = self.json_PoB["NotesHTML"]
+
         self.last_account_hash = ""
         self.last_character_hash = ""
         self.last_realm = ""
         self.last_league = ""
-
-        self.json_build = None
 
         self.nodes_assigned = 0
         self.ascnodes_assigned = 0
@@ -98,26 +112,27 @@ class Build:
            So yes, build variables are filled out twice on start up
            Once from here, and the 2nd from MainWindow.init.build_loader("Default")
            """
-        self.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
+        # ToDo: xml. Remove. json intializes correctly
+        # self.new(ET.ElementTree(ET.fromstring(empty_build_xml)))
+        self.new(None)
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}', {self.current_tree.version}"
-        # ret_str += f"{self.player}"
         return ret_str
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
     def name(self, new_name):
         self._name = new_name
         self.win.setWindowTitle(f"{program_title} - {new_name}")
-        if new_name != "Default" and (self.filename == "" or self.filename == "Default"):
-            self.filename = new_name
+        # if new_name != "Default" and (self.filename == "" or self.filename == "Default"):
+        #     self.filename = new_name
 
     @property
-    def current_class(self):
+    def current_class(self) -> int:
         # return self.current_spec and self.current_spec.classId or PlayerClasses(0)
         return self.current_spec.classId
 
@@ -133,56 +148,62 @@ class Build:
         self.className = PlayerClasses(new_class).name.title()
 
     @property
-    def className(self):
-        return self.xml_build.get("className", "Scion")
+    def className(self) -> str:
+        return self.json_build.get("className", "Scion")
 
     @className.setter
     def className(self, new_name):
-        self.xml_build.set("className", new_name)
+        self.json_build["className"] = new_name
 
     @property
-    def ascendClassName(self):
-        return self.xml_build.get("ascendClassName", "None")
+    def ascendClassName(self) -> str:
+        return self.json_build.get("ascendClassName", "None")
 
     @ascendClassName.setter
     def ascendClassName(self, new_name):
-        self.xml_build.set("ascendClassName", new_name)
+        self.json_build["ascendClassName"] = new_name
 
     @property
-    def level(self):
-        return int(self.xml_build.get("level"))
+    def level(self) -> int:
+        return self.json_build.get("level", 1)
 
     @level.setter
     def level(self, new_level):
-        self.xml_build.set("level", f"{new_level}")
+        self.json_build["level"] = new_level
         self.win.spin_level.setValue(new_level)
 
     @property
-    def mainSocketGroup(self):
-        # Use a property to ensure the correct +/- 1
-        return max(int(self.xml_build.get("mainSocketGroup", 1)) - 1, 0)
+    def mainSocketGroup(self) -> int:
+        # Use a property to ensure the correct +/- 1. XML is 1 based.
+        # return max(int(self.xml_build.get("mainSocketGroup", 1)) - 1, 0)
+        # JSON is 0 based
+        return self.json_build.get("mainSocketGroup", 0)
 
     @mainSocketGroup.setter
     def mainSocketGroup(self, new_group):
-        # Use a property to ensure the correct +/- 1
-        self.xml_build.set("mainSocketGroup", f"{new_group + 1}")
+        # Use a property to ensure the correct +/- 1. XML is 1 based.
+        # self.xml_build.set("mainSocketGroup", f"{new_group + 1}")
+        # JSON is 0 based
+        self.json_build["mainSocketGroup"] = new_group
 
     @property
-    def resistancePenalty(self):
-        return self.get_config_tag_item("Input", "resistancePenalty", -60)
+    def resistancePenalty(self) -> int:
+        # return self.get_config_tag_item("Input", "resistancePenalty", -60)
+        return self.json_config["Input"].get("resistancePenalty", -60)
 
     @resistancePenalty.setter
     def resistancePenalty(self, new_value):
-        self.set_config_tag_item("Input", "resistancePenalty", new_value)
+        # self.set_config_tag_item("Input", "resistancePenalty", new_value)
+        self.json_config["Input"]["resistancePenalty"] = int(new_value)
 
     @property
-    def bandit(self):
-        return self.get_config_tag_item("Input", "bandit", "None")
+    def bandit(self) -> str:
+        # return self.get_config_tag_item("Input", "bandit", "None")
+        return self.json_config["Input"].get("bandit", "None")
 
     @bandit.setter
     def bandit(self, new_bandit):
-        self.xml_build.set("bandit", new_bandit)
-        self.set_config_tag_item("Input", "bandit", new_bandit)
+        self.json_config["Input"]["bandit"] = new_bandit
         set_combo_index_by_data(self.win.combo_Bandits, self.bandit)
 
     def set_bandit_by_number(self, new_int):
@@ -190,59 +211,68 @@ class Build:
         self.bandit = list(bandits.keys())[new_int]
 
     @property
-    def pantheonMajorGod(self):
-        return self.get_config_tag_item("Input", "pantheonMajorGod", "None")
+    def pantheonMajorGod(self) -> str:
+        # return self.get_config_tag_item("Input", "pantheonMajorGod", "None")
+        return self.json_config["Input"].get("pantheonMajorGod", "None")
 
     @pantheonMajorGod.setter
-    def pantheonMajorGod(self, new_name):
-        self.xml_build.set("pantheonMajorGod", new_name)
-        self.set_config_tag_item("Input", "pantheonMajorGod", new_name)
+    def pantheonMajorGod(self, new_god):
+        self.json_config["Input"]["pantheonMajorGod"] = new_god
 
     @property
-    def pantheonMinorGod(self):
-        return self.get_config_tag_item("Input", "pantheonMinorGod", "None")
+    def pantheonMinorGod(self) -> str:
+        # return self.get_config_tag_item("Input", "pantheonMinorGod", "None")
+        return self.json_config["Input"].get("pantheonMinorGod", "None")
 
     @pantheonMinorGod.setter
-    def pantheonMinorGod(self, new_name):
-        self.xml_build.set("pantheonMinorGod", new_name)
-        self.set_config_tag_item("Input", "pantheonMinorGod", new_name)
+    def pantheonMinorGod(self, new_god):
+        self.json_config["Input"]["pantheonMinorGod"] = new_god
 
     @property
-    def targetVersion(self):
-        return self.xml_build.get("targetVersion")
+    def targetVersion(self) -> str:
+        return self.json_build.get("targetVersion")
 
     @targetVersion.setter
-    def targetVersion(self, new_name):
-        self.xml_build.set("targetVersion", new_name)
+    def targetVersion(self, new_version):
+        self.json_build["targetVersion"] = new_version
+
+    # @property
+    # def version_int(self) -> int:
+    #     return self.json_build.get("version", 2)
+    #
+    # @property
+    # def version(self) -> int:
+    #     return self.json_build.get("version", 2)
+    #
+    # @version.setter
+    # def version(self, curr_ver):
+    #     self.json_build["version"] = int(curr_ver)
 
     @property
-    def version_int(self):
-        return int(self.xml_build.get("version", "1"))
-
-    @property
-    def version(self):
-        return self.xml_build.get("version", "1")
-
-    @version.setter
-    def version(self, curr_ver):
-        self.xml_build.set("version", curr_ver)
-
-    @property
-    def viewMode(self):
-        return self.xml_build.get("viewMode")
+    def viewMode(self) -> str:
+        return str(self.json_build.get("viewMode", default_view_mode))
 
     @viewMode.setter
     def viewMode(self, curr_mode):
-        self.xml_build.set("viewMode", curr_mode.upper())
+        self.json_build["viewMode"] = curr_mode.upper()
 
     @property
-    def current_spec(self):
+    def current_spec(self) -> Spec:
         """Manage the currently chosen spec in the config class so it can be used by many other classes"""
         return self._current_spec
 
     @current_spec.setter
     def current_spec(self, new_spec):
         self._current_spec = new_spec
+
+    @property
+    def activeSpec(self) -> int:
+        """Manage the currently chosen spec in the config class so it can be used by many other classes"""
+        return self.json_tree["activeSpec"]
+
+    @activeSpec.setter
+    def activeSpec(self, new_spec):
+        self.json_tree["activeSpec"] = new_spec
 
     # @property
     # def (self):
@@ -256,7 +286,7 @@ class Build:
         """
         Get an item from the <Config> ... </Config> tag set
 
-        :param key: string: the key: Input or Placeholder for example
+        :param key: string: the key name: Input or Placeholder for example
         :param name: string: the value of the 'name' property
         :param default: Union[str, int, bool]): a default value in case the item is not in the xml
         :return: The appropriate value from xml or the default
@@ -358,74 +388,40 @@ class Build:
         for _input in self.xml_config.findall(key):
             del _input
 
-    def new(self, _xml):
+    def new(self, build_obj):
         """
-        common function to load internal variables from the ET
+        Common function to load functions. Fill internal variables from the json.
 
-        :param _xml: xml tree object from loading the source XML or the default one
+        :param build_obj: dict: object from loading the source json.
+        :param build_obj: None: Trigger loading the default build (a real new build).
         :return: N/A
         """
-
-        if self.json:
-            print("build.new: json")
-            self.json_build = empty_build
-        else:
-            print("build.new: xml")
+        # print(f"build.new: {type(build_obj)}")
+        if build_obj is None:
+            build_obj = deepcopy(empty_build)
             self.name = "Default"
-            self.xml_PoB = _xml
-            self.xml_root = _xml.getroot()
-            self.xml_build = self.xml_root.find("Build")
-            self.xml_import_field = self.xml_root.find("Import")
-            if self.xml_import_field is not None:
-                self.last_account_hash = self.xml_import_field.get("lastAccountHash", "")
-                self.last_character_hash = self.xml_import_field.get("lastCharacterHash", "")
-                self.last_realm = self.xml_import_field.get("lastRealm", "")
-                self.last_league = self.xml_import_field.get("lastLeague", "")
-            self.xml_calcs = self.xml_root.find("Calcs")
-            self.xml_skills = self.xml_root.find("Skills")
-            self.xml_tree = self.xml_root.find("Tree")
-            self.xml_notes = self.xml_root.find("Notes")
-            self.xml_notes_html = self.xml_root.find("NotesHTML")
-            # lua version doesn't have NotesHTML, expect it to be missing
-            if self.xml_notes_html is None:
-                self.xml_notes_html = ET.Element("NotesHTML")
-                self.xml_root.append(self.xml_notes_html)
-            self.xml_tree_view = self.xml_root.find("TreeView")
-            self.xml_items = self.xml_root.find("Items")
-            self.xml_config = self.xml_root.find("Config")
-            # print("build.new", print_a_xml_element(self.config))
+        elif type(build_obj) is not dict:
+            # Some other bullsh*t thing, we are going to ignore.
+            return
 
-            self.specs.clear()
-            # Find invalid trees, alert and convert to latest
-            invalid_spec_versions = set()
-            for xml_spec in self.xml_tree.findall("Spec"):
-                vers = xml_spec.get("treeVersion", _VERSION_str)
-                if vers not in tree_versions.keys():
-                    v = re.sub("_", ".", vers)
-                    invalid_spec_versions.add(v)
-                    xml_spec.set("treeVersion", _VERSION_str)
-                    title = xml_spec.get("title", "Default")
-                    xml_spec.set("title", f"{title} ({self.tr('was')} v{v})")
-            if invalid_spec_versions:
-                critical_dialog(
-                    self.win,
-                    f"{self.tr('Load build')}: v{self.version}",
-                    f"{self.tr('The build contains the following unsupported Tree versions')}:\n"
-                    f"{str(invalid_spec_versions)[1:-1]}\n\n"
-                    + self.tr(f"These will be converted to {_VERSION} and renamed to indicate this.\n"),
-                    self.tr("Close"),
-                )
+        self.json = build_obj
+        self.json_PoB = self.json["PathOfBuilding"]
+        self.json_build = self.json_PoB["Build"]
+        self.json_import_field = self.json_PoB["Import"]
+        self.json_items = self.json_PoB["Items"]
+        self.json_skills = self.json_PoB["Skills"]
+        self.json_tree = self.json_PoB["Tree"]
+        self.json_config = self.json_PoB["Config"]
+        self.json_calcs = self.json_PoB["Calcs"]
+        self.json_tree_view = self.json_PoB["TreeView"]
+        self.json_notes = self.json_PoB["Notes"]
+        self.json_notes_html = None
 
-            # Do not use self.new_spec() as this will duplicate the xml information
-            for xml_spec in self.xml_tree.findall("Spec"):
-                self.specs.append(Spec(self, xml_spec))
-            self.current_spec = self.specs[0]
+        self.specs.clear()
+        for spec in self.json_tree["Specs"]:
+            self.specs.append(Spec(self, spec))
+        self.current_spec = self.specs[0]
 
-            # In the xml, activeSpec is 1 based, but python indexes are 0 based, so we subtract 1
-            self.activeSpec = int(self.xml_tree.get("activeSpec", 1)) - 1
-            self.current_spec = self.specs[self.activeSpec]
-            self.className = self.current_spec.classId_str()
-            self.ascendClassName = self.current_spec.ascendClassId_str()
         # new
 
     def load_from_file(self, filename):
@@ -433,13 +429,12 @@ class Build:
         Load a build. Use new() as a common function.
 
         :param filename: str: XML file to load.
-        :return: N/A
+        :return: bool: True if successful
         """
         if type(filename) is Path or type(filename) is WindowsPath:
             filename = filename.name
-        self.json = "json" in filename
 
-        if self.json:
+        if "json" in filename:
             self.json_build = read_json(filename)
             self.new(self.json_build)
         else:
@@ -453,65 +448,51 @@ class Build:
                     self.tr("Close"),
                 )
             self.new(_build_pob)
-        # else:
+            return False
+
         self.filename = filename
         self.name = Path(Path(filename).name).stem
-        if self.version_int == 1:
-            # Custom Mods has newlines in it, but python XML turns them into a space.
-            custom_mods = read_v1_custom_mods(filename)
-            if custom_mods:
-                # add in a str of custom mods
-                self.set_config_tag_item("Input", "customMods", custom_mods)
+        return True
 
-    def save_to_xml(self, version="2"):
+    def save(self):
         """
         Save the build to the filename recorded in the build Class
-        :param:version: str. 1 for version 1 xml data,  2 for updated.
         :return: N/A
         """
-        self.version = version
-        self.xml_import_field.set("lastAccountHash", self.last_account_hash)
-        self.xml_import_field.set("lastCharacterHash", self.last_character_hash)
-        self.xml_import_field.set("lastRealm", self.last_realm)
-        self.xml_import_field.set("lastLeague", self.last_league)
+        self.json_import_field["lastAccountHash"] = self.last_account_hash
+        self.json_import_field["lastCharacterHash"] = self.last_character_hash
+        self.json_import_field["lastRealm"] = self.last_realm
+        self.json_import_field["lastLeague"] = self.last_league
+
+        specs = self.json_tree["Specs"]
+        specs.clear()
         for spec in self.specs:
-            spec.save()
-        # ensure these get updated to match last tree shown.
+            specs.append(spec.spec)
+
+        # ensure these get updated to match the last tree shown (these are properties and will trigger their own save to the dict)
         self.className = self.current_spec.classId_str()
         self.ascendClassName = self.current_spec.ascendClassId_str()
 
-        """Debug Please leave until build is mostly complete"""
-        # print("build")
-        # print(ET.tostring(self.xml_build, encoding='utf8'))  # .decode('utf8'))
-        # print("import_field")
-        # print(ET.tostring(self.xml_import_field, encoding='utf8').decode('utf8'))
-        # print("calcs")
-        # print(ET.tostring(self.xml_calcs, encoding='utf8').decode('utf8'))
-        # print("skills")
-        # print(ET.tostring(self.xml_skills, encoding='utf8').decode('utf8'))
-        # print("tree")
-        # print(ET.tostring(self.xml_tree, encoding='utf8').decode('utf8'))
-        # print("notes")
-        # print(ET.tostring(self.xml_notes, encoding='utf8').decode('utf8'))
-        # print("notes_html")
-        # print(ET.tostring(self.xml_notes_html, encoding='utf8').decode('utf8'))
-        # print("tree_view")
-        # print(ET.tostring(self.xml_tree_view, encoding='utf8').decode('utf8'))
-        # print("items")
-        # print(ET.tostring(self.xml_items, encoding='utf8').decode('utf8'))
-        # print("config")
-        # print(ET.tostring(self.xml_config, encoding='utf8').decode('utf8'))
-        """Debug Please leave until build is mostly complete"""
+    def save_to_json(self):
+        self.save()
+        write_json(self.filename, self.json)
 
-    def save_build_to_file(self, filename):
-        """
-        Save the build to file. Separated from the save routine above so export can use the above save routine.
-
-        :param filename:
-        :return:
-        """
-        write_xml(filename, self.xml_PoB)
-        self.name = Path(Path(filename).name).stem
+        # def save_to_xml(self):
+        #     """
+        #     Save the build to the filename recorded in the build Class
+        #     :param:version: str. 1 for version 1 xml data,  2 for updated.
+        #     :return: N/A
+        #     """
+        #     self.xml_import_field.set("lastAccountHash", self.last_account_hash)
+        #     self.xml_import_field.set("lastCharacterHash", self.last_character_hash)
+        #     self.xml_import_field.set("lastRealm", self.last_realm)
+        #     self.xml_import_field.set("lastLeague", self.last_league)
+        #     for spec in self.specs:
+        #         # ToDo: Need to find sockets parent, clear it and append save's output
+        #         spec.save(True)
+        #     # ensure these get updated to match last tree shown.
+        #     self.className = self.current_spec.classId_str()
+        #     self.ascendClassName = self.current_spec.ascendClassId_str()
 
     def ask_for_save_if_modified(self):
         """
@@ -563,12 +544,13 @@ class Build:
             return True
         new_spec = self.specs[tree_id]
         different_version = self.current_spec.treeVersion != new_spec.treeVersion
+        # print(f"change_tree: {tree_id=}, {self.current_spec.treeVersion=}, {new_spec.treeVersion}")
         # Check if this version is loaded
         if self.trees.get(new_spec.treeVersion, None) is None:
             self.trees[new_spec.treeVersion] = Tree(self.settings, new_spec.treeVersion)
         self.current_tree = self.trees[new_spec.treeVersion]
 
-        self.activeSpec = tree_id
+        self.activeSpec: int = tree_id
         self.current_spec = new_spec
         self.count_allocated_nodes()
         return different_version
@@ -582,17 +564,15 @@ class Build:
         :return: N/A
         """
         if _sg is not None:
-            for _idx, _gem in enumerate(_sg.findall("Gem")):
-                # find the first active gem and move it if it's index is not 0
+            for _idx, _gem in enumerate(_sg["Gems"]):
+                # find the first active gem and move it, if it's index is not 0
                 if "Support" not in _gem.get("skillId"):
                     if _idx != 0:
-                        _sg.remove(_gem)
-                        _sg.insert(0, _gem)
+                        _sg["Gems"].remove(_gem)
+                        _sg["Gems"].insert(0, _gem)
                     break
 
-    """
-    ################################################### SPECS ###################################################
-    """
+    """ ################################################### SPECS ################################################### """
 
     def move_spec(self, start, destination):
         """
@@ -603,62 +583,60 @@ class Build:
         :return:
         """
         spec = self.specs[start]
-        xml_spec = spec.xml_spec
+        json_spec = spec.spec
         if start < destination:
             # need to decrement destination by one as we are going to remove start first
             destination -= 1
         self.specs.remove(spec)
         self.specs.insert(destination, spec)
-        self.xml_tree.remove(xml_spec)
-        self.xml_tree.insert(destination, xml_spec)
+        self.json_tree["Specs"].remove(json_spec)
+        self.json_tree["Specs"].insert(destination, json_spec)
 
-    def new_spec(self, new_title="", version=_VERSION_str, xml_spec=None, destination=-1):
+    def new_spec(self, new_title="", version=_VERSION_str, new_spec=None, destination=-1):
         """
         Add a new empty tree/Spec
 
         :param new_title: str
         :param version: float: the version number of this spec. Default to the default Tree version
-        :param xml_spec: ET.elementtree: If specified, the new xml representation
+        :param new_spec: dict: If specified, the new xml representation
         :param destination: int: If specified, insert the new spec at destination elsewise append to the end
         :return: Spec(): the newly created Spec()
         """
         # print("build.new_spec")
-        spec = Spec(self, xml_spec, version)
+        spec = Spec(self, new_spec, version)
         spec.classId = self.current_spec.classId
         spec.ascendClassId = self.current_spec.ascendClassId
         if new_title != "":
             spec.title = new_title
         if destination == -1:
             self.specs.append(spec)
-            self.xml_tree.append(spec.xml_spec)
+            self.json_tree["Specs"].append(deepcopy(empty_spec_dict))
         else:
             self.specs.insert(destination, spec)
-            self.xml_tree.insert(destination, spec.xml_spec)
+            self.json_tree["Specs"].insert(destination, deepcopy(empty_spec_dict))
         return spec
 
     def copy_spec(self, source, destination):
         """
-        Copy an existing Spec() and xml_spec
+        Copy an existing Spec() and json_spec
 
         :param source: int: The source index into self.specs and self.tree
         :param destination: int: The destination index into self.specs and self.tree
         :return: Spec(): the newly created Spec()
         """
         # print("build.copy_spec")
-        # converting to a string ensures it is copied and not one element that is shared.
-        # internet rumour indicates .clone() and .copy() may not be good enough
-        new_xml_spec = ET.fromstring(ET.tostring(self.specs[source].xml_spec))
-        return self.new_spec(new_title="", xml_spec=new_xml_spec, destination=destination)
+        new_spec = deepcopy(self.specs[source].spec)
+        return self.new_spec("", new_spec, destination)
 
     def convert_spec(self, source, destination):
         """
-        Convert an existing Spec() and xml_spec to the latest tree version.
+        Convert an existing Spec() and json_spec to the latest tree version.
 
         :param source: int: The source index into self.specs and self.tree
         :param destination: int: The destination index into self.specs and self.tree
         :return: Spec(): the newly created Spec(), None if conversion didn't happen
         """
-        print("build.convert_spec")
+        # print("build.convert_spec")
         # Looking at the lua version, convert is just copy, with the tree version set to current.
         # ToDo: should we at least check the nodes are still valid ?
         spec = self.specs[source]
@@ -676,36 +654,38 @@ class Build:
         :param index: int: The index into self.specs and self.tree
         :return:  N/A
         """
-        # print("build.delete_spec")
+        # print(f"build.delete_spec: {index}")
         if index == "all":
             # Then remove all
-            for count in range(len(self.specs)):
-                xml_spec = self.specs[0].xml_spec
-                self.xml_tree.remove(xml_spec)
-                del self.specs[count]
+            self.specs.clear()
+            self.json_tree["Specs"].clear()
+            # for count in range(len(self.specs)):
+            #     spec = self.specs[0].spec
+            #     self.json_tree["Specs"].remove(spec)
+            #     del self.specs[count]
         elif 0 <= index < len(self.specs):
-            xml_spec = self.specs[index].xml_spec
-            self.xml_tree.remove(xml_spec)
+            spec = self.specs[index].spec
+            self.json_tree["Specs"].remove(spec)
             del self.specs[index]
 
-    """
-    ################################################### IMPORT ###################################################
-    """
+    """ ################################################### IMPORT ################################################### """
 
-    def import_passive_tree_jewels_ggg_json(self, json_tree, json_character):
+    def import_passive_tree_jewels_ggg_json(self, json_tree, json_character, delete_it_all):
         """
         Import the tree (and later the jewels)
 
         :param json_tree: json import of tree and jewel data
         :param json_character: json import of the character information
+        :param delete_it_all: bool: Delete all specs before importing ?
         :return: N/A
             character={ ascendancyClass=1, class="Inquisitor", classId=5, experience=1028062232,
                 league="Standard", level=82, name="Mirabel__Sentinel" },
         """
         # print("import_passive_tree_jewels_json", json_character)
         # print("import_passive_tree_jewels_json", json_tree)
-        new_spec = self.new_spec()
-        self.name = f"Imported {json_character.get('name', '')}"
+        if delete_it_all:
+            self.delete_spec("all")
+        new_spec = self.new_spec(f"Imported from {json_character.get('name', '')}")
         new_spec.load_from_ggg_json(json_tree, json_character)
         self.current_class = new_spec.classId
         self.ascendClassName = json_character.get("class", "")

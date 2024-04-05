@@ -4,6 +4,8 @@ Import dialog
 Open a dialog for importing a character.
 """
 
+from copy import deepcopy
+
 from PySide6.QtWidgets import QDialog, QListWidgetItem
 from PySide6.QtCore import Qt, Slot, QTimer
 
@@ -34,7 +36,7 @@ class ManageSkillsDlg(Ui_ManageSkillSet, QDialog):
 
         # UI Commands below this one
         self.setupUi(self)
-        for _set in self.skill_ui.skill_sets_list:
+        for _set in self.skill_ui.skillsets:
             title = _set.get("title", "Default")
             lwi = QListWidgetItem(title)
             lwi.setData(Qt.UserRole, _set)
@@ -106,7 +108,7 @@ class ManageSkillsDlg(Ui_ManageSkillSet, QDialog):
     @Slot()
     def new_set(self):
         # print("new_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Skill Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Skill Set Name", self.win)
         dlg.placeholder_text = "New Skill Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()
@@ -120,7 +122,7 @@ class ManageSkillsDlg(Ui_ManageSkillSet, QDialog):
     @Slot()
     def duplicate_set(self):
         # print("duplicate_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Skill Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Skill Set Name", self.win)
         dlg.placeholder_text = "New Skill Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()
@@ -144,10 +146,11 @@ class ManageSkillsDlg(Ui_ManageSkillSet, QDialog):
         text += "<br><b>Really DO this ?</b><br>"
         if yes_no_dialog(self, "Deleting Skill Sets", text):
             for lwi in copied_items:
-                _set = lwi.data(Qt.UserRole)
-                self.skill_ui.delete_skill_set(_set)
+                row = self.list_Skills.row(lwi)
+                # _set = lwi.data(Qt.UserRole)
+                self.skill_ui.delete_skill_set(row)
                 # Now remove it from the actual list
-                self.list_Skills.takeItem(self.list_Skills.row(lwi))
+                self.list_Skills.takeItem(row)
 
     @Slot()
     def list_item_changed(self, lwi):

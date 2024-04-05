@@ -4,12 +4,14 @@ Import dialog
 Open a dialog for importing a character.
 """
 
+from copy import deepcopy
+
 from PySide6.QtWidgets import QDialog, QListWidgetItem
 from PySide6.QtCore import Qt, Slot, QTimer
 
 from PoB.settings import Settings
+from PoB.utils import html_colour_text
 from dialogs.popup_dialogs import LineEditPopup, yes_no_dialog
-from widgets.ui_utils import html_colour_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgManageItems import Ui_ManageItemSet
@@ -108,7 +110,7 @@ class ManageItemsDlg(Ui_ManageItemSet, QDialog):
     @Slot()
     def new_set(self):
         # print("new_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Item Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Item Set Name", self.win)
         dlg.placeholder_text = "New Item Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()
@@ -122,7 +124,7 @@ class ManageItemsDlg(Ui_ManageItemSet, QDialog):
     @Slot()
     def duplicate_set(self):
         # print("duplicate_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Item Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Item Set Name", self.win)
         dlg.placeholder_text = "New Item Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()
@@ -145,10 +147,11 @@ class ManageItemsDlg(Ui_ManageItemSet, QDialog):
         text += "<br><b>Really DO this ?</b><br>"
         if yes_no_dialog(self, "Deleting Item Sets", text):
             for lwi in copied_items:
-                _set = lwi.data(Qt.UserRole)
-                self.item_ui.delete_itemset(_set)
+                # _set = lwi.data(Qt.UserRole)
+                row = self.list_Items.row(lwi)
+                self.item_ui.delete_itemset(row)
                 # Now remove it from the actual list
-                self.list_Items.takeItem(self.list_Items.row(lwi))
+                self.list_Items.takeItem(row)
 
     @Slot()
     def list_item_changed(self, lwi):
@@ -159,7 +162,7 @@ class ManageItemsDlg(Ui_ManageItemSet, QDialog):
         """
         # print("list_current_text_changed", lwi.text())
         self.set_being_edited = None
-        self.item_ui.rename_set(self.list_Items.currentRow(), lwi.text())
+        self.item_ui.rename_itemset(self.list_Items.currentRow(), lwi.text())
 
     @Slot()
     def list_item_double_clicked(self, lwi):

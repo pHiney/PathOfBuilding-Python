@@ -1,0 +1,36 @@
+Dictionary as a class
+https://stackoverflow.com/questions/1639174/creating-class-instance-properties-from-a-dictionary
+
+class AttributeDict(dict):
+    def __getattr__(self, name):
+        return self[name]
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+
+https://www.blog.pythonlibrary.org/2014/02/14/python-101-how-to-change-a-dict-into-a-class/
+########################################################################
+class Dict2Obj(object):
+    """
+    Turns a dictionary into a class
+    """
+
+    #----------------------------------------------------------------------
+    def __init__(self, dictionary):
+        """Constructor"""
+        for key in dictionary:
+            setattr(self, key, dictionary[key])
+        
+    #----------------------------------------------------------------------
+    def __repr__(self):
+        """"""
+        return "<dict2obj: %s="">" % self.__dict__
+    
+#----------------------------------------------------------------------
+if __name__ == "__main__":
+    ball_dict = {"color":"blue",
+                 "size":"8 inches",
+                 "material":"rubber"}
+    ball = Dict2Obj(ball_dict)
+</dict2obj:>

@@ -4,6 +4,7 @@ Import dialog
 Open a dialog for importing a character.
 """
 
+from copy import deepcopy
 import json
 import re
 import requests
@@ -14,17 +15,12 @@ from pprint import pprint
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import Qt, Slot
 
-from PoB.constants import valid_websites, website_list, get_http_headers
+from PoB.constants import bad_text, get_http_headers, valid_websites, website_list
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import write_json, read_json
-from widgets.ui_utils import (
-    decode_base64_and_inflate,
-    deflate_and_base64_encode,
-    html_colour_text,
-    set_combo_index_by_text,
-    unique_sorted,
-)
+from PoB.utils import decode_base64_and_inflate, deflate_and_base64_encode, html_colour_text, unique_sorted
+from widgets.ui_utils import set_combo_index_by_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgBuildImport import Ui_BuildImport
@@ -135,7 +131,6 @@ class ImportDlg(Ui_BuildImport, QDialog):
         :param text: str: text to test
         :return: boolean; True if test passes.
         """
-        bad_text = "py P 0 B"
         try:
             text_json = json.loads(text)
             return (
@@ -146,7 +141,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
                 and text_json.get("skills", bad_text) != bad_text
                 and text_json.get("tree", bad_text) != bad_text
             )
-        except (KeyError, json.decoder.JSONDecodeError):
+        except (AttributeError, KeyError, json.decoder.JSONDecodeError):
             print("test_import_text_for_poeplanner_json test failed")
             return False
 
@@ -256,6 +251,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
         self.import_passive_tree_jewels_selected()
         self.import_items_selected()
         self.import_skills_selected()
+        self.status = html_colour_text("GREEN", f"Character download complete.")
 
     @Slot()
     def import_passive_tree_jewels_selected(self):
@@ -264,10 +260,13 @@ class ImportDlg(Ui_BuildImport, QDialog):
         # download the data if one of the other buttons hasn't done it yet.
         if self.character_data is None:
             self.download_character_data()
-        if self.check_DeleteJewels.isChecked():
+        if self.check_DeleteJewels.isEnabled() and self.check_DeleteJewels.isChecked():
             # ToDo: Do something clever to remove jewels
             pass
-        self.build.import_passive_tree_jewels_ggg_json(self.character_data.get("tree"), self.character_data.get("character"))
+        self.build.import_passive_tree_jewels_ggg_json(
+            self.character_data.get("tree"), self.character_data.get("character"), self.check_DeleteTrees.isChecked()
+        )
+        self.status = html_colour_text("GREEN", f"Passive Tree downloaded.")
         self.btn_Close.setFocus()
 
     @Slot()
@@ -281,11 +280,11 @@ class ImportDlg(Ui_BuildImport, QDialog):
         # A lot of technology is built into the ItemsUI() class, lets reuse that
         self.win.items_ui.load_from_ggg_json(
             self.character_data["items"],
-            f'Imported {json_character.get("name", "")}',
-            self.check_DeleteItems.isChecked(),
+            self.check_DeleteItems.isEnabled() and self.check_DeleteItems.isChecked(),
         )
         # force everything back to xml format
         self.win.items_ui.save()
+        self.status = html_colour_text("GREEN", f"Items downloaded.")
         self.btn_Close.setFocus()
 
     @Slot()
@@ -295,7 +294,10 @@ class ImportDlg(Ui_BuildImport, QDialog):
         # download the data if one of the other buttons hasn't done it yet.
         if self.character_data is None:
             self.download_character_data()
-        self.win.skills_ui.import_gems_ggg_json(self.character_data.get("items"), self.check_DeleteSkills.isChecked())
+        self.win.skills_ui.import_gems_ggg_json(
+            self.character_data["items"], self.check_DeleteSkills.isEnabled() and self.check_DeleteSkills.isChecked()
+        )
+        self.status = html_colour_text("GREEN", f"Skills downloaded.")
         self.btn_Close.setFocus()
 
     @Slot()
@@ -334,10 +336,12 @@ class ImportDlg(Ui_BuildImport, QDialog):
         """
         match self.combo_Import.currentData():
             case "NEW":
+                self.check_DeleteTrees.setEnabled(False)
                 self.check_DeleteJewels.setEnabled(False)
                 self.check_DeleteItems.setEnabled(False)
                 self.check_DeleteSkills.setEnabled(False)
             case "THIS":
+                self.check_DeleteTrees.setEnabled(True)
                 self.check_DeleteJewels.setEnabled(True)
                 self.check_DeleteItems.setEnabled(True)
                 self.check_DeleteSkills.setEnabled(True)
@@ -423,6 +427,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
         Do not load into build. Let the button procedures do their thing.
         Called by the button procedures
         """
+        self.status = ""
         if self.combo_Import.currentData() == "NEW":
             self.win.build_new()
         self.character_data = None
@@ -448,10 +453,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
             response = requests.get(url, params=params, headers=get_http_headers, timeout=6.0)
             print("response.status_code", response.status_code)
             if response.status_code != 200:
-                self.status = html_colour_text(
-                    "RED",
-                    f"Error retrieving 'Data': {response.reason} ({response.status_code}).",
-                )
+                self.status = html_colour_text("RED", f"Error retrieving 'Data': {response.reason} ({response.status_code}).")
             else:
                 passive_tree = response.json()
                 # pprint(passive_tree)
@@ -471,7 +473,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
             url = f"{realm_code['hostName']}character-window/get-items"
             response = requests.get(url, params=params, headers=get_http_headers, timeout=6.0)
             items = response.json()
-            write_json(self.settings.build_path + "/" + char_name + "_items.json", items)
+            # write_json(self.settings.build_path + "/" + char_name + "_items.json", items)
         except requests.RequestException as e:
             print(f"Error retrieving 'Items': {e}.")
             self.status = html_colour_text(
@@ -492,10 +494,10 @@ class ImportDlg(Ui_BuildImport, QDialog):
             "character": char_info,
         }
         # pprint(passive_tree)
-        # write_json("builds/" + char_name + "_items.json", items)
+        # write_json(self.settings.build_path + "/" + char_name + "_all.json", self.character_data)
 
     def fill_character_history(self):
         self.combo_Account_History.clear()
-        self.combo_Account_History.addItems(self.settings.accounts())
+        self.combo_Account_History.addItems(self.settings.accounts)
         set_combo_index_by_text(self.combo_Account_History, self.settings.last_account_name)
         self.lineedit_Account.setText(self.settings.last_account_name)

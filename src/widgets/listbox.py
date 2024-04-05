@@ -4,6 +4,7 @@ Pob implementation of QlistWidget
 Currently only needed .
 """
 
+from copy import deepcopy
 
 from PySide6.QtWidgets import QListWidget
 from PySide6.QtCore import Qt
@@ -22,7 +23,7 @@ class ListBox(QListWidget):
         self.key_press_handler = None
 
         # Allow us to print in colour
-        self.delegate = HTMLDelegate()
+        self.delegate = HTMLDelegate(self)
         self.delegate._list = self
         self.setProperty("class", "ListBox")
 

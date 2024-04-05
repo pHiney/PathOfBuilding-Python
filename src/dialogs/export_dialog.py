@@ -4,6 +4,7 @@ Import dialog
 Open a dialog for importing a character.
 """
 
+from copy import deepcopy
 import re
 import requests
 import urllib3
@@ -16,7 +17,7 @@ from PySide6.QtCore import Qt, Slot, QTimer
 from PoB.constants import get_http_headers, post_http_headers, website_list
 from PoB.settings import Settings
 from PoB.build import Build
-from widgets.ui_utils import html_colour_text, deflate_and_base64_encode, print_a_xml_element, set_combo_index_by_text
+from PoB.utils import html_colour_text, deflate_and_base64_encode
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgBuildExport import Ui_BuildExport
@@ -25,18 +26,17 @@ from ui.dlgBuildExport import Ui_BuildExport
 class ExportDlg(Ui_BuildExport, QDialog):
     """Export dialog"""
 
-    def __init__(self, _settings: Settings, _build: Build, _win: Ui_MainWindow = None):
+    def __init__(self, _settings: Settings, xml_root, _win: Ui_MainWindow = None):
         """
         Export dialog init
-        :param _settings: A pointer to the settings
-        :param _build: A pointer to the currently loaded build
+        :param _settings: A pointer to the settings.
+        :param _build: xml.etree.ElementTree: The current build as an xml.
         :param _win: A pointer to MainWindowUI
         """
         super().__init__(_win)
         self.settings = _settings
-        self.build = _build
         self.http = urllib3.PoolManager()
-        self.build_as_astring = ET.tostring(self.build.root, encoding="utf8")
+        self.build_as_astring = ET.tostring(xml_root, encoding="utf8")
         self.code = deflate_and_base64_encode(self.build_as_astring).decode("utf8")
 
         # UI Commands below this one

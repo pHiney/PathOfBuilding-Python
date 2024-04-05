@@ -127,7 +127,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="rBtn_v2">
+      <widget class="QRadioButton" name="radioBtn_v2">
        <property name="minimumSize">
         <size>
          <width>40</width>
@@ -143,7 +143,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="rBtn_v1">
+      <widget class="QRadioButton" name="radioBtn_v1">
        <property name="minimumSize">
         <size>
          <width>40</width>
@@ -234,8 +234,8 @@
   <tabstop>lineEdit_CurrDir</tabstop>
   <tabstop>list_Files</tabstop>
   <tabstop>lineEdit_SaveAs</tabstop>
-  <tabstop>rBtn_v2</tabstop>
-  <tabstop>rBtn_v1</tabstop>
+  <tabstop>radioBtn_v2</tabstop>
+  <tabstop>radioBtn_v1</tabstop>
  </tabstops>
  <resources>
   <include location="../PoB.qrc"/>

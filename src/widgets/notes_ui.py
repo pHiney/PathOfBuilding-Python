@@ -2,28 +2,16 @@
 This Class manages all the elements and owns some elements of the "NOTES" tab
 """
 
+from copy import deepcopy
 import re
 
 from PySide6.QtCore import Slot, Qt
 from PySide6.QtGui import QBrush
 
-from PoB.constants import ColourCodes
+from PoB.constants import ColourCodes, colourEscapes
 from PoB.settings import Settings
 
 from ui.PoB_Main_Window import Ui_MainWindow
-
-colorEscape = [
-    ColourCodes.BLACK,  # ^0
-    ColourCodes.RED,  # ^1
-    ColourCodes.GREEN,  # ^2
-    ColourCodes.BLUE,  # ^3
-    ColourCodes.YELLOW,  # ^4
-    ColourCodes.PURPLE,  # ^5
-    ColourCodes.AQUA,  # ^6
-    ColourCodes.WHITE,  # ^7
-    ColourCodes.GRAY,  # ^8
-    ColourCodes.DARKGRAY,  # ^9
-]
 
 
 class NotesUI:
@@ -61,22 +49,17 @@ class NotesUI:
                 self.win.btn_ConvertToText.setVisible(True)
                 self.win.textedit_Notes.setPlainText(_notes.strip())
 
-    def save(self, version="2"):
+    def save(self):
         """
         Save internal structures back to the build object
 
-        :param:version: str. 1 for version 1 xml data,  2 for updated.
         :return: two strings representing the plain text and the html text
         """
         _notes_html = self.win.textedit_Notes.document().toHtml()
         _notes = self.win.textedit_Notes.document().toPlainText()
         self.modified = False
         # print(f"NotesUI.save. {version}")
-        match version:
-            case "1":
-                return _notes, None
-            case "2":
-                return _notes, _notes_html
+        return _notes, _notes_html
 
     def convert_to_text(self):
         """
@@ -92,7 +75,7 @@ class NotesUI:
         # remove single charactor colours for their full versions
         for idx in range(10):
             while f"^{idx}" in text:
-                text = text.replace(f"^{idx}", f"^{colorEscape[idx].value.replace('#', 'x')}")
+                text = text.replace(f"^{idx}", f"^{colourEscapes[idx].value.replace('#', 'x')}")
 
         # search for the lua colour codes and replace them with span tags
         m = re.search(r"(\^x[0-9A-Fa-f]{6})", text)

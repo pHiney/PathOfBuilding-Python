@@ -47,7 +47,7 @@ _settings = Settings(None, None)
 _settings.reset()
 base_items = read_json("../src/data/base_items.json")
 
-# Some items have a smaller number of variants than the actaul variant lists. Whilst these need to be fixed, this will get around it.
+# Some items have a smaller number of variants than the actual variant lists. Whilst these need to be fixed, this will get around it.
 max_variants = {"Precursor's Emblem": "7"}
 
 uniques = {}

@@ -2,9 +2,8 @@
 Tree Class
 
 This class represents an instance of the GGG Passive Tree for **ONE** tree version (eg: 3.18).
+    A Tree() instance is tied to a Version of the Tree as released by GGG (eg: 3.18).
 Multiple versions of Trees can exist in a single Build, so there could be multiple instantiations of this class.
-
-A Tree() instance is tied to a Version of the Tree as released by GGG (eg: 3.18).
 
 This holds, in memory, a copy of the tree data and doesn't know about any actively selected nodes.
   That's the Spec class' job.
@@ -12,6 +11,7 @@ This holds, in memory, a copy of the tree data and doesn't know about any active
 It is referenced by the TreeView class to display the tree
 """
 
+from copy import deepcopy
 import re
 import math
 from collections import OrderedDict
@@ -36,7 +36,7 @@ from PoB.constants import (
 from PoB.pob_file import read_json
 from PoB.node import Node
 from widgets.tree_graphics_item import TreeGraphicsItem
-from widgets.ui_utils import _debug
+from PoB.utils import _debug
 
 nodeOverlay = {
     "Normal": {
@@ -190,9 +190,9 @@ class Tree:
     @version.setter
     def version(self, new_vers):
         self._version = new_vers
-        self.tree_version_path = Path(self.settings.data_dir, re.sub(r"\.", "_", str(new_vers)))
+        self.tree_version_path = Path(self.settings._data_dir, re.sub(r"\.", "_", str(new_vers)))
         self.json_file_path = Path(self.tree_version_path, "tree.json")
-        self.legion_path = Path(self.settings.data_dir, "legion")
+        self.legion_path = Path(self.settings._data_dir, "legion")
 
     def add_picture(self, name, x, y, ox, oy, _layer=Layers.inactive, node=None):
         """
@@ -239,15 +239,15 @@ class Tree:
 
         :return:
         """
-        print(f"Loading Tree: {tree_versions[self.version]}")
+        print(f"Loading Tree: {self.version=}, {tree_versions[self.version]=}")
         try:
             json_dict = OrderedDict(read_json(self.json_file_path))
         except TypeError:
             json_dict = None
         if json_dict is None:
-            tr = self.settings.app.tr
+            tr = self.settings._app.tr
             critical_dialog(
-                self.settings.win,
+                self.settings._win,
                 f"{tr('Load Tree')}: v{self.version}",
                 f"{tr('An error occurred to trying load')}:\n{self.json_file_path}",
                 tr("Close"),
@@ -317,10 +317,10 @@ class Tree:
         # legion_sprites = read_json(Path(self.legion_path, "tree-legion.json"))
         # if not legion_sprites:
         #     critical_dialog(
-        #         self.settings.win,
-        #         "f{self.settings.app.tr('Load File')}",
-        #         "f{self.settings.app.tr('An error occurred to trying load')}:\n{self.legion_file_path}",
-        #         self.settings.app.tr("Close"),
+        #         self.settings._win,
+        #         "f{self.settings._app.tr('Load File')}",
+        #         "f{self.settings._app.tr('An error occurred to trying load')}:\n{self.legion_file_path}",
+        #         self.settings._app.tr("Close"),
         #     )
         # else:
         #     # Process a sprite map list for loading the image (downloading it too later)
