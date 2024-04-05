@@ -18,12 +18,17 @@ class PoBDict(object):
         """return: str:"""
         return "%s" % self.__dict__
 
+    def delete(self, key):
+        """Error safe del"""
+        if self.exists(key):
+            delattr(self, key)
+
     def load(self, dictionary=None):
         """Reset internal dictionary attr's"""
         # Only need to delete the top level as GC should dispose of the rest.
         # On first run through, keys() is empty.
         keys = [key for key in self.__dict__.keys() if not key.startswith("_")]
-        print(f"PoBdict: load: {keys=}")
+        # print(f"PoBdict: load: {keys=}")
         for key in keys:
             delattr(self, key)
 
@@ -46,9 +51,19 @@ class PoBDict(object):
         return _dict
 
     def exists(self, key):
-        """"""
+        """Does key exist ?"""
         return getattr(self, key, None) is not None
 
+    def new_child(self, key):
+        if not self.exists(key):
+            setattr(self, key, PoBDict({}))
+
+    def keys(self):
+        return self.__dict__.keys()
+
+    def items(self):
+        return self.__dict__.items()
+    
 #----------------------------------------------------------------------
 sub_dict = {"color":"red",
              "size":9,
@@ -84,3 +99,10 @@ write_json("test.json", ball.save())
 #----------------------------------------------------------------------
 ball.load(sub_dict)
 print(f"\n3        {ball=}")
+ball.colour = ball.color
+del ball.color
+print(f"\n3        {ball=}")
+ball.delete("color")
+ball.delete("color")
+
+print(ball.keys())
