@@ -713,14 +713,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.build_save_as()  # this will then call build_save()
         else:
             print(f"Saving to file: {self.build.filename}")
-            self.build.save_to_json()
+            name, file_extension = os.path.splitext(self.build.filename)
+            xml = file_extension == ".xml"
             self.build.json_notes, self.build.json_notes_html = self.notes_ui.save()
             self.player.save()
             self.skills_ui.save_to_json()
             self.items_ui.save()
             self.config_ui.save()
-            # write the file
-            self.build.save_to_json()
+            if xml:
+                save_to_xml(self.build.filename, self.build.json)
+            else:
+                # write the file
+                self.build.save_to_json()
 
     @Slot()
     def build_save_as(self):
@@ -746,7 +750,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.build.filename = filename
                 self.build_save()
                 self.add_recent_build_menu_item()
-                self.settings.open_build = self.build.filename
+                self.settings.open_build = self.build.version == 2 and self.build.filename or ""
 
     @Slot()
     def combo_item_manage_tree_changed(self, tree_label):
@@ -1037,8 +1041,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot()
     def open_export_dialog(self):
-        self.build.save_to_xml()
-        dlg = ExportDlg(self.settings, self.build, self)
+        xml_root = save_to_xml("", self.build.json)
+        dlg = ExportDlg(self.settings, xml_root, self)
         dlg.exec()
 
     def set_current_tab(self, tab_name=""):

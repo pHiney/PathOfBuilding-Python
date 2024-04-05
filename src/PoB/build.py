@@ -494,29 +494,6 @@ class Build:
         #     self.className = self.current_spec.classId_str()
         #     self.ascendClassName = self.current_spec.ascendClassId_str()
 
-        """Debug Please leave until build is mostly complete"""
-        # print("build")
-        # print(ET.tostring(self.xml_build, encoding='utf8'))  # .decode('utf8'))
-        # print("import_field")
-        # print(ET.tostring(self.xml_import_field, encoding='utf8').decode('utf8'))
-        # print("calcs")
-        # print(ET.tostring(self.xml_calcs, encoding='utf8').decode('utf8'))
-        # print("skills")
-        # print(ET.tostring(self.xml_skills, encoding='utf8').decode('utf8'))
-        # print("tree")
-        # print(ET.tostring(self.json_tree["Specs"], encoding='utf8').decode('utf8'))
-        # print("notes")
-        # print(ET.tostring(self.xml_notes, encoding='utf8').decode('utf8'))
-        # print("notes_html")
-        # print(ET.tostring(self.xml_notes_html, encoding='utf8').decode('utf8'))
-        # print("tree_view")
-        # print(ET.tostring(self.json_tree["Specs"]_view, encoding='utf8').decode('utf8'))
-        # print("items")
-        # print(ET.tostring(self.xml_items, encoding='utf8').decode('utf8'))
-        # print("config")
-        # print(ET.tostring(self.xml_config, encoding='utf8').decode('utf8'))
-        """Debug Please leave until build is mostly complete"""
-
     def ask_for_save_if_modified(self):
         """
         Check if the build has been modified and if so, prompt for saving.

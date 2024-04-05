@@ -17,7 +17,9 @@ from PoB.constants import ColourCodes, pob_debug, locale
 class PoBDict(object):
     """
     Turns a dictionary into a class. We use load and save to ensure there is only one instatiation of the class
-    thoughout the life of the application. This makes it easier to share between other classes
+    thoughout the life of the application. This makes it easier to share between other classes.
+    If descendant's want to have variables that are not saved in the dictionary, they need to be prefixed with '_'.
+      EG: self._variable1 = "blah"
     """
 
     def __init__(self, dictionary):
@@ -58,6 +60,10 @@ class PoBDict(object):
     def exists(self, key):
         """"""
         return getattr(self, key, None) is not None
+
+    def new_child(self, key):
+        if not self.exists(key):
+            setattr(self, key, PoBDict({}))
 
 
 def str_to_bool(in_str):

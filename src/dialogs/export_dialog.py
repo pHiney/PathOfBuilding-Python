@@ -26,18 +26,17 @@ from ui.dlgBuildExport import Ui_BuildExport
 class ExportDlg(Ui_BuildExport, QDialog):
     """Export dialog"""
 
-    def __init__(self, _settings: Settings, _build: Build, _win: Ui_MainWindow = None):
+    def __init__(self, _settings: Settings, xml_root, _win: Ui_MainWindow = None):
         """
         Export dialog init
-        :param _settings: A pointer to the settings
-        :param _build: A pointer to the currently loaded build
+        :param _settings: A pointer to the settings.
+        :param _build: xml.etree.ElementTree: The current build as an xml.
         :param _win: A pointer to MainWindowUI
         """
         super().__init__(_win)
         self.settings = _settings
-        self.build = _build
         self.http = urllib3.PoolManager()
-        self.build_as_astring = ET.tostring(self.build.root, encoding="utf8")
+        self.build_as_astring = ET.tostring(xml_root, encoding="utf8")
         self.code = deflate_and_base64_encode(self.build_as_astring).decode("utf8")
 
         # UI Commands below this one

@@ -106,8 +106,10 @@ class Settings(PoBDict):
 
     @property
     def pastebin_dev_api_key(self):
-        # return self.pastebin.dev_api_key
-        return self.exists("pastebin") and self.pastebin.dev_api_key or ""
+        try:
+            return self.exists("pastebin") and self.pastebin.dev_api_key or ""
+        except AttributeError:
+            return ""
 
     @pastebin_dev_api_key.setter
     def pastebin_dev_api_key(self, new_key):
@@ -117,8 +119,10 @@ class Settings(PoBDict):
 
     @property
     def pastebin_user_api_key(self):
-        # return self.pastebin.user_api_key
-        return self.exists("pastebin") and self.pastebin.user_api_key or ""
+        try:
+            return self.exists("pastebin") and self.pastebin.user_api_key or ""
+        except AttributeError:
+            return ""
 
     @pastebin_user_api_key.setter
     def pastebin_user_api_key(self, new_key):
@@ -128,7 +132,10 @@ class Settings(PoBDict):
 
     @property
     def pastebin_user_name(self):
-        return self.exists("pastebin") and self.pastebin.user_name or ""
+        try:
+            return self.exists("pastebin") and self.pastebin.user_name or ""
+        except AttributeError:
+            return ""
 
     @pastebin_user_name.setter
     def pastebin_user_name(self, new_key):
@@ -436,7 +443,7 @@ class Settings(PoBDict):
         try:
             self.accounts.remove(new_account)
             self.accounts.insert(0, new_account)
-        except IndexError:
+        except (IndexError, ValueError):
             found = False
             self.accounts.append(new_account)
         return found

@@ -966,7 +966,11 @@ def save_to_xml(filename, build):
     # xml_config = xml_root.find("Config")
 
     # print_a_xml_element(xml_root)
-    write_xml(filename, build_xml)
-    # rewrite ~^ to newlines
-    if customMods:
-        write_v1_custom_mods(filename)
+
+    if filename:
+        write_xml(filename, build_xml)
+        # rewrite ~^ to newlines
+        if customMods:
+            write_v1_custom_mods(filename)
+    else:
+        return xml_root

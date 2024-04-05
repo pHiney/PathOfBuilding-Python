@@ -57,12 +57,15 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         # for idx in range(0, self.hLayout_SaveAs.count()):
         #     self.hLayout_SaveAs.itemAt(idx).widget().setHidden(not self.save)
 
-        self.save_as_text = _build.filename
+        self.max_filename_width = 100
         self.list_Files.set_delegate()
         self.list_Files_width = self.list_Files.width()
-        self.max_filename_width = 100
-
-        self.change_dir(self.settings.build_path)  # connects triggers
+        if _build.filename:
+            path, name = os.path.split(_build.filename)
+            self.save_as_text = name
+            self.change_dir(path)  # connects triggers
+        else:
+            self.change_dir(self.settings.build_path)  # connects triggers
 
     @property
     def save_as_text(self):
@@ -242,16 +245,17 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         """
         # print("task_button_clicked")
         curr_item = self.list_Files.currentItem()
-        info = curr_item.data(Qt.UserRole)
-        # Only change directory on task button being pressed if we are an Open Dialog
-        # *OR* is Save Dialog and lineEdit_SaveAs is empty
-        # (this is mainly for keyboard usage)
-        if self.open and "[" in curr_item.text():  # is_dir
-            self.change_dir(info["path"])
-            return
-        if self.save and "[" in curr_item.text() and self.lineEdit_SaveAs.text() == "":  # is_dir
-            self.change_dir(info["path"])
-            return
+        if curr_item is not None:
+            info = curr_item.data(Qt.UserRole)
+            # Only change directory on task button being pressed if we are an Open Dialog
+            # *OR* is Save Dialog and lineEdit_SaveAs is empty
+            # (this is mainly for keyboard usage)
+            if self.open and "[" in curr_item.text():  # is_dir
+                self.change_dir(info["path"])
+                return
+            if self.save and "[" in curr_item.text() and self.lineEdit_SaveAs.text() == "":  # is_dir
+                self.change_dir(info["path"])
+                return
         # do something interesting, like return with the information
         self.file_chosen(curr_item)
 
@@ -263,26 +267,28 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         """
         Actions to be taken when the task button is pressed, but not changing directories.
         Changing directories is done by the calling functions.
-        :param: curr_item: QListWidgetItem. Passed in from callers. Guaranteed to be not None.
+        :param: curr_item: QListWidgetItem. Passed in from callers. Can't be None for 'open'.
+                            Can be None when saving a file without selecting it's name in the gui.
         :return: N/A
         """
-        info = curr_item.data(Qt.UserRole)
-        # print("file_chosen", info["path"])
-        # If we are here then an item was selected
         if self.save:
             save_name = self.lineEdit_SaveAs.text()
+            # print(f"file_chosen: save: {save_name=}")
             if save_name == "":
                 return
-            extension = os.path.splitext(save_name)[1]
-            if extension == "":
-                extension = self.radioBtn_v2.isChecked() and "json" or "xml"
-                save_name = f"{save_name}.{extension}"
+            name, extension = os.path.splitext(save_name)
+            # extension will be json or xml. No mucking around with allowing weird extensions.
+            extension = self.radioBtn_v2.isChecked() and "json" or "xml"
+            save_name = os.path.join(self.lineEdit_CurrDir.text(), f"{name}.{extension}")
             if os.path.exists(save_name):
                 if not yes_no_dialog(self, "Overwrite file", f"{save_name} exists. Overwrite"):
                     return
-            self.selected_file = os.path.join(self.lineEdit_CurrDir.text(), save_name)
+            self.selected_file = save_name
+            # print(f"file_chosen: save: {self.selected_file=}")
             self.accept()
         if self.open:
+            info = curr_item.data(Qt.UserRole)
+            # print("file_chosen: open: ", info["path"])
             self.selected_file = info["path"]
             self.accept()
 

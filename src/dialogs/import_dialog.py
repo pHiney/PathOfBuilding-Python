@@ -498,6 +498,6 @@ class ImportDlg(Ui_BuildImport, QDialog):
 
     def fill_character_history(self):
         self.combo_Account_History.clear()
-        self.combo_Account_History.addItems(self.settings.accounts())
+        self.combo_Account_History.addItems(self.settings.accounts)
         set_combo_index_by_text(self.combo_Account_History, self.settings.last_account_name)
         self.lineedit_Account.setText(self.settings.last_account_name)

@@ -14,7 +14,7 @@ import xml
 import xmltodict
 
 from PoB.constants import ColourCodes
-from PoB.utils import _debug, html_colour_text, print_call_stack
+from PoB.utils import _debug, print_call_stack
 
 
 def get_file_info(settings, filename, max_length, max_filename_width=40, html=True, menu=False):
@@ -33,20 +33,16 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
     if type(filename) is Path or type(filename) is WindowsPath:
         filename = filename.name
     if "json" in filename:
-        # try:
         _file = read_json(filename)
         pre = ""
         version = 2
-        if _file is None:
-            # except (json.JSONDecodeError, json.decoder.JSONDecodeError):  # Corrupt file
-            return "", ""
     else:
-        try:
-            _file = read_xml_as_dict(filename)
-            pre = "@"
-            version = 1
-        except xml.parsers.expat.ExpatError:  # Corrupt file
-            return "", ""
+        _file = read_xml_as_dict(filename)
+        pre = "@"
+        version = 1
+
+    if _file is None:
+        return "", ""
 
     build = _file.get("PathOfBuilding", {}).get("Build", {})
     if build != {}:
@@ -86,18 +82,6 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
             return f"{name}{spacer}{info_text}", class_name
     else:
         return "", ""
-
-
-# def json_to_et(json_content):
-#     """
-#     Convert a json string into a ET.ElementTree
-#     :param json_content: String: the json content
-#     :return: xml.etree.ElementTree
-#     """
-#     # convert via a dictionary
-#     _dict = json.loads(json_content)
-#     xml_content = xmltodict.unparse(_dict, pretty=True)
-#     return ET.ElementTree(ET.fromstring(xml_content))
 
 
 def read_json(filename):
@@ -150,6 +134,9 @@ def write_json(filename, _dict):
         print(f"Unable to write to {_fn}")
 
 
+"""!!!! read_xml_as_dict stays in this module as it is used by get_file_info !!!!. Peter, this means YOU !!!"""
+
+
 def read_xml_as_dict(filename):
     """
     Reads a XML file
@@ -165,24 +152,6 @@ def read_xml_as_dict(filename):
                 _dict = xmltodict.parse(xml_content)
                 return _dict
         # parent of IOError, OSError *and* WindowsError where available
-        except EnvironmentError:
+        except (EnvironmentError, xml.parsers.expat.ExpatError):
             print(f"Unable to open {_fn} (read_xml_as_dict)")
     return None
-
-
-# # Why don't these work ?
-# def dump_class_to_text(filename, _class):
-#     with open(filename, "a") as f_out:
-#         pprint(
-#             dict(
-#                 (name, getattr(_class, name))
-#                 for name in dir(_class)
-#                 if not name.startswith("__")
-#             ),
-#             f_out,
-#         )
-#
-# # Why don't these work ?
-# def dump_dict_to_text(filename, _dict):
-#     with open(filename, "a") as f_out:
-#         print(_dict, f_out)
