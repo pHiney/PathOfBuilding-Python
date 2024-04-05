@@ -110,7 +110,7 @@ class ManageItemsDlg(Ui_ManageItemSet, QDialog):
     @Slot()
     def new_set(self):
         # print("new_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Item Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Item Set Name", self.win)
         dlg.placeholder_text = "New Item Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()
@@ -124,7 +124,7 @@ class ManageItemsDlg(Ui_ManageItemSet, QDialog):
     @Slot()
     def duplicate_set(self):
         # print("duplicate_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Item Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Item Set Name", self.win)
         dlg.placeholder_text = "New Item Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()

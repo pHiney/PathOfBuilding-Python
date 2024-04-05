@@ -18,7 +18,7 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
     def __init__(self, _settings: Settings, _image: str, node, z_value=0, selectable=False) -> None:
         super(TreeGraphicsItem, self).__init__()
         self.settings = _settings
-        self.win = self.settings.win
+        self.win = self.settings._win
         self.name = ""
         self.filename = ""
         self.data = ""

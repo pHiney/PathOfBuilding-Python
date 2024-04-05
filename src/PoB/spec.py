@@ -19,7 +19,7 @@ class Spec:
         """
         self.internal_version = 6
         self.build = build
-        self.tr = self.build.settings.app.tr
+        self.tr = self.build.settings._app.tr
 
         self.spec = type(new_spec) is dict and new_spec or deepcopy(empty_spec_dict)
         self.nodes = set()

@@ -47,6 +47,35 @@ proxyURL="" buildPath="" open_build=""/>
    <recentBuilds/>
    <size width="800" height="600"/>
 </PathOfBuilding>"""
+empty_settings = {
+    "width": 800,
+    "height": 600,
+    "theme": "{def_theme}",
+    "slot_only_tooltips": True,
+    "show_titlebar_name": True,
+    "show_warnings": True,
+    "default_char_level": 1,
+    "node_power_theme": 0,
+    "connection_protocol": 0,
+    "thousands_separator": "n",
+    "decimal_separator": "_",
+    "show_thousands_separators": True,
+    "beta_mode": False,
+    "default_gem_quality": 0,
+    "build_sort_mode": "NAME",
+    "default_item_affix_quality": 0.5,
+    "colour_positive": "#33FF77",
+    "colour_negative": "#FF0022",
+    "colour_highlight": "#FF0000",
+    "proxy_url": "",
+    "open_build": "",
+    "build_path": "",
+    "pastebin": "",
+    "recent_builds": [],
+    "last_account_name": "",
+    "last_realm": "PC",
+    "accounts": [],
+}
 
 """ ############################################### DICT / JSON ############################################### """
 

@@ -14,6 +14,52 @@ import zlib
 from PoB.constants import ColourCodes, pob_debug, locale
 
 
+class PoBDict(object):
+    """
+    Turns a dictionary into a class. We use load and save to ensure there is only one instatiation of the class
+    thoughout the life of the application. This makes it easier to share between other classes
+    """
+
+    def __init__(self, dictionary):
+        """PoBDict. Constructor"""
+        self.load(dictionary)
+
+    def __repr__(self):
+        """return: str:"""
+        return "%s" % self.__dict__
+
+    def load(self, dictionary=None):
+        """Reset internal dictionary attr's"""
+        # Only need to delete the top level as GC should dispose of the rest.
+        # On first run through, keys() is empty.
+        keys = [key for key in self.__dict__.keys() if not key.startswith("_")]
+        # print(f"PoBdict: load: {keys=}")
+        for key in keys:
+            delattr(self, key)
+
+        if dictionary:
+            for key, value in dictionary.items():
+                if type(value) is dict:
+                    setattr(self, key, PoBDict(value))
+                else:
+                    setattr(self, key, value)
+
+    def save(self):
+        """return: dict: the python type dictionary representation of the class"""
+        _dict = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith("_"):
+                if type(value) is PoBDict:
+                    _dict[key] = value.save()
+                else:
+                    _dict[key] = value
+        return _dict
+
+    def exists(self, key):
+        """"""
+        return getattr(self, key, None) is not None
+
+
 def str_to_bool(in_str):
     """
     Return a boolean from a string. As the settings could be manipulated by a human, we can't trust eval()

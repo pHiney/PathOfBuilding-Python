@@ -29,7 +29,7 @@ class TreeUI:
         :param _win: pointer to MainWindow()
         """
         self.settings = _settings
-        self.tr = self.settings.app.tr
+        self.tr = self.settings._app.tr
         self.win = _win
         # reference to Items UI to fill it's tree combo
         self.items_ui = None
@@ -249,7 +249,7 @@ class TreeUI:
 
         :return: N/A
         """
-        dlg = ImportTreePopup(self.settings.app.tr, self.combo_manage_tree.currentText(), self.win)
+        dlg = ImportTreePopup(self.tr, self.combo_manage_tree.currentText(), self.win)
         _return = dlg.exec()
         if _return:
             self.build.current_spec.import_tree(dlg.lineedit_url.text() + "==")
@@ -261,7 +261,7 @@ class TreeUI:
         """Export the current nodes as a URL"""
         url = self.build.current_spec.export_nodes_to_url()
         self.build.current_spec.URL = url
-        dlg = ExportTreePopup(self.settings.app.tr, url, self.win)
+        dlg = ExportTreePopup(self.tr, url, self.win)
         # we don't care about how the user exits
         dlg.exec()
 

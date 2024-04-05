@@ -5,6 +5,7 @@ Open a dialog for Opening or Saving a character.
 """
 
 from copy import deepcopy
+from pathlib import Path
 import glob
 import os
 import re
@@ -176,7 +177,7 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
         """
         # print(f"change_dir {new_dir}")
         self.disconnect_triggers()
-        if os.path.exists(new_dir):
+        if Path(new_dir).exists():
             os.chdir(new_dir)
             self.lineEdit_CurrDir.setText(str(new_dir))
             self.fill_list_box(new_dir)

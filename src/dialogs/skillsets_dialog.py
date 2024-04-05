@@ -108,7 +108,7 @@ class ManageSkillsDlg(Ui_ManageSkillSet, QDialog):
     @Slot()
     def new_set(self):
         # print("new_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Skill Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Skill Set Name", self.win)
         dlg.placeholder_text = "New Skill Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()
@@ -122,7 +122,7 @@ class ManageSkillsDlg(Ui_ManageSkillSet, QDialog):
     @Slot()
     def duplicate_set(self):
         # print("duplicate_set")
-        dlg = LineEditPopup(self.settings.app.tr, "New Skill Set Name", self.win)
+        dlg = LineEditPopup(self.settings._app.tr, "New Skill Set Name", self.win)
         dlg.placeholder_text = "New Skill Set, Rename Me"
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()

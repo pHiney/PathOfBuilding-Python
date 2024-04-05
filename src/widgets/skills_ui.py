@@ -90,7 +90,7 @@ class SkillsUI:
 
         self.win.list_SocketGroups.set_delegate()
 
-        tr = self.settings.app.tr
+        tr = self.settings._app.tr
         self.win.combo_SortByDPS.addItem(tr("Full DPS"), "FullDPS")
         self.win.combo_SortByDPS.addItem(tr("Combined DPS"), "CombinedDPS")
         self.win.combo_SortByDPS.addItem(tr("Total DPS"), "TotalDPS")
@@ -325,7 +325,7 @@ class SkillsUI:
 
         # read in all gems but remove all invalid/unreleased ones
         # "Afflictions" will be removed by this (no display_name), so maybe a different list for them
-        gems = read_json(Path(self.settings.data_dir, "base_gems.json"))
+        gems = read_json(Path(self.settings._data_dir, "base_gems.json"))
         if gems is None:
             return None, None
         # make a list by name and skillId. Index supports using the full name (Faster Attacks Support)
@@ -343,7 +343,7 @@ class SkillsUI:
             if _gem.get("support", False):
                 self.gems_by_name_or_id[f"{name} Support"] = _gem  # name = "Added Chaos Damage" + " Support"
 
-        hidden = read_json(Path(self.settings.data_dir, "hidden_skills.json"))
+        hidden = read_json(Path(self.settings._data_dir, "hidden_skills.json"))
         for _id, _gem in hidden.items():
             _gem["colour"] = get_coloured_int(_gem)
             _gem["coloured_text"] = html_colour_text(_gem["colour"], _gem["name"])
@@ -558,7 +558,7 @@ class SkillsUI:
         :return: N/A
         """
         # print("delete_all_skill_sets")
-        tr = self.settings.app.tr
+        tr = self.settings._app.tr
         if not prompt or yes_no_dialog(
             self.win,
             tr("Delete all Skill Sets"),
@@ -739,7 +739,7 @@ class SkillsUI:
         # print("delete_all_socket_groups")
         if self.current_skill_set is None or len(list(self.current_skill_set)) == 0:
             return
-        tr = self.settings.app.tr
+        tr = self.settings._app.tr
         if not prompt or yes_no_dialog(
             self.win,
             tr("Delete all Socket Groups"),
@@ -866,7 +866,6 @@ class SkillsUI:
                                     f"the item.<br><br>You cannot add support gems to this group, but support gems in any other group "
                                     f"socketed into {_item.coloured_text} will automatically apply to the skill."
                                 )
-                                print(label)
                                 self.list_label.setText(label)
                                 self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
                     else:

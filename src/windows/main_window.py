@@ -252,7 +252,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_igniteMode.addItem("Crits Only", "CRIT")
 
         self.menu_Builds.addSeparator()
-        self.set_recent_builds_menu_items(self.settings)
+        self.set_recent_builds_menu_items()
 
         # Collect original tooltip text for Actions (for managing the text color thru qss - switch_theme)
         # Must be before the first call to switch_theme
@@ -374,7 +374,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_classes.currentTextChanged.disconnect(self.class_changed)
         self.combo_ascendancy.currentTextChanged.disconnect(self.ascendancy_changed)
 
-    def set_recent_builds_menu_items(self, config: Settings):
+    def set_recent_builds_menu_items(self):
         """
         Setup menu entries for all valid recent builds in the settings file
         Read the config for recent builds and create menu entries for them
@@ -390,13 +390,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             """
             _action.triggered.connect(lambda checked: self._open_previous_build(checked, _full_path))
 
-        os.chdir(config.build_path)
+        os.chdir(self.settings.build_path)
         max_length = 80
-        recent_builds = config.recent_builds()
+        recent_builds = self.settings.get_recent_builds()
         for idx, full_path in enumerate(recent_builds):
+
             if full_path is not None and full_path != "":
-                filename = Path(full_path).relative_to(self.settings.build_path)
-                text, class_name = get_file_info(self.settings, filename, max_length, 70, menu=True)
+                text, class_name = get_file_info(self.settings, full_path, max_length, 70, menu=True)
+                # print(f"set_recent_builds_menu_items: {class_name=}, {full_path=}")
                 ql = QLabel(text)
                 _action = QWidgetAction(self.menu_Builds)
                 _action.setDefaultWidget(ql)
@@ -408,40 +409,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Add this file (either Open or Save As) to the recent menu list. refreshing the menu if the name is a new one.
         :return: N/A
         """
+        # print(f"add_recent_build_menu_item: {self.build.filename=}")
         self.settings.add_recent_build(self.build.filename)
         for entry in self.menu_Builds.children():
             if type(entry) is QWidgetAction:
                 self.menu_Builds.removeAction(entry)
-        self.set_recent_builds_menu_items(self.settings)
-
-    def set_recent_builds_menu_items1(self, config: Settings):
-        """
-        Setup menu entries for all valid recent builds in the settings file
-        Read the config for recent builds and create menu entries for them
-        return: N/A
-        """
-
-        def make_connection(_idx, _filename):
-            """
-            Connect the menu item to _open_previous_build passing in extra information
-            Lambdas in python share the variable scope they're created in
-            so make a function containing just the lambda
-            :param _idx:
-            :param _filename:
-            :return: N/A
-            """
-            _action.triggered.connect(lambda checked: self._open_previous_build(checked, _idx, _filename))
-
-        os.chdir(self.settings.build_path)
-        max_length = 60
-        recent_builds = config.recent_builds()
-        for idx, value in enumerate(recent_builds):
-            if value is not None and value != "":
-                filename = Path(value).relative_to(self.settings.build_path)
-                text, class_name = get_file_info(self.settings, filename, max_length, 40, False)
-                _action = self.menu_Builds.addAction(f"&{idx}.  {text}")
-                _action.setFont(QFont(":Font/Font/NotoSans-Regular.ttf", 10))
-                make_connection(value, idx)
+        self.set_recent_builds_menu_items()
 
     def setup_theme_actions(self):
         """
@@ -460,7 +433,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             """
             _action.triggered.connect(lambda checked: self.switch_theme(name, _action))
 
-        themes = [os.path.basename(x) for x in glob.glob(f"{self.settings.data_dir}/qss/*.colours")]
+        themes = [os.path.basename(x) for x in glob.glob(f"{self.settings._data_dir}/qss/*.colours")]
         # print("setup_theme_actions", themes)
         for value in themes:
             _name = os.path.splitext(value)[0]
@@ -558,18 +531,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     #     self.curr_theme.setChecked(False)
         #     self.curr_theme.setChecked(True)
         # return
-        file = Path(self.settings.data_dir, "qss", f"{new_theme}.colours")
+        file = Path(self.settings._data_dir, "qss", f"{new_theme}.colours")
         new_theme = Path.exists(file) and new_theme or def_theme
         try:
-            with open(Path(self.settings.data_dir, "qss", "qss.template"), "r") as template_file:
+            with open(Path(self.settings._data_dir, "qss", "qss.template"), "r") as template_file:
                 template = template_file.read()
-            with open(Path(self.settings.data_dir, "qss", f"{new_theme}.colours"), "r") as colour_file:
+            with open(Path(self.settings._data_dir, "qss", f"{new_theme}.colours"), "r") as colour_file:
                 colours = colour_file.read().splitlines()
                 for line in colours:
                     line = line.split("~~")
                     if len(line) == 2:
                         if line[0] == "qss_background":
-                            self.settings.qss_background = line[1]
+                            self.settings._qss_background = line[1]
                         if line[0] == "qss_default_text":
                             self.settings.qss_default_text = line[1]
                             for tooltip_text in self.toolbar_buttons.keys():
@@ -582,7 +555,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Uncheck old entry. First time through, this could be None.
             if self.curr_theme is not None:
                 self.curr_theme.setChecked(False)
-            self.settings.theme = new_theme
+            self.settings.theme = new_theme.lower()
             self.curr_theme = selected_action
             if self.curr_theme is not None:
                 self.curr_theme.setChecked(True)
@@ -654,11 +627,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Common actions for UI components when we are loading a build.
 
         :param filename_or_dict: dict: the dict of an imported build (called open_import_dialog)
-        :param filename_or_dict: String: build name, commonly "Default" when called from the New action.
+        :param filename_or_dict: String: the filename of file to be loaded, or "Default" if called from the New action.
         :param filename_or_dict: Path: the filename of file to be loaded, or "Default" if called from the New action.
         :param imported_name: str: The name of the build from the import dialog
         :return: N/A
         """
+        # print(f"build_loader: {filename_or_dict}, {imported_name=}")
         self.alerting = False
         self.player.clear()
         self.config_ui.initial_startup_setup()

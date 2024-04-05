@@ -59,8 +59,8 @@ class ItemsUI:
         # Flag to stop some actions happening in triggers during loading
         self.alerting = False
 
-        self.base_items = read_json(Path(self.settings.data_dir, "base_items.json"))
-        self.mods = read_json(Path(self.settings.data_dir, "mods.json"))
+        self.base_items = read_json(Path(self.settings._data_dir, "base_items.json"))
+        self.mods = read_json(Path(self.settings._data_dir, "mods.json"))
 
         # set the key_event - handler - self.item_list_keypressed
         self.win.list_Items.key_press_handler = self.item_list_keypressed
@@ -323,7 +323,7 @@ class ItemsUI:
 
     def load_unique_items(self):
         item_leagues = set()
-        u_json = read_json(Path(self.settings.data_dir, "uniques.json"))
+        u_json = read_json(Path(self.settings._data_dir, "uniques.json"))
         for key in u_json.keys():
             for _item in u_json[key]:
                 new_item = Item(self.settings, self.base_items)
@@ -348,7 +348,7 @@ class ItemsUI:
         self.win.combo_ItemsImportLeague.view().setMinimumWidth(self.win.combo_ItemsImportLeague.minimumSizeHint().width())
 
     def load_rare_template_items(self):
-        t_json = read_json(Path(self.settings.data_dir, "rare_templates.json"))
+        t_json = read_json(Path(self.settings._data_dir, "rare_templates.json"))
         for _item in t_json:
             new_item = Item(self.settings, self.base_items)
             new_item.load_from_json(_item, "RARE")

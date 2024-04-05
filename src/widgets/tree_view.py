@@ -200,7 +200,7 @@ class TreeView(QGraphicsView):
         :return: bool: True if an effect was chosen
         """
         dlg = MasteryPopup(
-            self.settings.app.tr,
+            self.settings._app.tr,
             node,
             self.build.current_spec,
             self.build.current_tree.mastery_effects_nodes[node.name],

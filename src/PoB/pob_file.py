@@ -14,7 +14,7 @@ import xml
 import xmltodict
 
 from PoB.constants import ColourCodes
-from PoB.utils import html_colour_text
+from PoB.utils import _debug, html_colour_text, print_call_stack
 
 
 def get_file_info(settings, filename, max_length, max_filename_width=40, html=True, menu=False):
@@ -33,11 +33,12 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
     if type(filename) is Path or type(filename) is WindowsPath:
         filename = filename.name
     if "json" in filename:
-        try:
-            _file = read_json(filename)
-            pre = ""
-            version = 2
-        except (json.JSONDecodeError, json.decoder.JSONDecodeError):  # Corrupt file
+        # try:
+        _file = read_json(filename)
+        pre = ""
+        version = 2
+        if _file is None:
+            # except (json.JSONDecodeError, json.decoder.JSONDecodeError):  # Corrupt file
             return "", ""
     else:
         try:
@@ -49,6 +50,12 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
 
     build = _file.get("PathOfBuilding", {}).get("Build", {})
     if build != {}:
+        try:
+            filename = Path(filename).relative_to(settings.build_path)
+        except ValueError:
+            # MainWindow() passes in full path's from the recent_builds settings elements, so no error.
+            # but File Open/Save dialog only passes in filenames. This is what gives the ValueError.
+            pass
         name = os.path.splitext(filename)[0]
         # Get the maximum length of a name, trimming it if need be
         name = len(name) > max_filename_width and (name[:max_filename_width] + "..") or name
@@ -106,8 +113,8 @@ def read_json(filename):
                 _dict = json.load(json_file)
                 return _dict
         # parent of IOError, OSError *and* WindowsError where available
-        except EnvironmentError:
-            print(f"Unable to open {_fn}")
+        except (EnvironmentError, json.decoder.JSONDecodeError):
+            print(f"Unable to open {_fn} (read_json)")
     return None
 
 
@@ -124,7 +131,7 @@ def read_json16(filename):
                 _dict = json.load(json_file)
                 return _dict
         except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-            print(f"Unable to open {_fn}")
+            print(f"Unable to open {_fn} (read_json16)")
     return None
 
 
@@ -159,7 +166,7 @@ def read_xml_as_dict(filename):
                 return _dict
         # parent of IOError, OSError *and* WindowsError where available
         except EnvironmentError:
-            print(f"Unable to open {_fn}")
+            print(f"Unable to open {_fn} (read_xml_as_dict)")
     return None
 
 

@@ -66,12 +66,12 @@ for key in sorted(u_json.keys()):
 print(f"lua: {lua_total}, py: {py_total}")
 write_json("../src/data/uniques.new.json", new_uniques)
 
-templates = []
-t_xml = read_xml("rare_templates_flat.xml")
-_xml_root = t_xml.getroot()
-for v1_item in _xml_root:
-    item = load_item_from_xml(v1_item.text.replace(char2013,'-'))
-    item.pop("id")
-    item.pop("Rarity")
-    templates.append(item)
-write_json("../src/data/rare_templates.new.json", templates)
+# templates = []
+# t_xml = read_xml("rare_templates_flat.xml")
+# _xml_root = t_xml.getroot()
+# for v1_item in _xml_root:
+    # item = load_item_from_xml(v1_item.text.replace(char2013,'-'))
+    # item.pop("id")
+    # item.pop("Rarity")
+    # templates.append(item)
+# write_json("../src/data/rare_templates.new.json", templates)

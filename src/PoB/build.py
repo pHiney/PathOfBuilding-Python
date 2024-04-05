@@ -52,7 +52,7 @@ class Build:
     def __init__(self, _settings: Settings, _win: Ui_MainWindow) -> None:
         self.settings = _settings
         self.win = _win
-        self.tr = self.settings.app.tr
+        self.tr = self.settings._app.tr
         self._name = "Default"
         self.filename = ""
         self.search_text = ""
@@ -429,7 +429,7 @@ class Build:
         Load a build. Use new() as a common function.
 
         :param filename: str: XML file to load.
-        :return: N/A
+        :return: bool: True if successful
         """
         if type(filename) is Path or type(filename) is WindowsPath:
             filename = filename.name
@@ -448,10 +448,11 @@ class Build:
                     self.tr("Close"),
                 )
             self.new(_build_pob)
-            return
+            return False
 
         self.filename = filename
         self.name = Path(Path(filename).name).stem
+        return True
 
     def save(self):
         """

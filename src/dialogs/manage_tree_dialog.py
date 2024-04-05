@@ -175,7 +175,7 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
     def new_spec(self):
         """Add a new empty tree to the list"""
         # print("new_spec")
-        dlg = NewTreePopup(self.settings.app.tr, self.win)
+        dlg = NewTreePopup(self.settings._app.tr, self.win)
         _return = dlg.exec()
         new_name = dlg.lineedit_name.text()
         version = dlg.combo_tree_version.currentData()
@@ -288,7 +288,7 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
 
         :return: N/A
         """
-        dlg = ImportTreePopup(self.settings.app.tr, "", self.win)
+        dlg = ImportTreePopup(self.settings._app.tr, "", self.win)
         _return = dlg.exec()
         if _return:
             new_spec = self.add_spec(dlg.spec_name)
@@ -300,6 +300,6 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
     # def export_tree(self):
     #     """Export the current nodes as a URL"""
     #     url = self.build.current_spec.export_nodes_to_url()
-    #     dlg = ExportTreePopup(self.settings.app.tr, url, self.win)
+    #     dlg = ExportTreePopup(self.settings._app.tr, url, self.win)
     #     # we don't care about how the user exits
     #     dlg.exec()
