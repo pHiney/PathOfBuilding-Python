@@ -1192,7 +1192,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Don't keep calculating as a build is loaded
             return
         self.config_ui.save()
-        self.player.calc_stats(self.items_ui.item_list_active_items())
+        self.player.calc_stats(self.items_ui.itemset_list_active_items())
         self.textedit_Statistics.clear()
         just_added_blank = False  # Prevent duplicate blank lines. Faster than investigating the last line added of a QLineEdit.
         for stat_name in player_stats_list:
