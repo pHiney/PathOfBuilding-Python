@@ -2,7 +2,7 @@ Parts of this install have a depenceny on libraries from Microsoft Visual C++ Re
 If you get an error "MSVCP140.dll missing",  see bottom of this document for how to source the required files
 
 Python 3.11
-Download https://www.python.org/ftp/python/3.11.8/python-3.11.8-embed-amd64.zip
+Download https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip
 Extract it somewhere you can find it again. EG: c:\Python311
 
 Add this location to your path, in Win10/11 this has been buried in settings, so maybe use powershell (option 1):
@@ -21,9 +21,10 @@ EG:
 	C:\Python311\Scripts\
 
 Open a command prompt and change directory to where you cloned PathofBuilding
+Jump to "upgrade pip"
 
-Python 3.12
-Download https://www.python.org/ftp/python/3.12.2/python-3.12.2-amd64.exe
+Python 3.12 -- Developer test only. Nuitka doesn't support python versions >3.11
+Download https://www.python.org/ftp/python/3.12.2/python-3.12.2-embed-amd64.zip
 Extract it somewhere you can find it again. EG: c:\Python312
 Follow path instructions above substituting the correct directory.
 
@@ -42,11 +43,28 @@ poetry install
 	Package operations: 22 installs, 0 updates, 0 removals
 	...
 
-- Switch to the virtual environment
-poetry shell
+For the first time install, run devel_run.cmd, to make sure the .ui files get imported.
 
-- Run pob2
-run.bat
+After that, using your IDE (pyCharm, vscode, etc)
+
+Without a IDE
+--------------
+Option 1)
+	Keep using devel_run.cmd
+
+Option 2)
+	- Switch to the virtual environment
+	poetry shell
+
+	- Run pyPoB
+	python PathOfBuilding.py
+
+
+Making an .exe
+--------------
+Run scripts\make_exe.cmd
+The .exe will be in the current directory
+Copy the .exe to a new location so the development files don't interfere (I'm pretty certain they don't, but ...)
 
 
 MSVCP140.dll missing

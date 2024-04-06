@@ -25,7 +25,7 @@ tree_versions = {
     "3_23": "3.23",
     "3_24": "3.24",
 }
-_VERSION_str = "3_23"
+_VERSION_str = "3_24"
 _VERSION = tree_versions[_VERSION_str]
 default_view_mode = "TREE"
 # default_view_mode = "ITEMS"

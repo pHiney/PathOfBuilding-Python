@@ -298,11 +298,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings.pob_debug = False
             # Use this code to signal the splash screen removal.
             splash_filenames = glob.glob(f"{tempfile.gettempdir()}/onefile_*_splash_feedback.tmp")
-            if splash_filenames:
-                for filename in splash_filenames:
-                    if self.settings.pob_debug:
-                        print("Splash found: ", filename)
-                    os.unlink(filename)
+            for filename in splash_filenames:  # splash_filenames is a [list]
+                if self.settings.pob_debug:
+                    print("Splash found: ", filename)
+                os.unlink(filename)
 
     # init
 
@@ -699,7 +698,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.alerting = True
         # self.do_calcs()
         self.build.save()
-        save_to_xml("test.xml", self.build.json)
+        # save_to_xml("test.xml", self.build.json)
 
     @Slot()
     def build_save(self):

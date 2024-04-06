@@ -677,7 +677,7 @@ def load_from_xml(filename_or_xml):
     if type(xml_items["Item"]) is dict:  # list or dict if only one
         xml_items["Item"] = [xml_items["Item"]]
     for xml_item in xml_items["Item"]:
-        json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item["#text"], xml_item.get("@id", 0)))
+        json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item["#text"], int(xml_item.get("@id", "0"))))
     # ItemSets
     json_PoB["Items"]["ItemSets"].clear()  # get rid of the default itemset
     if type(xml_items["ItemSet"]) is dict:  # list or dict if only one

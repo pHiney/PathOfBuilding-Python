@@ -626,7 +626,7 @@ class Build:
         """
         # print("build.copy_spec")
         new_spec = deepcopy(self.specs[source].spec)
-        return self.new_spec("", new_spec, destination)
+        return self.new_spec("", new_spec["treeVersion"], new_spec, destination)
 
     def convert_spec(self, source, destination):
         """

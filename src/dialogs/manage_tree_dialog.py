@@ -3,6 +3,7 @@ Import dialog
 
 Open a dialog for importing a character.
 """
+
 from copy import deepcopy
 
 from PySide6.QtCore import Qt, Slot
