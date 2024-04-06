@@ -450,6 +450,10 @@ class Build:
             self.new(_build_pob)
             return False
 
+        self.last_account_hash = self.json_import_field["lastAccountHash"]
+        self.last_character_hash = self.json_import_field["lastCharacterHash"]
+        self.last_realm = self.json_import_field["lastRealm"]
+        self.last_league = self.json_import_field["lastLeague"]
         self.filename = filename
         self.name = Path(Path(filename).name).stem
         return True
@@ -476,23 +480,6 @@ class Build:
     def save_to_json(self):
         self.save()
         write_json(self.filename, self.json)
-
-        # def save_to_xml(self):
-        #     """
-        #     Save the build to the filename recorded in the build Class
-        #     :param:version: str. 1 for version 1 xml data,  2 for updated.
-        #     :return: N/A
-        #     """
-        #     self.xml_import_field.set("lastAccountHash", self.last_account_hash)
-        #     self.xml_import_field.set("lastCharacterHash", self.last_character_hash)
-        #     self.xml_import_field.set("lastRealm", self.last_realm)
-        #     self.xml_import_field.set("lastLeague", self.last_league)
-        #     for spec in self.specs:
-        #         # ToDo: Need to find sockets parent, clear it and append save's output
-        #         spec.save(True)
-        #     # ensure these get updated to match last tree shown.
-        #     self.className = self.current_spec.classId_str()
-        #     self.ascendClassName = self.current_spec.ascendClassId_str()
 
     def ask_for_save_if_modified(self):
         """

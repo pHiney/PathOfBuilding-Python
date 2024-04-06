@@ -23,7 +23,6 @@ from dialogs.craft_items_dialog import CraftItemsDlg
 from dialogs.itemsets_dialog import ManageItemsDlg
 from widgets.item_slot_ui import ItemSlotUI
 from dialogs.popup_dialogs import yes_no_dialog
-from widgets.ui_utils import set_combo_index_by_text
 
 # Classes of items that can be pasted in from in game/Trade site
 import_classes = (
@@ -794,24 +793,26 @@ class ItemsUI:
     @Slot()
     def define_item_labels(self, item=None):
         """
-        ToDo: Set item labels based on what set they are in and what set is active
-        :return:
+        Change listItems' items to include what itemset they are in, but don't list the current subset's name.
+
+        :return: N/A
         """
-        # active_items = item is None and self.itemset_list_active_items() or item
         lwis = [self.win.list_Items.item(x) for x in range(self.win.list_Items.count())]
+        if self.current_itemset is None:  # pretty much can't happen
+            return
+        curr_itemset_name = self.current_itemset["title"]
         ids_by_itemset = {}
         for itemset in self.itemsets:
             ids_by_itemset[itemset["title"]] = set(sorted([itemset["Slots"][item]["itemId"] for item in itemset["Slots"]]))
-            # print(ids_by_itemset)
         for lwi in lwis:
             _item = lwi.data(Qt.UserRole)
-            subset_names = [key for key in ids_by_itemset if _item.id in ids_by_itemset[key]]
+            subset_names = [key for key in ids_by_itemset if key != curr_itemset_name and _item.id in ids_by_itemset[key]]
             if subset_names:
                 items_subset_names = ", ".join(f'"{w}"' for w in subset_names)
-                # print(f"{_item.name}, subset_names={items_subset_names}")
-                lwi.setText(
-                    f"{html_colour_text(_item.rarity, _item.name)}{html_colour_text(self.settings.qss_default_text, f' Used in ({items_subset_names})')}"
-                )
+                tag = f"\tUsed in ({items_subset_names})"
+            else:
+                tag = "\tUnused"
+            lwi.setText(f"<pre>{html_colour_text(_item.rarity, _item.name)}{html_colour_text('DARKGRAY', tag)}</pre>")
 
     @Slot()
     def item_list_on_row_changed(self, item):
@@ -867,13 +868,11 @@ class ItemsUI:
             self.itemlist_by_id[dlg.original_item.id] = dlg.original_item
             lwi.setData(Qt.UserRole, dlg.original_item)
 
-    @Slot(name="item_list_delete_item")
+    @Slot()
     def item_list_delete_item(self):
         """Delete an item from list_Items (list on the right)."""
         # print(f"item_list_delete_item: {len(self.win.list_Items.selectedItems())=}")
         # Multi-select is not enabled, so it can't have more than one. Using 'for' removes the need for an 'if item selected'
-        self.define_item_labels()
-        return
         for lwi in self.win.list_Items.selectedItems():
             _item = lwi.data(Qt.UserRole)
             if yes_no_dialog(
@@ -922,6 +921,15 @@ class ItemsUI:
             self.slot_ui_add_item(dlg.item)
         else:
             print(f"Discarded: {dlg.item.name}")
+
+    # def set_list_items_size_hint(self):
+    # Keeping it for stamps. Maybe something will need it
+    #     return
+    #     _list = self.win.list_Items
+    #     _list.setFixedSize(
+    #         min(_list.sizeHintForColumn(0) + _list.frameWidth() * 2, 600),
+    #         min(_list.sizeHintForRow(0) * _list.count() + 2 * _list.frameWidth(), 890),
+    #     )
 
     def show_itemset(self, itemset_num, initial=False):
         """
@@ -994,6 +1002,7 @@ class ItemsUI:
                 # Have a guess at what could be - used for imports
                 for slot_name in self.item_slot_ui_list:
                     self.item_slot_ui_list[slot_name].set_default_item()
+        self.define_item_labels()
 
     def new_itemset(self, itemset_name="Default"):
         """

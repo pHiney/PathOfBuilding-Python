@@ -95,9 +95,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.max_points = 123
         self.settings = Settings(self, _app)
-        self.resize(self.settings.size)
 
         self.setupUi(self)
+        self.resize(self.settings.size)
         self.last_messages = []
 
         atexit.register(self.exit_handler)
@@ -1089,8 +1089,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # each line is a colon separated of socket group label and gem list
         current_index = self.combo_MainSkill.currentIndex()
         for line in _list:
-            _label, _gem_list = line.split(":")
+            _label, _gem_list = line.split("^^^")
             self.combo_MainSkill.addItem(_label, _gem_list)
+            # self.combo_MainSkill.addItem(line)
         self.combo_MainSkill.view().setMinimumWidth(self.combo_MainSkill.minimumSizeHint().width())
         # In case the new list is shorter or empty
         current_index = min(max(0, current_index), len(_list))
