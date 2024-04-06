@@ -212,7 +212,7 @@ class Item:
             self.pob_item.pop("corrupted", False)
 
     @property
-    def current_variant(self):
+    def current_variant(self) -> int:
         """variants are numbered from 1, so 0 is no selection."""
         return self.pob_item.get("Selected Variant", 0)
 
@@ -233,7 +233,7 @@ class Item:
         return html_colour_text(self.rarity_colour, f"{self.name}")
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self._type
 
     @type.setter
@@ -243,7 +243,7 @@ class Item:
         # Fill slot list
 
     @property
-    def slot(self):
+    def slot(self) -> str:
         return self._slot
 
     @slot.setter

@@ -95,9 +95,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.max_points = 123
         self.settings = Settings(self, _app)
-        self.resize(self.settings.size)
 
         self.setupUi(self)
+        self.resize(self.settings.size)
         self.last_messages = []
 
         atexit.register(self.exit_handler)
@@ -298,11 +298,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.settings.pob_debug = False
             # Use this code to signal the splash screen removal.
             splash_filenames = glob.glob(f"{tempfile.gettempdir()}/onefile_*_splash_feedback.tmp")
-            if splash_filenames:
-                for filename in splash_filenames:
-                    if self.settings.pob_debug:
-                        print("Splash found: ", filename)
-                    os.unlink(filename)
+            for filename in splash_filenames:  # splash_filenames is a [list]
+                if self.settings.pob_debug:
+                    print("Splash found: ", filename)
+                os.unlink(filename)
 
     # init
 
@@ -699,7 +698,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.alerting = True
         # self.do_calcs()
         self.build.save()
-        save_to_xml("test.xml", self.build.json)
+        # save_to_xml("test.xml", self.build.json)
 
     @Slot()
     def build_save(self):
@@ -1090,8 +1089,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # each line is a colon separated of socket group label and gem list
         current_index = self.combo_MainSkill.currentIndex()
         for line in _list:
-            _label, _gem_list = line.split(":")
+            _label, _gem_list = line.split("^^^")
             self.combo_MainSkill.addItem(_label, _gem_list)
+            # self.combo_MainSkill.addItem(line)
         self.combo_MainSkill.view().setMinimumWidth(self.combo_MainSkill.minimumSizeHint().width())
         # In case the new list is shorter or empty
         current_index = min(max(0, current_index), len(_list))
@@ -1192,7 +1192,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Don't keep calculating as a build is loaded
             return
         self.config_ui.save()
-        self.player.calc_stats(self.items_ui.item_list_active_items())
+        self.player.calc_stats(self.items_ui.itemset_list_active_items())
         self.textedit_Statistics.clear()
         just_added_blank = False  # Prevent duplicate blank lines. Faster than investigating the last line added of a QLineEdit.
         for stat_name in player_stats_list:

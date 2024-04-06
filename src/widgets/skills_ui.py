@@ -673,8 +673,8 @@ class SkillsUI:
         sg_idx = self.current_skill_set["SGroups"].index(group)
         active = self.win.combo_MainSkill.currentIndex() == sg_idx and enabled
 
-        # get a copy of the label with out all the extra information or colours
-        item.setWhatsThis(f"{_label}:{_gem_list}")
+        # get a copy of the label with out all the extra information or colours.  Was using : but content providers use it.
+        item.setWhatsThis(f"{_label}^^^{_gem_list}")
 
         _label += (
             f"{not enabled and ' Disabled' or ''}"

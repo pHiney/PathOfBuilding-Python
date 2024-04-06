@@ -326,9 +326,7 @@ class Settings(PoBDict):
         :returns: a QSize(width, height)
         """
         width = max(self.width, 800)
-        # width = width < 800 and 800 or width
         height = max(self.height, 600)
-        # height = height < 600 and 600 or height
         srw = self._screen_rect.width()
         if width > srw:
             print(f"Width: {width} is bigger than screen: {srw}. Correcting ...")

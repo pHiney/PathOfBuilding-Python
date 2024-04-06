@@ -271,7 +271,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <string notr="true"/>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>2</number>
            </property>
            <widget class="QWidget" name="tab_Tree">
             <property name="minimumSize">
@@ -1059,8 +1059,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1010</width>
-                  <height>808</height>
+                  <width>1146</width>
+                  <height>792</height>
                  </rect>
                 </property>
                 <property name="maximumSize">
@@ -1426,8 +1426,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                            <rect>
                             <x>0</x>
                             <y>0</y>
-                            <width>98</width>
-                            <height>28</height>
+                            <width>362</width>
+                            <height>150</height>
                            </rect>
                           </property>
                           <layout class="QVBoxLayout" name="layout_SocketedJewels">
@@ -1564,26 +1564,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <property name="minimumSize">
                        <size>
                         <width>400</width>
-                        <height>0</height>
+                        <height>600</height>
                        </size>
                       </property>
                       <property name="maximumSize">
                        <size>
-                        <width>16777215</width>
+                        <width>600</width>
                         <height>890</height>
                        </size>
                       </property>
                       <property name="acceptDrops">
                        <bool>true</bool>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">QListWidget::item:selected{background:#2c3e50;}</string>
-                      </property>
-                      <property name="horizontalScrollBarPolicy">
-                       <enum>Qt::ScrollBarAsNeeded</enum>
-                      </property>
-                      <property name="sizeAdjustPolicy">
-                       <enum>QAbstractScrollArea::AdjustToContents</enum>
                       </property>
                       <property name="editTriggers">
                        <set>QAbstractItemView::DoubleClicked</set>
@@ -1592,31 +1583,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <bool>true</bool>
                       </property>
                       <property name="dragDropMode">
-                       <enum>QAbstractItemView::InternalMove</enum>
+                       <enum>QAbstractItemView::DropOnly</enum>
                       </property>
                       <property name="defaultDropAction">
                        <enum>Qt::MoveAction</enum>
                       </property>
                       <property name="alternatingRowColors">
                        <bool>false</bool>
-                      </property>
-                      <property name="horizontalScrollMode">
-                       <enum>QAbstractItemView::ScrollPerPixel</enum>
-                      </property>
-                      <property name="movement">
-                       <enum>QListView::Free</enum>
-                      </property>
-                      <property name="resizeMode">
-                       <enum>QListView::Adjust</enum>
-                      </property>
-                      <property name="spacing">
-                       <number>0</number>
-                      </property>
-                      <property name="uniformItemSizes">
-                       <bool>true</bool>
-                      </property>
-                      <property name="selectionRectVisible">
-                       <bool>true</bool>
                       </property>
                      </widget>
                     </item>
