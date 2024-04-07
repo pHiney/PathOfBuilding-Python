@@ -380,6 +380,21 @@ pantheon_minor_gods = {
 
 quality_id = {"Anomalous": "Alternate1", "Divergent": "Alternate2", "Phantasmal": "Alternate3"}
 
+weapon_classes = (
+    "Bow",
+    "Claw",
+    "Dagger",
+    "One Handed Axe",
+    "One Handed Mace",
+    "One Handed Sword",
+    "Sceptre",
+    "Staff",
+    "Two Handed Axe",
+    "Two Handed Mace",
+    "Two Handed Sword",
+    "Wand",
+)
+
 
 class Layers(enum.IntEnum):
     backgrounds = -4

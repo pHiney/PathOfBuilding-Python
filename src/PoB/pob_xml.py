@@ -339,7 +339,7 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
                 line = lines.pop(0)
             json_item["base_name"] = "variant"
         else:
-            json_item["base_name"] = line
+            json_item["base_name"] = line.replace("Maelstrom", "Maelström")
 
     if debug_lines:
         print("a", len(lines), lines)

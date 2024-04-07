@@ -6,7 +6,17 @@ from copy import deepcopy
 import math
 import re
 
-from PoB.constants import ColourCodes, bad_text, empty_item_dict, influencers, influence_colours, pob_debug, slot_map, slot_names
+from PoB.constants import (
+    ColourCodes,
+    bad_text,
+    empty_item_dict,
+    influencers,
+    influence_colours,
+    pob_debug,
+    slot_map,
+    slot_names,
+    weapon_classes,
+)
 from PoB.settings import Settings
 from PoB.mod import Mod
 from PoB.utils import _debug, html_colour_text, index_exists, str_to_bool, bool_to_str
@@ -29,9 +39,10 @@ class Item:
         # This item's entry from base_items
         self.base_item = None
         self.name = ""  # Combination of title and base_name
-        self._type = ""  # or item_class - eg weapon
-        self.sub_type = ""  # or item_class - eg claw
-        self.active = False  # is this the item that is currently chosen/shown in the dropdown ?
+        self.type = ""
+        self.sub_type = ""  # Evasion/Energy Shield, Armour, Utility, Talisman, etc. Or weapon type for weapons
+        self.weapon_sub_type = ""  # Rune, Thrusting, Warstaff
+        self.active = False  # Is this the item that is currently chosen/shown in the dropdown ?
         self.pob_item = deepcopy(empty_item_dict)
         self.variants = self.pob_item.setdefault("Variants", [])
         # list of things like evasion=100 ilevel=44
@@ -92,10 +103,12 @@ class Item:
         self.base_tooltip_text = ""
 
         # special dictionary/list for the rare template items that get imported into a build
-        self.crafted_item = {"Prefix": [], "Sufffix": []}
+        self.crafted_item = {"Prefix": [], "Suffix": []}
         self.alt_variants = {}
 
         self.rarity_colour = ""
+        self.grants_skill = []
+        self.grants_skill_level = []
 
     @property
     def id(self) -> int:
@@ -121,8 +134,15 @@ class Item:
         self.base_item = self.base_items.get(new_value, None)
         if self.base_item is not None:
             self.type = self.base_item["type"]
-            self.sub_type = self.base_item["sub-type"]
-            self.two_hand = "twohand" in self.base_item["tags"]
+            self.sub_type = self.base_item.get("subType", "")
+            # setup weapon's subType
+            if self.type in weapon_classes:
+                if self.sub_type != "":
+                    self.weapon_sub_type = self.sub_type
+                self.sub_type = self.type
+                self.type = "Weapon"
+                self.two_hand = "twohand" in self.base_item["tags"]
+
             # check for any extra requires. Just attributes for now.
             reqs = self.base_item.get("requirements", None)
             if reqs:
@@ -133,9 +153,9 @@ class Item:
                             # don't overwrite a current value
                             if self.requires.get(tag, bad_text) == bad_text and val != bad_text and val != 0:
                                 self.requires[tag] = val
-        elif "Flask" in new_value:
-            self.type = "Flask"
-            self.sub_type = "Flask"
+        # elif "Flask" in new_value:
+        #     self.type = "Flask"
+        #     self.sub_type = "Flask"
 
         match self.type:
             case "Shield":
@@ -231,16 +251,6 @@ class Item:
     @property
     def coloured_text(self) -> str:
         return html_colour_text(self.rarity_colour, f"{self.name}")
-
-    @property
-    def type(self) -> str:
-        return self._type
-
-    @type.setter
-    def type(self, new_type):
-        """Fill slot list based on type"""
-        self._type = new_type
-        # Fill slot list
 
     @property
     def slot(self) -> str:
@@ -577,12 +587,17 @@ class Item:
             mod = Mod(self.settings, line)
             self.full_explicitMods_list.append(mod)
             # check for variants and if it's our variant, add it to the smaller explicit mod list
-            if "variant" in line:
-                m = re.search(r"{variant: ?([\d,]+)}(.*)", line)
-                if str(self.current_variant) in m.group(1).split(","):
+            if self.current_variant != 0 and "variant" in line:
+                v = re.search(r"{variant: ?([\d,]+)}(.*)", line)
+                if str(self.current_variant) in v.group(1).split(","):
                     self.explicitMods.append(mod)
             else:
                 self.explicitMods.append(mod)
+            g = re.search(r"Grants Level (\d+) (.*) Skill", line)
+            if g:
+                self.grants_skill_level.append(int(g.group(1)))
+                self.grants_skill.append(g.group(2))
+        # print(f"{self.title}, {self.grants_skill}, {self.grants_skill_level}, {self.current_variant=}")
 
         # mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods if mod.line_with_range
         self.all_stats = [mod for mod in self.implicitMods + self.explicitMods if mod.line_with_range]
@@ -848,8 +863,12 @@ class Item:
             stats += f"Evasion Rating: {self.evasion}<br/>"
         if self.energy_shield:
             stats += f"Energy Shield: {self.energy_shield}<br/>"
-        if self.type == "Weapon":
+        if self.sub_type:
+            # print(f"{self.type}, {self.sub_type}")
             stats += f"{self.sub_type}<br/>"
+        # if self.type in weapon_classes:
+        #     print(f"{self.type}, {self.sub_type}")
+        #     stats += f"{self.type}<br/>"
         if self.quality != 0:
             stats += f"Quality: {self.quality}%<br/>"
         if self.sockets != "":

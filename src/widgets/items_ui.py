@@ -20,7 +20,7 @@ from PoB.item import Item
 from PoB.pob_file import read_json
 from PoB.utils import _debug, html_colour_text, print_call_stack
 from dialogs.craft_items_dialog import CraftItemsDlg
-from dialogs.itemsets_dialog import ManageItemsDlg
+from dialogs.itemsets_dialog import ManageItemsetDlg
 from widgets.item_slot_ui import ItemSlotUI
 from dialogs.popup_dialogs import yes_no_dialog
 
@@ -805,13 +805,22 @@ class ItemsUI:
         for itemset in self.itemsets:
             ids_by_itemset[itemset["title"]] = set(sorted([itemset["Slots"][item]["itemId"] for item in itemset["Slots"]]))
         for lwi in lwis:
-            _item = lwi.data(Qt.UserRole)
+            _item: Item = lwi.data(Qt.UserRole)
             subset_names = [key for key in ids_by_itemset if key != curr_itemset_name and _item.id in ids_by_itemset[key]]
-            if subset_names:
-                items_subset_names = ", ".join(f'"{w}"' for w in subset_names)
-                tag = f"\tUsed in ({items_subset_names})"
+            all_subset_names = [key for key in ids_by_itemset if _item.id in ids_by_itemset[key]]
+            tag = ""
+            # print(f" 1 {_item.name}: {_item.two_hand}")
+            if all_subset_names:
+                if curr_itemset_name in all_subset_names:
+                    all_subset_names.remove(curr_itemset_name)
+                # print(f" 2 {_item.name}: {all_subset_names}")
+                if all_subset_names:
+                    # print(f" 3 {_item.name}: {all_subset_names}")
+                    items_subset_names = ", ".join(f'"{w}"' for w in subset_names)
+                    tag = f"\t(Used in {items_subset_names})"
             else:
-                tag = "\tUnused"
+                tag = "\t(Unused)"
+                # tag = all_subset_names == [curr_itemset_name] and "" or "\tUnused"
             lwi.setText(f"<pre>{html_colour_text(_item.rarity, _item.name)}{html_colour_text('DARKGRAY', tag)}</pre>")
 
     @Slot()
@@ -1124,7 +1133,7 @@ class ItemsUI:
         """
         # Ctrl-M (from MainWindow) won't know if there is another window open, so stop opening another instance.
         if self.dlg is None:
-            self.dlg = ManageItemsDlg(self.settings, self, self.win)
+            self.dlg = ManageItemsetDlg(self.settings, self, self.win)
             self.dlg.exec()
             self.dlg = None
 

@@ -72,6 +72,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         btn_reset = self.btnBox.button(QDialogButtonBox.Reset)
         btn_reset.clicked.connect(self.reset)
 
+        self.variants = False
         self.max_num_sockets = 0
         self.socket_widgets = [  # 0 based array
             self.combo_Socket1,
@@ -141,10 +142,10 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             for c_idx in range(max(self.max_num_sockets, 1), len(self.connector_widgets)):
                 self.connector_widgets[c_idx].setHidden(True)
 
-        print(len(self.item.variant_names))
-        variants = len(self.item.variant_names) != 1
-        self.combo_Variants1.setVisible(variants)
-        self.label_Variants1.setVisible(variants)
+        # print(len(f"{self.item.variant_names=}"))
+        self.variants = len(self.item.variant_names) != 1
+        self.combo_Variants1.setVisible(self.variants)
+        self.label_Variants1.setVisible(self.variants)
         self.combo_Variants2.setVisible(False)
         self.label_Variants2.setVisible(False)
         self.combo_Variants3.setVisible(False)
@@ -164,7 +165,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
                     case "R" | "G" | "B" | "W" | "A":
                         set_combo_index_by_text(self.socket_widgets[idx], socket)
 
-        if variants:
+        if self.variants:
             curr_variant = self.item.current_variant == 0 and self.combo_Variants1.count() or self.item.current_variant
             self.combo_Variants1.setCurrentIndex(curr_variant - 1)
         self.label_Item.setText(self.item.tooltip())
@@ -306,6 +307,10 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         :return: N/A
         """
         self.item.sockets = self.sockets
+        if self.variants:
+            curr_variant = self.item.current_variant == 0 and self.combo_Variants1.count() or self.item.current_variant
+            self.combo_Variants1.setCurrentIndex(curr_variant - 1)
+        self.item.current_variant = self.combo_Variants1.currentIndex() + 1
         self.accept()
 
     @Slot()

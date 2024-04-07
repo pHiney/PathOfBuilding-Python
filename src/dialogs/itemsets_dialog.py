@@ -17,7 +17,7 @@ from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgManageItems import Ui_ManageItemSet
 
 
-class ManageItemsDlg(Ui_ManageItemSet, QDialog):
+class ManageItemsetDlg(Ui_ManageItemSet, QDialog):
     """ManageItemSets dialog"""
 
     def __init__(self, _settings: Settings, _item_ui, _win: Ui_MainWindow = None):
@@ -89,7 +89,7 @@ class ManageItemsDlg(Ui_ManageItemSet, QDialog):
                 event.ignore()
         else:
             event.ignore()
-        super(ManageItemsDlg, self).keyPressEvent(event)
+        super(ManageItemsetDlg, self).keyPressEvent(event)
 
     def connect_triggers(self):
         if self.triggers_connected:
