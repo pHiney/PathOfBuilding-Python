@@ -1,0 +1,96 @@
+Clone the 'dev' branch of luaPoB
+
+open <dir>\src\Modules\Main.lua
+Paste the following in at line 26 (following the last LoadModule and in front of '--[[if launch.devMode then')
+Save and run PoB
+Close PoB and you will find the saved .json files in <dir>\src\Data. Do not attempt to create other directories as PoB will crash.
+Copy/Move the json files to the pyPoB <dir>\scripts\lua_json directory
+Remove the lines from Main.lua and save.
+  This procedure can be run on the live PoB also. As you have changed Main.lua, it will want to repair that.
+  Accept the update to remove this code.
+
+-- --------snip--------
+local json = require "dkjson"
+
+-- ################### tables that don't require alteration ###################
+local str = json.encode (SkillType, { indent = true })
+local f = io.open('Data/SkillType.json', 'w')
+f:write(str)
+f:close()
+
+local str = json.encode(data.costs, { indent = true })
+local f = io.open('Data/costs.json', 'w')
+f:write(str)
+f:close()
+
+local str = json.encode(data.itemBases, { indent = true })
+local f = io.open('Data/item_bases.json', 'w')
+f:write(str)
+f:close()
+
+table.sort(data.uniques, sort_alphabetical)
+local str = json.encode(data.uniques, { indent = true })
+local f = io.open('Data/uniques.json', 'w')
+f:write(str)
+f:close()
+
+
+depth = 1
+# Recursive copy Table function that removes 'function' -> which breaks json
+# This also allow for us to alter the datawithout crashing PoB
+function copyTable(datatable)
+  local tblRes={}
+  if type(datatable)=="table" then
+    for k,v in pairs(datatable) do 
+      if depth >= 10 then
+      else
+        depth = depth + 1
+        tblRes[k]=copyTable(v) 
+        depth = depth - 1
+      end
+    end
+  else
+    tblRes=datatable
+  end
+  return tblRes
+end
+
+-- ################### hidden skills ###################
+local skillNames = {}
+local hiddenSkills = {}
+for name, gem in pairs(data.skills) do
+	if string.find(gem.id, "ABTT") or string.find(gem.id, "Atlas") or string.find(gem.id, "Azmeri") or string.find(gem.id, "Atziri") then
+	else
+		t_insert(skillNames, {name = gem.id})
+		if gem.hidden then
+			gem.variantId = gem.id
+			new_gem = copyTable(gem)
+			new_gem.statMap._grantedEffect = nil
+			t_insert(hiddenSkills, {[name] = new_gem})
+		end
+	end
+end
+
+local str = json.encode(hiddenSkills, { indent = true })
+local f = io.open('Data/hiddenSkills.json', 'w')
+f:write(str)
+f:close()
+
+-- ################### data.gems ###################
+local playerSkills = {}
+for name, gem in pairs(data.gems) do
+	new_gem = copyTable(gem)
+	new_gem.grantedEffect.statMap._grantedEffect = nil
+	new_gem.grantedEffectList = nil
+	if new_gem.secondaryGrantedEffect then new_gem.secondaryGrantedEffect.statMap._grantedEffect = nil end
+	t_insert(playerSkills, {[name] = new_gem})
+	-- t_insert(playerSkills, {new_gem})
+end
+
+-- local str = json.encode(data.gems, { indent = true })
+local str = json.encode(playerSkills, { indent = true })
+local f = io.open('Data/lua_gems.json', 'w')
+f:write(str)
+f:close()
+
+-- --------snip--------
