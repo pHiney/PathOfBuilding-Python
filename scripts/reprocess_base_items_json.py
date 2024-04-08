@@ -83,13 +83,21 @@ for item_id in sorted(base_items_json):
             initial_sockets = "RGBRGB"
             item["initial_sockets"] = "-".join([char for char in initial_sockets[:socket_number]])
 
+    # Titlecase req's keys to match the program's Requires
+    new_reqs = {}
+    old_reqs = item.get("req", {})
+    if old_reqs:
+        for req, value in old_reqs.items():
+            new_reqs[req.title()] = value
+    item["req"] = new_reqs  # always overwrite. empty req's in original files are list(). This makes them dict in all circumstances.
+
     item_tags = [tag for tag in item.get("tags", {}).keys() if tag != "default"]
     if item_tags:
         item["tags"] = item_tags
 
     # Add item to our dictionary
     # Fix Data Inconsistency. Display the umlaut. Will there be others ?
-    base_items[item_id.replace("Maelstrom", "Maelström")] = item
+    base_items[item_id.replace("Maelstrom", "Maelstr\u00f6m")] = item
 
 write_json("base_items_new.json", base_items)
 write_json("../src/data/base_items.new.json", base_items)

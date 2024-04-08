@@ -138,17 +138,17 @@ class Item:
             # setup weapon's subType
             if self.type in weapon_classes:
                 if self.sub_type != "":
-                    self.weapon_sub_type = self.sub_type
+                    self.weapon_sub_type = self.sub_type  # This will be something like "Thrusting"
                 self.sub_type = self.type
                 self.type = "Weapon"
                 self.two_hand = "twohand" in self.base_item["tags"]
 
             # check for any extra requires. Just attributes for now.
-            reqs = self.base_item.get("requirements", None)
+            reqs = self.base_item.get("req", None)
             if reqs:
                 for tag in reqs:
                     match tag:
-                        case "Dex" | "Int" | "Str":
+                        case "Dex" | "Int" | "Str" | "Level":
                             val = reqs.get(tag, bad_text)
                             # don't overwrite a current value
                             if self.requires.get(tag, bad_text) == bad_text and val != bad_text and val != 0:

@@ -147,7 +147,7 @@ def read_xml_as_dict(filename):
     _fn = Path(filename)
     if _fn.exists():
         try:
-            with _fn.open("r") as xml_file:
+            with _fn.open("r", -1, "utf-8") as xml_file:
                 xml_content = xml_file.read()
                 _dict = xmltodict.parse(xml_content)
                 return _dict

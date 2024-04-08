@@ -93,7 +93,7 @@ def read_xml(filename):
     _fn = Path(filename)
     if _fn.exists():
         try:
-            with _fn.open("r") as xml_file:
+            with _fn.open("r", -1, "utf-8") as xml_file:
                 tree = ET.parse(xml_file)
                 return tree
         # parent of IOError, OSError *and* WindowsError where available
@@ -111,7 +111,7 @@ def write_xml(filename, _tree):
     """
     _fn = Path(filename)
     try:
-        with _fn.open("wb") as xml_file:
+        with _fn.open("w", -1, "utf-8") as xml_file:
             ET.indent(_tree, "\t")
             _tree.write(xml_file, encoding="utf-8", xml_declaration=True)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
@@ -339,7 +339,7 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
                 line = lines.pop(0)
             json_item["base_name"] = "variant"
         else:
-            json_item["base_name"] = line.replace("Maelstrom", "Maelström")
+            json_item["base_name"] = line.replace("Maelstrom", "Maelstr\u00f6m")
 
     if debug_lines:
         print("a", len(lines), lines)
