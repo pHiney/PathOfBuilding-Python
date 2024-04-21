@@ -551,9 +551,9 @@ class ItemsUI:
         # Abyssal sockets have the item name in front, so split it out. EG: 'Belt Abyssal Socket 1'
         if "Abyssal" in slot_name:
             socket_number = slot_name.split("Socket ")
-            slot_ui = ItemSlotUI(f"Abyssal #{socket_number[1]}", self.item_changed, True)
+            slot_ui = ItemSlotUI(f"Abyssal #{socket_number[1]}", self.item_changed, self.win, True)
         else:
-            slot_ui = ItemSlotUI(slot_name, self.item_changed, insert_after != "")
+            slot_ui = ItemSlotUI(slot_name, self.item_changed, self.win, insert_after != "")
         # Find which list we are adding these to, Items or Sockets
         layout = "Socket #" in slot_name and self.win.layout_SocketedJewels or self.win.layout_EquippedItems
         if insert_after != "":

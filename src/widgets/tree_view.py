@@ -145,9 +145,9 @@ class TreeView(QGraphicsView):
                     # elif g_item.node_type == "Socket":
                     #     del self.build.current_spec.sockets[g_item.node_id]
                     self.build.current_spec.nodes.remove(g_item.node_id)
+                    if g_item.node.grants_skill:
+                        self.win.remove_item_or_node_with_skills(f"Tree:{g_item.node_id}")
                 else:
-                    # current_tree_nodes = self.build.current_tree.nodes
-                    # node = current_tree_nodes[g_item.node_id]
                     node = g_item.node
                     # Check to see if node is connected to an active node
                     for node_id in node.nodes_out.union(node.nodes_in):
@@ -160,10 +160,10 @@ class TreeView(QGraphicsView):
                                 # ToDo: Do we need a popup to select a jewel ?
                                 self.build.current_spec.nodes.add(g_item.node_id)
                             else:
-                                print("mouseReleaseEvent", g_item.node_type)
+                                print(f"mouseReleaseEvent, {g_item.node_type=}")
                                 self.build.current_spec.nodes.add(g_item.node_id)
                                 if g_item.node.grants_skill:
-                                    self.win.equip_item_or_node_with_skills(g_item.node.grants_skill, f"Tree:{g_item.node_id}")
+                                    self.win.add_item_or_node_with_skills(g_item.node.grants_skill, f"Tree:{g_item.node_id}")
                             break
             elif event.button() == Qt.RightButton:
                 # look for Mastery and popup a dialog

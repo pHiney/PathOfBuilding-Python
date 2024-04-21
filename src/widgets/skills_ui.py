@@ -714,21 +714,34 @@ class SkillsUI:
     def delete_socket_group(self):
         """Delete a socket group"""
         # print("delete_socket_group")
-        self.disconnect_skill_triggers()
         if self.current_skill_set is not None and self.current_socket_group is not None:
-            idx = self.win.list_SocketGroups.currentRow()
+            self.remove_socket_group(self.current_socket_group)
+
+    def remove_socket_group(self, _sg):
+        """
+        Remove a socket group
+        :param _sg: dict: The group to be removed.
+        :return: N/A
+        """
+        # print(f"remove_socket_group: {_sg}")
+        try:
+            curr_row = self.win.list_SocketGroups.currentRow()
+            idx = _sg and self.current_skill_set["SGroups"].index(_sg) or curr_row
+            self.disconnect_skill_triggers()
             self.win.list_SocketGroups.takeItem(idx)
             del self.current_skill_set["SGroups"][idx]
-            if len(self.current_skill_set.findall("Skill")) == 0:
+            if len(self.current_skill_set) == 0:
                 # empty all skill/socket widgets
                 self.change_skill_set(-1)
-            else:
+            elif idx == curr_row:
                 self.connect_skill_triggers()
                 # Trigger the filling out of the RHS UI elements using change_socket_group -> load_socket_group
                 self.win.list_SocketGroups.setCurrentRow(min(idx, self.win.list_SocketGroups.count()))
-        self.update_socket_group_labels()
-        self.load_main_skill_combo()
-        self.connect_skill_triggers()
+            self.update_socket_group_labels()
+            self.load_main_skill_combo()
+            self.connect_skill_triggers()
+        except ValueError:
+            pass
 
     @Slot()
     def delete_all_socket_groups(self, prompt=True):
@@ -759,16 +772,22 @@ class SkillsUI:
     def new_socket_group(self):
         """Create a new socket group. Actions for when the new socket group button is pressed."""
         # print("new_socket_group")
-        # Add new group to xml and Socket Group list, and then show the update
+        self.add_socket_group()
+        # Trigger the filling out of the right hand side UI elements using change_socket_group -> load_socket_group
+        idx = len(self.current_skill_set) - 1
+        self.win.list_SocketGroups.setCurrentRow(idx)
+
+    def add_socket_group(self):
+        """
+        Create a new socket group.
+        return: Socket Group: dict:
+        """
         new_socket_group = deepcopy(empty_socket_group_dict)
         if self.current_skill_set is None:
             self.current_skill_set = self.new_skill_set()
         self.current_skill_set["SGroups"].append(new_socket_group)
-        idx = len(self.current_skill_set) - 1
         self.win.list_SocketGroups.addItem(self.define_socket_group_label(group=new_socket_group))
         self.update_socket_group_labels()
-        # Trigger the filling out of the right hand side UI elements using change_socket_group -> load_socket_group
-        self.win.list_SocketGroups.setCurrentRow(idx)
         return new_socket_group
 
     def clear_socket_group_settings(self):
@@ -1147,7 +1166,7 @@ class SkillsUI:
                     if this_group != current_socket_group_number:
                         self.check_socket_group_for_an_active_gem(current_socket_group)
                         current_socket_group_number = this_group
-                        current_socket_group = self.new_socket_group()
+                        current_socket_group = self.add_socket_group()
                         current_socket_group["slot"] = slot_map[item["inventoryId"]]
                     _gem = deepcopy(empty_gem_dict)
                     current_socket_group["Gems"].append(_gem)
@@ -1193,7 +1212,7 @@ class SkillsUI:
         self.delete_all_socket_groups(False)
 
         for json_group in json_skills["groups"]:
-            current_socket_group = self.new_socket_group()
+            current_socket_group = self.add_socket_group()
             _slot = json_group.get("equipmentSlot", "")
             if _slot != "":
                 current_socket_group["slot"] = slot_map[_slot.title()]

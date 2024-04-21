@@ -10,12 +10,11 @@ import sys
 import tempfile
 
 from typing import Union
-import xml.etree.ElementTree as ET
 from pathlib import Path
 import psutil
 
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtGui import QAction, QColor, QFont, QPalette
+from PySide6.QtGui import QAction, QColor, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -35,13 +34,11 @@ from PoB.constants import (
     bad_text,
     def_theme,
     empty_gem_dict,
-    empty_socket_group_dict,
     pantheon_major_gods,
     pantheon_minor_gods,
     player_stats_list,
     pob_debug,
     program_title,
-    qss_template,
     resistance_penalty,
 )
 
@@ -1227,38 +1224,43 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     )
                     just_added_blank = False
 
-    def equip_item_or_node_with_skills(self, source, source_text):
+    def add_item_or_node_with_skills(self, source, source_text):
         """
-        Add a skill from an equiped Item or assigned Node
+        Add a skill from an equiped Item or assigned Node. Only called from Items_UI() and TreeView()
         :param source: list: The Node() or Item()'s grants_skill param
         :param source_text: str: the text to go into the gem's source field
-        :return:
+        :return: N/A
         """
-        print(f"equip_item_or_node_with_skills: {type(source)}, {source=}, {source_text=}")
-        if source:
-            if len(source) > 1:
-                # Only an Item can have this, get the one that matches the variant
-                skill_name, level = "tba", 20
-            else:
-                skill_name, level = source[0]
+        # print(f"equip_item_or_node_with_skills: {type(source)}, {source=}, {source_text=}")
+        skill_name, level = source
+        found = [sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") == source_text]
+        skill = self.skills_ui.hidden_skills_by_name_or_id.get(skill_name, None)
+        # print(f"1. {found=}, {skill=}")
+        # Don't add if it's already there. Multiple Items of the same type might cause this ?? or just it's an error ?
+        if skill and not found:
+            # add gem
+            new_gem = deepcopy(empty_gem_dict)
+            new_gem["nameSpec"] = skill["name"]
+            new_gem["variantId"] = skill["variantId"]
+            new_gem["level"] = level
+            if skill.get("minionList", None):
+                new_gem["skillMinion"] = skill["minionList"][0]
+                new_gem["skillMinionSkillCalcs"] = 1
+                new_gem["skillMinionSkill"] = 1
+                new_gem["skillMinionCalcs"] = None
+            new_sg = self.skills_ui.add_socket_group()
+            new_sg["source"] = source_text
+            new_sg["Gems"] = [new_gem]
+            self.skills_ui.update_socket_group_labels()
 
-            print(f"equip_item_or_node_with_skills: {skill_name=}, {level=}")
-            if skill_name:
-                found = [sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") == source_text]
-                skill = self.skills_ui.hidden_skills_by_name_or_id.get(skill_name, None)
-                print(f"1. {found=}, {skill=}")
-                if not found and skill:
-                    print(f"2. {found=}")
-                    # add gem
-                    new_gem = deepcopy(empty_gem_dict)
-                    new_gem["nameSpec"] = skill["name"]
-                    new_gem["variantId"] = skill["variantId"]
-                    new_gem["level"] = level
-                    new_gem["skillMinion"] = skill["minionList"][0]
-                    new_gem["skillMinionSkillCalcs"] = 1
-                    new_gem["skillMinionSkill"] = 1
-                    new_gem["skillMinionCalcs"] = None
-                    new_sg = self.skills_ui.new_socket_group()
-                    new_sg["source"] = source_text
-                    new_sg["Gems"] = [new_gem]
-                    # load socket group or update socket labels ????
+    def remove_item_or_node_with_skills(self, source_text):
+        """
+        Add a skill from an equiped Item or assigned Node.
+        :param source_text: str: The text to go into the gem's source field.
+        :return: N/A
+        """
+        found = [sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") == source_text]
+        # print(f"remove_item_or_node_with_skills: {source_text=}, {found=}")
+        if found:
+            _sg = found[0]
+            self.skills_ui.remove_socket_group(_sg)

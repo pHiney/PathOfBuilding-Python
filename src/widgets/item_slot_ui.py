@@ -17,7 +17,7 @@ class ItemSlotUI(QWidget):
     A class to manage one item/jewel on the left hand side of the UI
     """
 
-    def __init__(self, title, parent_notify, indent=False) -> None:
+    def __init__(self, title, parent_notify, _win, indent=False) -> None:
         """
         init
 
@@ -26,6 +26,7 @@ class ItemSlotUI(QWidget):
         :param parent_notify: function: function to call when a change has happened.
         """
         super(ItemSlotUI, self).__init__()
+        self.win = _win
         self.widget_height = 26
         # self.setGeometry(0, 0, 320, self.widget_height)
         self.setMinimumHeight(self.widget_height)
@@ -148,11 +149,13 @@ class ItemSlotUI(QWidget):
     @Slot()
     def combobox_change_text(self, _text):
         """Set the comboBox's tooltip"""
-        # print(f"combobox_change_text, {self.slot_name=}, {_text=}")
+        # print(f"combobox_change_text, {self.slot_name=}, {_text=}, {self.lastSelectedItem=}")
         if self.combo_item_list.currentIndex() == 0:
             self.combo_item_list.setToolTip("")
             if self.lastSelectedItem:
                 self.lastSelectedItem.active = False
+                if self.lastSelectedItem.grants_skill:
+                    self.win.remove_item_or_node_with_skills(f"Item:{self.lastSelectedItem.id}:{self.lastSelectedItem.name}")
             self.lastSelectedItem = None
         else:
             item = self.combo_item_list.currentData()
@@ -160,11 +163,19 @@ class ItemSlotUI(QWidget):
                 self.combo_item_list.setToolTip(item.tooltip())
                 if self.lastSelectedItem:
                     self.lastSelectedItem.active = False
+                    if self.lastSelectedItem.grants_skill:
+                        self.win.remove_item_or_node_with_skills(f"Item:{self.lastSelectedItem.id}:{self.lastSelectedItem.name}")
                 item.active = True
                 self.lastSelectedItem = item
+                if self.lastSelectedItem.grants_skill:
+                    self.win.add_item_or_node_with_skills(
+                        self.lastSelectedItem.grants_skill, f"Item:{self.lastSelectedItem.id}:{self.lastSelectedItem.name}"
+                    )
                 # Clear the other slot if this is a two-hander
                 if item.two_hand:
                     self.other_weapon_slot.clear_default_item()
+                    if self.other_weapon_slot.grants_skill:
+                        self.win.remove_item_or_node_with_skills(f"Item:{self.other_weapon_slot.id}:{self.other_weapon_slot.name}")
         self.parent_notify(self)
 
     def set_default_by_text(self, _text):

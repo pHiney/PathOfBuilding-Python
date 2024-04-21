@@ -107,7 +107,7 @@ class Item:
         self.alt_variants = {}
 
         self.rarity_colour = ""
-        self.grants_skill = {}
+        self.grants_skill = ()
 
     @property
     def id(self) -> int:
@@ -514,8 +514,8 @@ class Item:
     def load_from_json(self, json, default_rarity=bad_text):
         """
         Fill variables from json dict
-        :param json: dict: the loaded json dict
-        :param default_rarity: str: a default rarity. Useful for the uniue and rare templates
+        :param json: dict: the loaded json dict.
+        :param default_rarity: str: a default rarity. Useful for the unique and rare templates.
         :return: boolean
         """
 
@@ -591,9 +591,15 @@ class Item:
                 v = re.search(r"{variant: ?([\d,]+)}(.*)", line)
                 if str(self.current_variant) in v.group(1).split(","):
                     self.explicitMods.append(mod)
+                    skill = search_stats_for_skill(line, self.title == "United in Dream")
+                    if skill:
+                        self.grants_skill = skill
             else:
                 self.explicitMods.append(mod)
-            self.grants_skill = search_stats_for_skill(line)
+                # self.grants_skill = search_stats_for_skill(line, self.title == "Craiceann's Carapace")
+                skill = search_stats_for_skill(line)
+                if skill:
+                    self.grants_skill = skill
 
         # mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods if mod.line_with_range
         self.all_stats = [mod for mod in self.implicitMods + self.explicitMods if mod.line_with_range]
