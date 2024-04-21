@@ -7,10 +7,10 @@ As well as the information from the json file, it will have image data added.
 It is referenced by the Tree class
 """
 
-from copy import deepcopy
+import re
 
 from PoB.constants import _VERSION
-from PoB.settings import str_to_bool
+from PoB.utils import search_stats_for_skill
 
 """
 Example node data
@@ -41,7 +41,7 @@ Example node data
 
 
 class Node:
-    def __init__(self, _node, _version: str = _VERSION) -> None:
+    def __init__(self, _node, _settings, _version: str = _VERSION) -> None:
         """
         init
         :param _node: a copy of the dictionary for this node only
@@ -49,6 +49,8 @@ class Node:
         """
         # declare variables that are set in functions
         self.version = _version
+        self.settings = _settings
+        self.node = _node
         # self._active = False
 
         # calculated values
@@ -103,6 +105,8 @@ class Node:
         self.isKeystone = _node.get("isKeystone", False)
         self.isMultipleChoiceOption = _node.get("isMultipleChoiceOption", False)
         self.flavourText = _node.get("flavourText", "")
+
+        self.grants_skill = search_stats_for_skill(self.stats)
 
         """ These values are text items indicating the name of a file. 
             We will overwrite them with a handle to an image"""

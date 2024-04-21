@@ -225,3 +225,34 @@ def search_list_for_regex(_list, regex, debug=False) -> list:
     :return: list: the list of values that match the regex.
     """
     return [line for line in _list if re.search(regex, line)]
+
+
+def search_stats_for_skill(stats):
+    """
+    Check for 'Trigger Level nn Skill' or 'Grants Level nn Skill'
+    :param stats: str or list of str
+    :return: set: ("skill name", int("skill level"))
+    """
+    grants_skill = []
+    g = re.search(r"Grants Level (\d+) (.*) Skill\n?", "\n".join(stats))
+    t = re.search(r"Trigger Level (\d+) (.*) when", "\n".join(stats))
+    if g:
+        grants_skill = (g.group(2), int(g.group(1)))
+    if t:
+        grants_skill = (t.group(2), int(t.group(1)))
+
+    return grants_skill and [grants_skill] or []
+
+
+def list_to_str(_input_list):
+    if type(_input_list) is list:
+        return "\n".join(_input_list)
+    else:
+        return ""
+
+
+def str_to_list(_input_str):
+    if type(_input_str) is str:
+        return [y for y in (x.strip(" \t\r\n") for x in _input_str.splitlines()) if y]
+    else:
+        return []

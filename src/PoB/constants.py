@@ -107,11 +107,10 @@ empty_gem_dict = {
 empty_socket_group_dict = {
     "enabled": True,
     "label": "",
+    "mainActiveSkill": 0,
     "mainActiveSkillCalcs": 0,
     "includeInFullDPS": False,
     "slot": "",
-    "mainActiveSkill": 0,
-    # "Gems": [empty_gem_dict],
     "Gems": [],
 }
 empty_skillset_dict = {

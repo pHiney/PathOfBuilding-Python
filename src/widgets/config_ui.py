@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QGridLayout
 from PoB.constants import default_max_charges
 from PoB.settings import Settings
 from PoB.build import Build
+from PoB.utils import list_to_str, str_to_list
 from widgets.ui_utils import set_combo_index_by_data
 
 from ui.PoB_Main_Window import Ui_MainWindow
@@ -63,23 +64,24 @@ class ConfigUI:
 
         _input.get("customMods", "default")
         custom_mods = _input.get("customMods", "")
-        self.win.textedit_CustomModifiers.setPlainText(custom_mods.replace("~^", "\n"))
+        self.win.textedit_CustomModifiers.setPlainText(list_to_str(custom_mods))
+        # self.win.textedit_CustomModifiers.setPlainText(custom_mods.replace("~^", "\n"))
 
-    def load_from_xml(self, _config):
-        """
-        Load internal structures from the build object
-        :param _config: Reference to the xml <Config> tag set
-        """
-        # print("config.load_from_xml", self.build.version, self.build.className, print_a_xml_element(_config))
-        _input = {}
-
-        # A list of _config.findall("Input) and create a new dictonary from it and call self.load()
-        for xml_input in _config.findall("Input"):
-            name = xml_input.get("name")
-            _input[name] = self.build.get_config_tag_item("Input", name, "")
-
-        self.json_config["Input"] = _input
-        self.load()
+    # def load_from_xml(self, _config):
+    #     """
+    #     Load internal structures from the build object
+    #     :param _config: Reference to the xml <Config> tag set
+    #     """
+    #     # print("config.load_from_xml", self.build.version, self.build.className, print_a_xml_element(_config))
+    #     _input = {}
+    #
+    #     # A list of _config.findall("Input) and create a new dictonary from it and call self.load()
+    #     for xml_input in _config.findall("Input"):
+    #         name = xml_input.get("name")
+    #         _input[name] = self.build.get_config_tag_item("Input", name, "")
+    #
+    #     self.json_config["Input"] = _input
+    #     self.load()
 
     def save(self):
         """
@@ -127,7 +129,7 @@ class ConfigUI:
         # Will this produce "" or "~^" ???
         custom_mods = self.win.textedit_CustomModifiers.toPlainText().splitlines()
         if custom_mods:
-            _input["customMods"] = "~^".join(custom_mods)
+            _input["customMods"] = custom_mods
 
         self.json_config["Input"] = _input
 

@@ -7,11 +7,11 @@ from copy import deepcopy
 import re
 
 from PoB.constants import slot_map, ColourCodes
-from PoB.utils import _debug, html_colour_text, format_number, index_exists, str_to_bool, bool_to_str, print_call_stack
+from PoB.utils import _debug, html_colour_text, format_number, print_call_stack, search_stats_for_skill
 
 
 class Mod:
-    def __init__(self, settings, _line) -> None:
+    def __init__(self, settings, _line, _current_version=0) -> None:
         """
         Initialise defaults
         :param _line: the full line of the mod, including variant stanzas.
@@ -36,7 +36,7 @@ class Mod:
             return
 
         # value for managing the range of values. EG: 20-40% of ... _range will be between 0 and 1
-        self._range = -1
+        self._range_value = -1
         self.min = 0
         self.max = 0
         self.range_sep = ""
@@ -52,23 +52,35 @@ class Mod:
         self.tooltip_colour = ColourCodes.MAGIC.value
         if self.crafted:
             self.tooltip_colour = ColourCodes.CRAFTED.value
-        if self.fractured:
+        elif self.fractured:
             self.tooltip_colour = ColourCodes.FRACTURED.value
-        if self.crucible:
+        elif self.crucible:
             self.tooltip_colour = ColourCodes.CRUCIBLE.value
         # preformed text for adding to the tooltip. Let's set a default in case there is no 'range'
         self.tooltip = f"{html_colour_text(self.tooltip_colour, self.line)}<br/>"
 
+        # Needed ???
+        self.grants_skill = search_stats_for_skill(_line)
+
+        # check for and keep tag information
+        m = re.search(r"({tags:[\w,]+})", _line)
+        self.tags = m and m.group(1) or ""
+
         # check for and keep variant information
-        m = re.search(r"({variant:\d+})", _line)
-        self.variant_text = m and m.group(1) or None
+        self.current_variant = _current_version
+        self.my_variants = []
+        m = re.search(r"{variant:([\d,]+)}", _line)
+        if m:
+            self.my_variants = [int(variant) for variant in m.group(1).split(",")]
+        m = re.search(r"({variant:[\d,]+})", _line)
+        self.variant_text = m and m.group(1) or ""
 
         # sort out the range, min, max,value and the tooltip, if applicable
         tooltip = self.line
         self.line_unformatted = self.line
         m1 = re.search(r"{range:([0-9.]+)}(.*)", tooltip)
         if m1:
-            # this is now stripped of the {range:n}
+            # This is now stripped of the {range:n}
             self.line = m1.group(2)
             m2 = (
                 re.search(r"\(([0-9.]+)-([0-9.]+)\)(.*)\(([0-9.]+)-([0-9.]+)\)(.*)", self.line)
@@ -80,12 +92,13 @@ class Mod:
             if m2:
                 match len(m2.groups()):
                     case 2:
+                        # Not sure what this could be, but it's probably an error
                         print(f"2: {m2.groups()=}, {self.line=}")
                     case 3:
                         self.min = float(m2.group(1))
                         self.max = float(m2.group(2))
                         self.line_unformatted = re.sub(r"\([0-9.]+-[0-9.]+\)", "{}", self.line)
-                        self.range = float(m1.group(1))  # Trigger setting self.value and self.line_with_range
+                        self.range_value = float(m1.group(1))  # Trigger setting self.value and self.line_with_range
                     case 6:
                         self.min = float(m2.group(1))
                         self.max = float(m2.group(2))
@@ -94,44 +107,44 @@ class Mod:
                         self.max2 = float(m2.group(5))
                         self.line_unformatted = re.sub(r"\([0-9.]+-[0-9.]+\)", "{0}", self.line, count=1)
                         self.line_unformatted = re.sub(r"\([0-9.]+-[0-9.]+\)", "{1}", self.line_unformatted, count=1)
-                        self.range = float(m1.group(1))  # Trigger setting self.value and self.line_with_range
+                        self.range_value = float(m1.group(1))  # Trigger setting self.value and self.line_with_range
 
                 # trigger property to update value and tooltip
-                self.range = float(m1.group(1))
-        # print("self.text", self.text)
+                self.range_value = float(m1.group(1))
+        # print(f"{_line=}, {self.line_unformatted=}, {self.line_for_save}")
 
     @property
-    def text_for_xml(self):
-        """Return the text formatted for the xml output"""
+    def line_for_save(self) -> str:
+        """Return the text formatted for the save"""
         text = (
+            f'{self.tags and self.tags or ""}'
             f'{self.variant_text and self.variant_text or ""}'
             f'{self.crafted and "{crafted}" or ""}'
             f'{self.fractured and "{fractured}" or ""}'
             f'{self.crucible and "{crucible}" or ""}'
         )
-        if self.range >= 0:
-            r = f"range:{self.range}".rstrip("0").rstrip(".")
+        if self.range_value >= 0:
+            r = f"range:{self.range_value}".rstrip("0").rstrip(".")
             text += f"{{{r}}}"
         text += f'{self.line.replace("&", "&amp;")}'
         return text
 
     @property
-    def range(self):
-        return self._range
+    def range_value(self) -> float:
+        return self._range_value
 
-    @range.setter
-    def range(self, new_range):
+    @range_value.setter
+    def range_value(self, new_range):
         """Set a new range and update value and tooltip"""
-        self._range = new_range
-        self.value = self.min + ((self.max - self.min) * self.range)
+        self._range_value = new_range
+        self.value = self.min + ((self.max - self.min) * self._range_value)
         # get the value without the trailing .0, so we don't end up with 40.0% or such.
         fmt = self.value < 10 and "%0.3g" or "%0.5g"
-        # value_str = format_number(self.value, fmt, self.settings)
         # put the crafted colour on the value only
         value_str = format_number(self.value, fmt, self.settings)
         value_colored_str = html_colour_text("CRAFTED", value_str)
         if self.min2:
-            self.value2 = self.min2 + ((self.max2 - self.min2) * self.range)
+            self.value2 = self.min2 + ((self.max2 - self.min2) * self._range_value)
             value_str2 = format_number(self.value2, fmt, self.settings)
             value_colored_str2 = html_colour_text("CRAFTED", value_str2)
             self.line_with_range = self.line_unformatted.format(value_str, value_str2)
@@ -139,7 +152,6 @@ class Mod:
         else:
             self.line_with_range = self.line_unformatted.format(value_str)
             self.tooltip = self.line_unformatted.format(value_colored_str)
-        # tooltip = f'{html_colour_text("CRAFTED",value_str)}{self.line_unformatted}'
         # colour the whole tip
         self.tooltip = f"{html_colour_text(self.tooltip_colour,self.tooltip)}<br/>"
         # print(f"range.setter, {self.line=}")

@@ -79,6 +79,7 @@ class SkillsUI:
         self.current_socket_group = None
         # list of gems from gems.json
         self.gems_by_name_or_id = {}
+        self.hidden_skills_by_name_or_id = {}
         self.base_gems, self.hidden_skills = self.load_base_gems_json()
         # tracks the state of the triggers, to stop setting triggers more than once or disconnecting when not connected
         self.triggers_connected = False
@@ -344,9 +345,11 @@ class SkillsUI:
                 self.gems_by_name_or_id[f"{name} Support"] = _gem  # name = "Added Chaos Damage" + " Support"
 
         hidden = read_json(Path(self.settings._data_dir, "hidden_skills.json"))
-        for _id, _gem in hidden.items():
+        for variantId, _gem in hidden.items():
             _gem["colour"] = get_coloured_int(_gem)
             _gem["coloured_text"] = html_colour_text(_gem["colour"], _gem["name"])
+            self.hidden_skills_by_name_or_id[variantId] = _gem
+            self.hidden_skills_by_name_or_id[_gem["name"]] = _gem
 
         return gems, hidden
         # load_base_gems_json
@@ -425,7 +428,7 @@ class SkillsUI:
                 self.gems_by_name_or_id[full_name]["skillId"] = g
 
         return gems
-        # load_base_gems_json
+        # load_base_gems_json_v1
 
     def connect_skill_triggers(self):
         """re-connect triggers"""
@@ -988,7 +991,7 @@ class SkillsUI:
         """
         # print("create_gem_ui", index, gem)
         item = QListWidgetItem()
-        self.win.list_Skills.addItem(item)
+        self.win.list_Skills.insertItem(index, item)
         gem_ui = GemUI(item, self.gems_by_name_or_id, self.gem_ui_notify, self.settings, gem)
         gem_ui.fill_gem_list(self.base_gems, self.win.combo_ShowSupportGems.currentText())
         item.setSizeHint(gem_ui.sizeHint())
@@ -996,6 +999,7 @@ class SkillsUI:
 
         # this is for deleting the gem
         gem_ui.btn_GemRemove.clicked.connect(lambda checked: self.gems_remove_checkbox_selected(item, gem_ui))
+        return gem_ui
 
     def clear_gem_ui_list(self):
         """
@@ -1045,6 +1049,7 @@ class SkillsUI:
             # print("gem_ui_notify", row, ui)
             # self.remove_gem_ui(_key)
             self.current_socket_group["Gems"].remove(_gem)
+        # Make sure there is always one GemUI available
         if self.win.list_Skills.count() == 0:
             self.create_gem_ui(0)
         self.update_socket_group_labels()

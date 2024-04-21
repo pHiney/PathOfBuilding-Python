@@ -62,6 +62,7 @@ class ItemsUI:
 
         self.base_items = read_json(Path(self.settings._data_dir, "base_items.json"))
         self.mods = read_json(Path(self.settings._data_dir, "mods.json"))
+        self.hidden_skills = _settings._hidden_skills  # a copy of the hidden_skills.json from skills_ui.
 
         # set the key_event - handler - self.item_list_keypressed
         self.win.list_Items.key_press_handler = self.item_list_keypressed
@@ -348,7 +349,7 @@ class ItemsUI:
 
         # print("new_item", new_item)
         dlg = CraftItemsDlg(self.settings, self.base_items, self.mods, "add", self.win)
-        item = Item(self.settings, self.base_items)
+        item = Item(self.settings, self.base_items, self.hidden_skills)
         print(f"1. {item.sockets=}")
         item.load_from_json(new_item)
         print(f"2. {item.sockets=}")

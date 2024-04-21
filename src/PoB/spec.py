@@ -530,27 +530,7 @@ class Spec:
         for socket in self.sockets.keys():
             str_sockets += f"{{{socket},{self.sockets[socket]}}},"
         self.spec["Sockets"] = str_sockets.rstrip(",")
-
-        # if xml:
-        #     xml_spec = ET.fromstring(default_spec_xml)
-        #     xml_spec["@title"] = self.title
-        #     xml_spec["@classId"] = self.spec["classId"]
-        #     xml_spec["@ascendClassId"] = self.spec["ascendClassId"]
-        #     xml_spec["@nodes"] = self.spec["nodes"]
-        #     xml_spec["@masteryEffects"] = self.spec["masteryEffects"]
-        #     xml_spec["URL"] = self.spec["URL"]
-        #     xml_sockets = xml_spec.find("Sockets")
-        #     if xml_sockets is not None:
-        #         xml_spec.remove(xml_sockets)
-        #     xml_sockets = ET.Element("Sockets")
-        #     xml_spec.append(xml_sockets)
-        #     if len(self.sockets) > 0:
-        #         for node_id in self.sockets.keys():
-        #             xml_sockets.append(ET.fromstring(f'<Socket nodeId="{node_id}" itemId="{self.sockets[node_id]}"/>'))
-        #     return self.title, xml_spec
-        # else:
-        # print("save", self.title, self.spec)
-        return self.title, self.spec
+        return self.spec
 
     # def save(self):
     #     """Save things to the internal dict() and return it"""

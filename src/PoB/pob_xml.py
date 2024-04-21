@@ -19,7 +19,7 @@ from PoB.constants import (
 )
 
 from PoB.pob_file import read_xml_as_dict
-from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, str_to_bool
+from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, list_to_str, str_to_bool
 
 """ ################################################### XML ################################################### """
 
@@ -93,7 +93,7 @@ def read_xml(filename):
     _fn = Path(filename)
     if _fn.exists():
         try:
-            with _fn.open("r", -1, "utf-8") as xml_file:
+            with _fn.open("r") as xml_file:
                 tree = ET.parse(xml_file)
                 return tree
         # parent of IOError, OSError *and* WindowsError where available
@@ -111,9 +111,11 @@ def write_xml(filename, _tree):
     """
     _fn = Path(filename)
     try:
-        with _fn.open("w", -1, "utf-8") as xml_file:
+        with _fn.open("w") as xml_file:
             ET.indent(_tree, "\t")
-            _tree.write(xml_file, encoding="utf-8", xml_declaration=True)
+            xml_file.writelines(ET.tostring(_tree, encoding="utf8").decode("utf8"))
+            # ET.indent(_tree, "\t")
+            # _tree.write(xml_file, encoding="utf-8", xml_declaration=True)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
         print(f"Unable to write to {_fn}")
 
@@ -140,7 +142,8 @@ def read_v1_custom_mods(filename):
                         # EG:
                         #   ['name="customMods" string="+1 to Maximum Endurance Charges\n+14% increased maximum Life\n']
                         # Get rid of unwanted bits
-                        return inputs[0].replace('string="', "").replace('name="customMods"', "").strip()
+                        input_str = inputs[0].replace('string="', "").replace('name="customMods"', "").strip()
+                        return [y for y in (x.strip(" \t\r\n") for x in input_str.splitlines()) if y]
 
         except (EnvironmentError, FileNotFoundError, ET.ParseError):
             print(f"Unable to open {_fn}")
@@ -469,7 +472,7 @@ def load_from_xml(filename_or_xml):
                             if _name == "customMods":
                                 # EG:
                                 #   ['name="customMods" string="+1 to Maximum Endurance Charges\n+14% increased maximum Life\n']
-                                _value = read_v1_custom_mods(filename_or_xml).replace("\n", "~^")
+                                _value = read_v1_custom_mods(filename_or_xml)
                         case "@boolean":
                             _value = str_to_bool(_dict[key])
                         case "@number":
@@ -775,6 +778,7 @@ def save_to_xml(filename, build):
         return _v, _type
 
     # print(f"save_to_xml: {filename}")
+    debug = False
 
     # Flag to reread the written file and change ~^ back to newlines.
     customMods = False
@@ -808,6 +812,8 @@ def save_to_xml(filename, build):
         )
     )
     xml_root.append(xml_build)
+    if debug:
+        print_a_xml_element(xml_build)
 
     """Import"""
     json_import = build["PathOfBuilding"]["Import"]
@@ -816,6 +822,8 @@ def save_to_xml(filename, build):
         f' exportParty="{bool_to_str(json_import.get("exportParty","False"))}" lastAccountHash="{json_import.get("lastAccountHash","")}"/>'
     )
     xml_root.append(xml_import)
+    if debug:
+        print_a_xml_element(xml_import)
 
     """Tree"""
     json_tree = build["PathOfBuilding"]["Tree"]
@@ -824,7 +832,7 @@ def save_to_xml(filename, build):
         _spec = (
             f'<Spec masteryEffects="{str(spec["masteryEffects"])}" title="{spec["title"]}" ascendClassId="{str(spec["ascendClassId"])}" '
             f'nodes="{str(spec["nodes"])}" secondaryAscendClassId="0" '
-            f'treeVersion="{spec["treeVersion"]}" classId="{str(spec["ascendClassId"])}" />'
+            f'treeVersion="{spec["treeVersion"]}" classId="{str(spec["classId"])}" />'
         )
         xml_spec = ET.fromstring(_spec)
         xml_spec.append(ET.fromstring(f'<URL>{spec["URL"]}</URL>'))
@@ -839,6 +847,8 @@ def save_to_xml(filename, build):
         xml_spec.append(xml_overides)
         xml_tree.append(xml_spec)
     xml_root.append(xml_tree)
+    if debug:
+        print_a_xml_element(xml_tree)
 
     """Notes"""
     xml_root.append(ET.fromstring(f'<Notes>{build["PathOfBuilding"]["Notes"]}</Notes>'))
@@ -887,6 +897,8 @@ def save_to_xml(filename, build):
             xml_set.append(xml_sg)
         xml_skills.append(xml_set)
     xml_root.append(xml_skills)
+    if debug:
+        print_a_xml_element(xml_skills)
 
     """Calcs"""
     json_calcs = build["PathOfBuilding"]["Calcs"]
@@ -899,6 +911,8 @@ def save_to_xml(filename, build):
             ET.fromstring(f'<Section subsection="{_name}" collapsed="{bool_to_str(_value["collapsed"])}" id="{_value["id"]}"/>')
         )
     xml_root.append(xml_calcs)
+    if debug:
+        print_a_xml_element(xml_calcs)
 
     """TreeView"""
     json_tv = build["PathOfBuilding"]["TreeView"]
@@ -907,6 +921,8 @@ def save_to_xml(filename, build):
         f'showStatDifferences="{bool_to_str(json_tv["showStatDifferences"])}" zoomX="0" />'
     )
     xml_root.append(ET.fromstring(tv))
+    if debug:
+        print_a_xml_element(ET.fromstring(tv))
 
     """Items"""
     json_items = build["PathOfBuilding"]["Items"]
@@ -925,13 +941,15 @@ def save_to_xml(filename, build):
                     ET.fromstring(f'<SocketIdURL nodeId="{str(slot["nodeId"])}" name="{slot["name"]}" itemPbURL="{slot["itemPbURL"]}" />')
                 )
     xml_root.append(xml_items)
+    if debug:
+        print_a_xml_element(xml_items)
 
     """Config"""
     json_config = build["PathOfBuilding"]["Config"]
     xml_config = ET.fromstring(f"<Config/>")
     for _name, _value in json_config["Input"].items():
         if _name == "customMods":
-            xml_config.append(ET.fromstring(f'<Input name="customMods" string="{_value}"/>'))
+            xml_config.append(ET.fromstring(f'<Input name="customMods" string="{"~^".join(_value)}"/>'))
             customMods = True
         else:
             _value, value_type = get_value_s_type(_value)
@@ -940,35 +958,13 @@ def save_to_xml(filename, build):
         _value, value_type = get_value_s_type(_value)
         xml_config.append(ET.fromstring(f'<Placeholder name="{_name}" {value_type}="{_value}"/>'))
     xml_root.append(xml_config)
-
-    # # build.text = ""
-    # print_a_xml_element(build_xml)
-    # build_xml.append(build)
-    # print_a_xml_element(build_xml)
-
-    # xml_import = xml_root.find("Import")
-    # if xml_import is not None:
-    #     last_account_hash = xml_import.get("lastAccountHash", "")
-    #     last_character_hash = xml_import.get("lastCharacterHash", "")
-    #     last_realm = xml_import.get("lastRealm", "")
-    #     last_league = xml_import.get("lastLeague", "")
-    # xml_calcs = xml_root.find("Calcs")
-    # xml_skills = xml_root.find("Skills")
-    # xml_tree = xml_root.find("Tree")
-    # xml_notes = xml_root.find("Notes")
-    # xml_notes_html = xml_root.find("NotesHTML")
-    # # lua version doesn't have NotesHTML, expect it to be missing
-    # if xml_notes_html is None:
-    #     xml_notes_html = ET.Element("NotesHTML")
-    #     xml_root.append(xml_notes_html)
-    # xml_tree_view = xml_root.find("TreeView")
-    # xml_items = xml_root.find("Items")
-    # xml_config = xml_root.find("Config")
+    if debug:
+        print_a_xml_element(xml_config)
 
     # print_a_xml_element(xml_root)
 
     if filename:
-        write_xml(filename, build_xml)
+        write_xml(filename, xml_root)
         # rewrite ~^ to newlines
         if customMods:
             write_v1_custom_mods(filename)

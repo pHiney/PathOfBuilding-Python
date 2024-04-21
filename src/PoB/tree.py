@@ -347,7 +347,7 @@ class Tree:
         #     self.nodes = dictionary from the json"""
         for node_id in self.nodes:
             # Overwrite the json node definition with our class definition
-            node = Node(self.nodes[node_id])
+            node = Node(self.nodes[node_id], self.settings)
             self.nodes[node_id] = node
 
             # Find the node's type

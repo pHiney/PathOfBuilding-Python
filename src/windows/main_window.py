@@ -34,6 +34,8 @@ from PoB.constants import (
     bandits,
     bad_text,
     def_theme,
+    empty_gem_dict,
+    empty_socket_group_dict,
     pantheon_major_gods,
     pantheon_minor_gods,
     player_stats_list,
@@ -113,13 +115,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.calcs_ui = CalcsUI(self.settings, self.build, self)
         self.config_ui = ConfigUI(self.settings, self.build, self)
         self.notes_ui = NotesUI(self.settings, self)
+        # skills_ui before tree_ui and items_ui, as they need settings._hidden_skills.
         self.skills_ui = SkillsUI(self.settings, self.build, self)
+        self.settings._hidden_skills = self.skills_ui.hidden_skills
+        # tree_ui before items_ui, as it needs 'open_manage_trees' function.
         self.tree_ui = TreeUI(self.settings, self.build, self.frame_TreeTools, self)
         self.items_ui = ItemsUI(self.settings, self.build, self.tree_ui, self)
-        self.tree_ui.items_ui = self.items_ui
-
-        # share the goodness
-        self.build.gems_by_name_or_id = self.skills_ui.gems_by_name_or_id
 
         """
             Start: Do what the QT Designer cannot yet do 
@@ -665,7 +666,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Config_UI needs to be set before the tree, as the change_tree function uses/sets it also.
             self.config_ui.load(self.build.json_config)
-            self.tree_ui.load(self.build.json_tree)
+            self.tree_ui.load(self.build.json_tree, self.build.json_tree_view)
             self.skills_ui.load_from_json(self.build.json_skills)
             self.items_ui.load_from_json(self.build.json_items)
             self.notes_ui.load(self.build.json_notes, self.build.json_notes_html)
@@ -690,12 +691,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #     self.player.load(self.build.xml_build)
 
         # # This is needed to make the jewels show. Without it, you need to select or deselect a node.
-        self.gview_Tree.add_tree_images(True)
-        # # Make sure the Main and Alt weapons are active and shown as appropriate
+        self.gview_Tree.switch_tree(True)
+
+        # Make sure the Main and Alt weapons are active and shown as appropriate
         self.items_ui.weapon_swap2(self.btn_WeaponSwap.isChecked())
         self.update_status_bar(f"Loaded: {self.build.name}", 10)
-        # Do calcs. Needs to be near last n this function
+
         self.alerting = True
+
+        # Do calcs. Needs to be nearly last in this function
         # self.do_calcs()
         self.build.save()
         # save_to_xml("test.xml", self.build.json)
@@ -719,6 +723,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.skills_ui.save_to_json()
             self.items_ui.save()
             self.config_ui.save()
+            self.tree_ui.save()
             if xml:
                 save_to_xml(self.build.filename, self.build.json)
             else:
@@ -822,7 +827,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return:
         """
         new_class = self.combo_classes.currentData()
-        # print(f"class_changed: '{selected_class}'", self.build.current_spec.classId, new_class, self.refresh_tree)
+        # print(f"class_changed: {selected_class=}, {self.build.current_spec.classId=}, {new_class=}, {self.refresh_tree=}")
         if self.build.current_spec.classId == new_class and self.refresh_tree:
             return
         if self.alerting:
@@ -865,7 +870,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "" will occur during a combobox clear.
         :return:
         """
-        # print(f"ascendancy_changed: '{selected_ascendancy}'", self.build.current_spec.ascendClassId_str(), self.refresh_tree)
+        # print(f"ascendancy_changed: '{selected_ascendancy=}'", self.build.current_spec.ascendClassId_str(), self.refresh_tree)
         if selected_ascendancy == "":
             # "" will occur during a combobox clear (changing class)
             return
@@ -896,9 +901,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Remove old start node.
             self.build.current_spec.nodes.discard(current_tree.ascendancy_start_nodes[curr_ascendancy_name])
 
-            if selected_ascendancy != "None":
-                # add new start node.
-                self.build.current_spec.nodes.add(current_tree.ascendancy_start_nodes[selected_ascendancy])
+        if selected_ascendancy != "None":
+            # add new start node.
+            self.build.current_spec.nodes.add(current_tree.ascendancy_start_nodes[selected_ascendancy])
 
         if self.refresh_tree:
             self.build.current_spec.ascendClassId = self.combo_ascendancy.currentData()
@@ -1221,3 +1226,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         f'<span style="white-space: pre; color:{_colour};">{stat["label"]:>24}:</span> {_str_value} {_extra_value}'
                     )
                     just_added_blank = False
+
+    def equip_item_or_node_with_skills(self, source, source_text):
+        """
+        Add a skill from an equiped Item or assigned Node
+        :param source: list: The Node() or Item()'s grants_skill param
+        :param source_text: str: the text to go into the gem's source field
+        :return:
+        """
+        print(f"equip_item_or_node_with_skills: {type(source)}, {source=}, {source_text=}")
+        if source:
+            if len(source) > 1:
+                # Only an Item can have this, get the one that matches the variant
+                skill_name, level = "tba", 20
+            else:
+                skill_name, level = source[0]
+
+            print(f"equip_item_or_node_with_skills: {skill_name=}, {level=}")
+            if skill_name:
+                found = [sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") == source_text]
+                skill = self.skills_ui.hidden_skills_by_name_or_id.get(skill_name, None)
+                print(f"1. {found=}, {skill=}")
+                if not found and skill:
+                    print(f"2. {found=}")
+                    # add gem
+                    new_gem = deepcopy(empty_gem_dict)
+                    new_gem["nameSpec"] = skill["name"]
+                    new_gem["variantId"] = skill["variantId"]
+                    new_gem["level"] = level
+                    new_gem["skillMinion"] = skill["minionList"][0]
+                    new_gem["skillMinionSkillCalcs"] = 1
+                    new_gem["skillMinionSkill"] = 1
+                    new_gem["skillMinionCalcs"] = None
+                    new_sg = self.skills_ui.new_socket_group()
+                    new_sg["source"] = source_text
+                    new_sg["Gems"] = [new_gem]
+                    # load socket group or update socket labels ????

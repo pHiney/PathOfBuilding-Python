@@ -471,7 +471,7 @@ class Build:
         specs = self.json_tree["Specs"]
         specs.clear()
         for spec in self.specs:
-            specs.append(spec.spec)
+            specs.append(spec.save())
 
         # ensure these get updated to match the last tree shown (these are properties and will trigger their own save to the dict)
         self.className = self.current_spec.classId_str()

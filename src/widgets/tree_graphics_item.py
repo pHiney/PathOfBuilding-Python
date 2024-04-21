@@ -39,6 +39,7 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
 
         # these are to have a fast way for a graphic item to identify its owner node's params. Used by mouse events
         # Maybe have just the node reference ?
+        self.node = node
         self.node_id = 0
         self.node_tooltip = ""
         self.node_sd = ""

@@ -21,11 +21,11 @@ class GemUI(QWidget):
         """
         init
 
-        :param list_widget_item:QListWidgetItem: the item inthe list box that this instance is attached to
-        :param gems_by_name_or_id: dict: a dictionary of skills by id and name
-        :param parent_notify: function: function to call when a change has happened
-        :param _settings: A pointer to the settings
-        :param gem: ET.elementree: prefill with this gem
+        :param list_widget_item: QListWidgetItem: the item inthe list box that this instance is attached to.
+        :param gems_by_name_or_id: dict: a dictionary of skills by id and name.
+        :param parent_notify: function: function to call when a change has happened.
+        :param _settings: A pointer to the settings.
+        :param gem: ET.elementree: prefill with this gem.
         """
         super(GemUI, self).__init__()
 

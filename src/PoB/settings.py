@@ -37,6 +37,7 @@ class Settings(PoBDict):
         self._screen_rect = self._app.primaryScreen().size()
         self._qss_background = "32, 33, 36, 1.000"
         self._qss_default_text = "#FFFFFF"
+        self._hidden_skills = None  # a copy of the hidden_skills.json from skills_ui.
 
         # self.PoB: PoBDict = PoBDict(empty_settings)
         self.reset()

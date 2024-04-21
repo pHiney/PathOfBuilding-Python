@@ -31,12 +31,11 @@ class TreeUI:
         self.settings = _settings
         self.tr = self.settings._app.tr
         self.win = _win
-        # reference to Items UI to fill it's tree combo
-        self.items_ui = None
         self.build = _build
         self._curr_class = PlayerClasses.SCION
         self.dlg = None  # Is a dialog active
         self.json_tree = None
+        self.json_treeview = None
 
         self.win.action_ManageTrees.triggered.connect(self.open_manage_trees)
 
@@ -113,18 +112,22 @@ class TreeUI:
         self.lineEdit_Search.textChanged.connect(self.search_text_changed)
         self.lineEdit_Search.returnPressed.connect(self.search_text_return_pressed)
 
-    def load(self, _config: dict):
+    def load(self, _config: dict, _treeview: dict):
         """
         Load UI Widgets from the build object
         :param: _config: dict. The build's copy of json_config
+        :param: _treeview: dict. The build's copy of json_treeview
         """
         # print("config.load", self.build.version, self.build.className, print_a_xml_element(_config))
         self.json_tree = _config
+        self.json_treeview = _treeview
         self.fill_current_tree_combo()
+        self.lineEdit_Search.setText(_treeview.get("searchStr", ""))
+        self.search_text_changed()
 
     def save(self):
         """Save internal structures back to the build object."""
-        pass
+        self.json_treeview["searchStr"] = self.lineEdit_Search.text()
 
     @property
     def curr_class(self):

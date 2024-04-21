@@ -19,8 +19,7 @@ from PoB.constants import (
 )
 from PoB.settings import Settings
 from PoB.mod import Mod
-from PoB.utils import _debug, html_colour_text, index_exists, str_to_bool, bool_to_str
-from PoB.pob_xml import print_a_xml_element
+from PoB.utils import _debug, html_colour_text, search_stats_for_skill
 from widgets.ui_utils import search_stats_list_for_regex
 
 
@@ -36,6 +35,7 @@ class Item:
         # the dict from json of the all items
         self.base_items = _base_items
         self.settings = _settings
+        self.hidden_skills = _settings._hidden_skills  # a copy of the hidden_skills.json from skills_ui.
         # This item's entry from base_items
         self.base_item = None
         self.name = ""  # Combination of title and base_name
@@ -107,8 +107,7 @@ class Item:
         self.alt_variants = {}
 
         self.rarity_colour = ""
-        self.grants_skill = []
-        self.grants_skill_level = []
+        self.grants_skill = {}
 
     @property
     def id(self) -> int:
@@ -532,17 +531,17 @@ class Item:
 
         # get all the variant information
         self.variants = self.pob_item.get("Variants", [])
-        if self.variants:
-            # Remove "current" in case it's crept in there
-            # self.variants.pop("current", None)
+        current_variant = self.pob_item.get("Selected Variant", 0)
+        if self.variants and current_variant:
+
             self.variant_names = [""]  # Variants are numbered from one, insert a blank for index 0
             self.variant_names.extend(self.variants)
             # print(f"item.load_from_json: {self.variant_names=}")
             self.alt_variants = self.pob_item.get("Alt Variants", {})
 
             variant_base_names = self.pob_item.get("Variant Entries", {}).get("base_name", {})
-            if variant_base_names and self.current_variant > 0:
-                self.base_name = variant_base_names[str(self.current_variant)]
+            if variant_base_names and current_variant > 0:
+                self.base_name = variant_base_names[str(current_variant)]
 
         # get some common attribs. Less common ones can use item.get_attrib()
         self.armour = self.get_attrib("armour", 0)
@@ -577,6 +576,7 @@ class Item:
             # check for variants and if it's our variant, add it to the smaller implicit mod list
             if "variant" in line:
                 m = re.search(r"{variant:([\d,]+)}(.*)", line)
+                variants = [int(variant) for variant in m.group(1).split(",") if str(current_variant) == variant]
                 if str(self.current_variant) in m.group(1).split(","):
                     self.implicitMods.append(mod)
             else:
@@ -593,11 +593,7 @@ class Item:
                     self.explicitMods.append(mod)
             else:
                 self.explicitMods.append(mod)
-            g = re.search(r"Grants Level (\d+) (.*) Skill", line)
-            if g:
-                self.grants_skill_level.append(int(g.group(1)))
-                self.grants_skill.append(g.group(2))
-        # print(f"{self.title}, {self.grants_skill}, {self.grants_skill_level}, {self.current_variant=}")
+            self.grants_skill = search_stats_for_skill(line)
 
         # mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods + self.crucibleMods if mod.line_with_range
         self.all_stats = [mod for mod in self.implicitMods + self.explicitMods if mod.line_with_range]
