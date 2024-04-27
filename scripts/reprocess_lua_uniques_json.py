@@ -1,4 +1,3 @@
-import re
 import sys
 
 """
@@ -39,7 +38,8 @@ sys.path.insert(1, "../src/")
 sys.path.insert(1, "../src/PoB")
 
 from PoB.pob_file import read_json, write_json
-from PoB.pob_xml import load_item_from_xml, read_xml
+from PoB.pob_xml import load_item_from_xml
+
 
 base_items = read_json("../src/data/base_items.json")
 
@@ -48,14 +48,14 @@ max_variants = {"Precursor's Emblem": "7"}
 
 new_uniques = {}
 u_json = read_json("lua_json/uniques.json")
-lua_total=0
-py_total=0
+lua_total = 0
+py_total = 0
 for key in sorted(u_json.keys()):
     print(f"{key}: {len(u_json[key])}")
     lua_total += len(u_json[key])
     new_uniques[key] = []
     for v1_item in u_json[key]:
-        char2013=u'\u2013'
+        char2013 = "\u2013"
         item = load_item_from_xml(f"Rarity: UNIQUE\n{v1_item.replace(char2013,'-')}")
         item.pop("id")
         item.pop("Rarity")
