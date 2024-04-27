@@ -1,4 +1,4 @@
-from pathlib import Path, WindowsPath
+from pathlib import Path
 from copy import deepcopy
 import re
 import traceback
@@ -19,7 +19,7 @@ from PoB.constants import (
 )
 
 from PoB.pob_file import read_xml_as_dict
-from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, list_to_str, str_to_bool
+from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, str_to_bool
 
 """ ################################################### XML ################################################### """
 
@@ -127,7 +127,6 @@ def read_v1_custom_mods(filename):
     :param filename: Name of xml to be read
     :return: str: with \n encoded in it.
     """
-    custom_mods = []
     _fn = Path(filename)
     if _fn.exists():
         try:
@@ -158,7 +157,6 @@ def write_v1_custom_mods(filename):
     :param filename: Name of xml to be read
     :return: str: with \n encoded in it.
     """
-    custom_mods = []
     _fn = Path(filename)
     if _fn.exists():
         try:
@@ -205,6 +203,24 @@ def remove_lua_colours(text):
         except ValueError:
             pass
     return text
+
+
+def renumber_variants(mods):
+    """
+    renumber variants to be 0 based.
+    :param mods: list: Implicits or Explicts
+    :return: the new list to replace the old one
+    """
+    new_list = []
+    for line in mods:
+        if "{variant" in line:  # EG: Bloodgrip
+            v = re.search(r"{variant:([\d,]+)}(.*)", line)
+            _variant_numbers = v.group(1).split(",")
+            # _variant_numbers is always a list (of str), even if it contains one entry.
+            new_variant_numbers = ",".join(str(int(num) - 1) for num in _variant_numbers)
+            line = "{variant:" f"{new_variant_numbers}}}{v.group(2)}"
+        new_list.append(line)
+    return new_list
 
 
 def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
@@ -257,8 +273,8 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
             case "Variant":
                 json_item["Variants"].append(n.group(2))
             case "Selected Variant":
-                """variants are numbered from 1, so 0 is no selection. !!! don't add -1"""
-                json_item["Selected Variant"] = int(n.group(2))
+                """Our variants are numbered from 0, so -1 is no selection. (XML is 0 no selection)"""
+                json_item["Selected Variant"] = int(n.group(2)) - 1
             case "Prefix" | "Suffix":
                 json_item["Crafted"][tag].append(n.group(2))
             case "Has Alt Variant":
@@ -332,17 +348,19 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
         # if "{variant" not in line:
         #     json_item["base_name"] = line
         if "{variant" in line:
-            while "{variant" in line:
+            # Separate Basename variants into an expanded list, not '{variant:1}Coral Amulet\n{variant:2,3}Marble Amulet'
+            while "{variant" in line:  # EG: Bloodgrip
                 v = re.search(r"{variant:([\d,]+)}(.*)", line)
                 _variant_numbers = v.group(1).split(",")
                 # _variant_numbers is always a list (of str), even if it contains one entry.
                 for _var in _variant_numbers:
-                    json_item.setdefault("Variant Entries", {}).setdefault("base_name", {})[int(_var)] = v.group(2)
-                # if "{variant" in lines[0]:
+                    json_item.setdefault("Variant Entries", {}).setdefault("base_name", []).append(v.group(2))
                 line = lines.pop(0)
             json_item["base_name"] = "variant"
+            lines.insert(0, line)  # push the last pop'd line back in so we don't lose it.
         else:
-            json_item["base_name"] = line.replace("Maelstrom", "Maelstr\u00f6m")
+            # this is faster than re.sub(r"MaelstrÃ¶m|Maelstrom", "Maelstr\u00f6m", line)
+            json_item["base_name"] = line.replace("Maelstrom", "Maelstr\u00f6m").replace("MaelstrÃ¶m", "Maelstr\u00f6m")
 
     if debug_lines:
         print("a", len(lines), lines)
@@ -420,6 +438,9 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
 
     if json_item["base_name"] == "Unset Ring" and json_item["Attribs"].get("sockets", "") == "" and "Has 1 Socket" in items_free_text:
         json_item["Attribs"]["sockets"] = "W"
+
+    json_item["Implicits"] = renumber_variants(json_item["Implicits"])
+    json_item["Explicits"] = renumber_variants(json_item["Explicits"])
 
     # print(f"{json_item=}")
     return json_item
@@ -727,10 +748,10 @@ def save_item_to_xml(_item):
         text = f"{{variant:{str(_var)}}}{_name}\n"
     for influence in _item.get("Influences", []):
         text += f"{influence}\n"
-    if _item.get("Selected Variant", 0):
+    if int(_item.get("Selected Variant", -1)) >= 0:
         for variant in _item.get("Variants", []):
             text += f"Variant: {variant}\n"
-        text += f"Selected Variant: {str(_item['Selected Variant'])}\n"
+        text += f"Selected Variant: {str(_item['Selected Variant']+1)}\n"
     for attrib, value in _item["Attribs"].items():
         text += f"{attrib}: {str(value)}\n"
     for attrib, value in _item["Requires"].items():
@@ -748,8 +769,8 @@ def save_item_to_xml(_item):
     if _item.get("Corrupted", False):
         text += "Corrupted"
 
-    if _item.get("Selected Variant", 0):
-        return ET.fromstring(f'<Item variant="{str(_item["Selected Variant"])}" id="{str(_item["id"])}">{text}</Item>')
+    if int(_item.get("Selected Variant", -1)) >= 0:
+        return ET.fromstring(f'<Item variant="{str(_item["Selected Variant"]+1)}" id="{str(_item["id"])}">{text}</Item>')
     else:
         return ET.fromstring(f'<Item id="{str(_item["id"])}">{text}</Item>')
     # save
