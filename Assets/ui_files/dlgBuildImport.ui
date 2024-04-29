@@ -205,6 +205,11 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Noto Mono</family>
+     </font>
+    </property>
     <item>
      <property name="text">
       <string>Character List</string>

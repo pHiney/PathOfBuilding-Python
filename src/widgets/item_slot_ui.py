@@ -174,14 +174,21 @@ class ItemSlotUI(QWidget):
                 # Clear the other slot if this is a two-hander
                 if item.two_hand:
                     self.other_weapon_slot.clear_default_item()
-                    if self.other_weapon_slot.grants_skill:
-                        self.win.remove_item_or_node_with_skills(f"Item:{self.other_weapon_slot.id}:{self.other_weapon_slot.name}")
         self.parent_notify(self)
 
     def set_default_by_text(self, _text):
         """Set the combo's active item by text"""
-        # print(f"set_default_by_text, slot_name: '{self.slot_name}', text: '{_text}'")
+        # print(f"set_default_by_text, {self.slot_name=}, {_text=}")
         self.combo_item_list.setCurrentText(_text)
+
+    def set_default_by_item_id(self, _id):
+        """Set the combo's active item by item id"""
+        # print(f"set_default_by_text, {self.slot_name=}, {_id=}")
+        for idx in range(self.combo_item_list.count()):
+            _item = self.combo_item_list.itemData(idx)
+            if _item != 0 and _item.id == _id:
+                self.combo_item_list.setCurrentIndex(idx)
+                break
 
     def set_default_item(self, item=None, _id=0):
         """
@@ -243,5 +250,8 @@ class ItemSlotUI(QWidget):
 
     def clear_default_item(self):
         """Remove the default item, so the control is blank. Useful for offhand when using a two handed Weapon"""
+        _item = self.current_item
+        if _item and _item.grants_skill:
+            self.win.remove_item_or_node_with_skills(f"Item:{_item.id}:{_item.name}")
         self.clear_item_slot()
         self.combo_item_list.setCurrentIndex(0)

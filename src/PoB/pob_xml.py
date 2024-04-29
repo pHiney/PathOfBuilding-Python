@@ -400,7 +400,7 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
                     line = lines.pop(line_idx)
                     if debug_lines:
                         print("I", len(lines), lines)
-                    json_item["Implicits"].append(line)
+                    json_item["Implicits"].append(line.replace("{range:0}", ""))
                 explicits_idx = line_idx
                 break
             else:
@@ -421,7 +421,7 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
             if m and not m.group(1).startswith("{"):
                 get_attribute(m)
             else:
-                json_item["Explicits"].append(line)
+                json_item["Explicits"].append(line.replace("{range:0}", ""))
 
     if debug_lines:
         print("c", len(lines), lines)

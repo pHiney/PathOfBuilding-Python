@@ -123,7 +123,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
 
     def fill_widgets(self):
         """Fill the widgets with default values. Called when setting self.item"""
-        self.setWindowTitle(self.item.name + "....")
+        self.setWindowTitle(self.item.name + " ....")
         if self.item.type != "Flask":
             base_item = self.base_items[self.item.base_name]
 
@@ -142,8 +142,10 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             for c_idx in range(max(self.max_num_sockets, 1), len(self.connector_widgets)):
                 self.connector_widgets[c_idx].setHidden(True)
 
-        # print(len(f"{self.item.variant_names=}"))
-        self.variants = len(self.item.variant_names) != 1
+        print(f"{self.item.corrupted=}")
+        self.radioBtn_Corrupted_Yes.setChecked(self.item.corrupted)
+        print(f"{len(self.item.variants)}, {self.item.variants=}")
+        self.variants = len(self.item.variants) != 0
         self.combo_Variants1.setVisible(self.variants)
         self.label_Variants1.setVisible(self.variants)
         self.combo_Variants2.setVisible(False)
@@ -151,9 +153,12 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         self.combo_Variants3.setVisible(False)
         self.label_Variants3.setVisible(False)
         # skip the leading ""
-        self.combo_Variants1.addItems(self.item.variant_names[1:])
-        self.combo_Variants2.addItems(self.item.variant_names[1:])
-        self.combo_Variants3.addItems(self.item.variant_names[1:])
+        self.combo_Variants1.addItems(self.item.variants)
+        self.combo_Variants1.view().setMinimumWidth(self.combo_Variants1.minimumSizeHint().width())
+        self.combo_Variants2.addItems(self.item.variants)
+        self.combo_Variants2.view().setMinimumWidth(self.combo_Variants2.minimumSizeHint().width())
+        self.combo_Variants3.addItems(self.item.variants)
+        self.combo_Variants3.view().setMinimumWidth(self.combo_Variants3.minimumSizeHint().width())
 
         self.connect_triggers()
 
@@ -166,8 +171,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
                         set_combo_index_by_text(self.socket_widgets[idx], socket)
 
         if self.variants:
-            curr_variant = self.item.current_variant == 0 and self.combo_Variants1.count() or self.item.current_variant
-            self.combo_Variants1.setCurrentIndex(curr_variant - 1)
+            curr_variant = self.item.current_variant == -1 and self.combo_Variants1.count() - 1 or self.item.current_variant
+            self.combo_Variants1.setCurrentIndex(curr_variant)
         self.label_Item.setText(self.item.tooltip())
 
     def connect_triggers(self):
@@ -200,7 +205,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         for idx, checkbox in enumerate(self.connector_widgets):  # Remember self.connector_widgets is a 1 based array
             make_checkbox_connection(idx, checkbox)
 
-        self.combo_Variants1.currentIndexChanged.connect(self.change_variant)
+        self.radioBtn_Corrupted_Yes.toggled.connect(self.change_corrupted_radio_button)
+        self.combo_Variants1.currentIndexChanged.connect(self.change_variant1)
 
     @Slot()
     def update_status_bar(self, message="", timeout=10):
@@ -308,18 +314,24 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         """
         self.item.sockets = self.sockets
         if self.variants:
-            curr_variant = self.item.current_variant == 0 and self.combo_Variants1.count() or self.item.current_variant
-            self.combo_Variants1.setCurrentIndex(curr_variant - 1)
-        self.item.current_variant = self.combo_Variants1.currentIndex() + 1
+            curr_index = self.combo_Variants1.currentIndex()
+            curr_variant = curr_index == 0 and self.combo_Variants1.count() or curr_index
+            self.combo_Variants1.setCurrentIndex(curr_variant)
+        self.item.current_variant = self.combo_Variants1.currentIndex()
         self.accept()
 
     @Slot()
-    def change_variant(self, index):
-        # print("change_variant", index)
+    def change_variant1(self, index):
+        # print(f"change_variant1 {index=}")
         if index <= 0:
             return
         base_names = self.item.variant_entries.get("base_name", "")
         if base_names:
             self.item.base_name = base_names[index]
-        self.item.curr_variant = index
-        self.label_Item.setText(self.item.tooltip())
+        self.item.current_variant = index
+        self.label_Item.setText(self.item.tooltip(True))
+
+    def change_corrupted_radio_button(self, checked):
+        print(f"change_corrupted_radio_button: {checked}")
+        self.item.corrupted = checked
+        self.label_Item.setText(self.item.tooltip(True))

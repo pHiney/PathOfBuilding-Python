@@ -59,6 +59,8 @@ class ItemsUI:
         self.dlg = None  # Is a dialog active
         # Flag to stop some actions happening in triggers during loading
         self.alerting = False
+        # full list of all items that grant skills
+        self.grant_skills_list = []
 
         self.base_items = read_json(Path(self.settings._data_dir, "base_items.json"))
         self.mods = read_json(Path(self.settings._data_dir, "mods.json"))
@@ -654,7 +656,7 @@ class ItemsUI:
                 for slot in self.jewel_slot_ui_list:
                     slot.add_item(item)
             except KeyError:
-                print("fill_jewel_slot_uis KeyError1", j_id, len(self.itemlist_by_id), len(self.jewel_slot_ui_list))
+                print(f"fill_jewel_slot_uis KeyError1:, {j_id=}, {len(self.itemlist_by_id)=}, {len(self.jewel_slot_ui_list)=}")
 
         # print(self.jewels)
         # print(self.build.current_spec.sockets)
@@ -666,9 +668,10 @@ class ItemsUI:
             try:
                 j_id = self.build.current_spec.sockets[slot_ui.jewel_node_id]
                 item = self.itemlist_by_id[j_id]
-                slot_ui.set_default_by_text(item.name)
+                slot_ui.set_default_by_item_id(j_id)
+                # slot_ui.set_default_by_text(item.name)
             except KeyError:
-                print("fill_jewel_slot_uis KeyError2", j_id, len(self.itemlist_by_id), len(self.jewel_slot_ui_list))
+                print(f"fill_jewel_slot_uis KeyError2:, {j_id=}, {len(self.itemlist_by_id)=}, {len(self.jewel_slot_ui_list)=}")
 
     def show_hide_jewels_frame(self):
         show = self.win.layout_SocketedJewels.count() > 3
@@ -689,7 +692,7 @@ class ItemsUI:
         u_json = read_json(Path(self.settings._data_dir, "uniques.json"))
         for key in u_json.keys():
             for _item in u_json[key]:
-                new_item = Item(self.settings, self.base_items)
+                new_item = Item(self.settings, self.base_items, template=True)
                 new_item.load_from_json(_item, "UNIQUE")
                 new_item.quality = 20
                 self.uniques_items.append(new_item)
@@ -713,7 +716,7 @@ class ItemsUI:
     def load_rare_template_items(self):
         t_json = read_json(Path(self.settings._data_dir, "rare_templates.json"))
         for _item in t_json:
-            new_item = Item(self.settings, self.base_items)
+            new_item = Item(self.settings, self.base_items, template=True)
             new_item.load_from_json(_item, "RARE")
             self.rare_template_items.append(new_item)
 
@@ -968,14 +971,14 @@ class ItemsUI:
                     slot = slots.get(slot_name, {})
                     if slot:
                         item_id = slot.get("itemId", -1)
-                        # check for bad naming, like "Belt Abyssal Socket 6"
                         if item_id >= 0:
                             # Clear the slot if not used
                             if item_id == 0:
                                 slot_ui.clear_default_item()
                             else:
                                 item = self.itemlist_by_id[item_id]
-                                slot_ui.set_default_by_text(item.name)
+                                # slot_ui.set_default_by_text(item.name)
+                                slot_ui.set_default_by_item_id(item_id)
                                 slot_ui.itemPbURL = slot.get("itemPbURL", "")
                                 if item.type == "Flask":
                                     slot_ui.active = slot.get("active", False)
@@ -1121,9 +1124,12 @@ class ItemsUI:
         Return a list() of Item() for items that are currently selected in the left
         :return: list:
         """
+        # print("itemset_list_active_items")
         results = [i for i in self.itemlist_by_id.values() if i.active]
         # for item in results:
         #     print(item.name)
+        self.grant_skills_list = [item.grants_skill for item in results if item.grants_skill]
+        # print(f"{self.grant_skills_list=}")
         return results
 
     @Slot()

@@ -535,75 +535,146 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
       <item>
        <widget class="QWidget" name="widget_Right" native="true">
         <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="leftMargin">
-          <number>2</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
+          <layout class="QGridLayout" name="gLayout_Corrupted">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_Corrupted">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::LeftToRight</enum>
+             </property>
+             <property name="text">
+              <string>Corrupted :</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <layout class="QHBoxLayout" name="hLayout_Corrupted">
+             <property name="leftMargin">
+              <number>30</number>
+             </property>
+             <item>
+              <widget class="QRadioButton" name="radioBtn_Corrupted_Yes">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&amp;Yes</string>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioBtn_Corrupted_No">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>24</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>&amp;No</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QGridLayout" name="gLayout_Variants1">
+           <item row="0" column="0">
             <widget class="QLabel" name="label_Variants1">
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
-              <string>Variants</string>
+              <string>Variants :</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
+             <property name="buddy">
+              <cstring>combo_Variants1</cstring>
+             </property>
             </widget>
            </item>
-           <item>
-            <widget class="QComboBox" name="combo_Variants1"/>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="combo_Variants1">
+             <item>
+              <property name="text">
+               <string>Choose Variant</string>
+              </property>
+             </item>
+            </widget>
            </item>
           </layout>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <item>
+          <layout class="QGridLayout" name="gLayout_Variants2">
+           <item row="0" column="0">
             <widget class="QLabel" name="label_Variants2">
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
-              <string>Variants</string>
+              <string>Variants :</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QComboBox" name="combo_Variants2"/>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="combo_Variants2">
+             <item>
+              <property name="text">
+               <string>Choose Variant</string>
+              </property>
+             </item>
+            </widget>
            </item>
           </layout>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_5">
-           <item>
+          <layout class="QGridLayout" name="gLayout_Variants3">
+           <item row="0" column="0">
             <widget class="QLabel" name="label_Variants3">
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
-              <string>Variants</string>
+              <string>Variants :</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QComboBox" name="combo_Variants3"/>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="combo_Variants3">
+             <item>
+              <property name="text">
+               <string>Choose Variant</string>
+              </property>
+             </item>
+            </widget>
            </item>
           </layout>
          </item>

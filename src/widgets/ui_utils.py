@@ -101,6 +101,8 @@ class HTMLDelegate(QStyledItemDelegate):
 
         painter.restore()
 
+    """ PSH: 20240427 Commented out to suit QComboBox testing. Noted ListViews seemed to still work """
+
     def sizeHint(self, option, index):
         """Inherited function to return the max width of all text items"""
         if type(index) is int:
@@ -109,8 +111,4 @@ class HTMLDelegate(QStyledItemDelegate):
         else:
             # print("HTMLDelegate.sizeHint", self._list.objectName(), index.row())
             self.doc.setHtml(self._list.item(index.row()).text())
-        # Doing it this way to shut pyCharm's warnings up
-        q = QSize()
-        q.setWidth(self.doc.idealWidth() + 20)
-        q.setHeight(self.doc.size().height())
-        return q
+        return QSize(self.doc.idealWidth() + 20, self.doc.size().height())

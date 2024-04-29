@@ -85,6 +85,8 @@ class SkillsUI:
         self.triggers_connected = False
         self.internal_clipboard = None
         self.dlg = None  # Is a dialog active
+        # dictionary list of active nodes and items that 'Grant' skills, for use with new_skill_set
+        self.active_hidden_skills = {}
 
         # dictionary for holding the GemUI representions of the gems in each socket group
         # self.gem_ui_list = {}
@@ -222,6 +224,7 @@ class SkillsUI:
         #     str_to_bool(self.xml_skills.get("matchGemLevelToCharacterLevel", "False"))
         # )
 
+        self.active_hidden_skills.clear()
         self.win.combo_SkillSet.clear()
         self.skillsets = self.skills["SkillSets"]
 
@@ -475,6 +478,8 @@ class SkillsUI:
         new_skillset = deepcopy(empty_skillset_dict)
         new_skillset["id"] = len(self.skillsets) + 1
         new_skillset["title"] = itemset_name
+        for key, item in self.active_hidden_skills.items():
+            self.win.add_item_or_node_with_skills(item, key, new_skillset)
         self.skillsets.append(new_skillset)
         self.win.combo_SkillSet.addItem(itemset_name, new_skillset)
         # set the SkillSet ComboBox dropdown width.
@@ -845,7 +850,7 @@ class SkillsUI:
         :param _index: index to display, 0 based integer
         :return: N/A
         """
-        # print("load_socket_group")
+        # print(f"load_socket_group: {_index=}")
         self.disconnect_skill_triggers()
 
         sgroups = self.current_skill_set["SGroups"]
@@ -869,16 +874,20 @@ class SkillsUI:
                         t = re.search(r"Tree:(\d+)$", source)
                         i = re.search(r"Item:(\d+):(.*)$", source)
                         hskill = self.hidden_skills[gem0["variantId"]]
-                        if t and int(t.group(1)) in self.build.current_spec.nodes:
-                            tree_node = self.build.current_tree.nodes.get(int(t.group(1)), None)
-                            if tree_node:
-                                label = (
-                                    f"This is a special group created for the {hskill['coloured_text']} skill, which is being provided by "
-                                    f"{tree_node.name}.<br>You cannot delete this group, but it will disappear if you un-allocate the node."
-                                )
-                                # print(label)
-                                self.list_label.setText(label)
-                                self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
+                        if t:
+                            if int(t.group(1)) in self.build.current_spec.nodes:
+                                tree_node = self.build.current_tree.nodes.get(int(t.group(1)), None)
+                                if tree_node:
+                                    label = (
+                                        f"This is a special group created for the {hskill['coloured_text']} skill, which is being provided by "
+                                        f"{tree_node.name}.<br>You cannot delete this group, but it will disappear if you un-allocate the node."
+                                    )
+                                    # print(label)
+                                    self.list_label.setText(label)
+                                    self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
+                            else:
+                                # Remove this SG, Node no longer allocated.
+                                self.win.remove_item_or_node_with_skills(source)
                         elif i:
                             _item = self.win.items_ui.itemlist_by_id.get(int(i.group(1)), 0)
                             if _item:
@@ -890,13 +899,19 @@ class SkillsUI:
                                 )
                                 self.list_label.setText(label)
                                 self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
+                            else:
+                                # Remove this SG, Item no longer equipped
+                                self.win.remove_item_or_node_with_skills(source)
                     else:
+                        # No "Source", so regular Socket Group
                         for idx, gem in enumerate(self.current_socket_group["Gems"]):
                             self.create_gem_ui(idx, gem)
                         # Create an empty gem at the end
                         self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
                 else:
                     # Create an empty gem at the end
+                    self.list_label.setHidden(True)
+                    self.win.list_Skills.setHidden(False)
                     self.create_gem_ui(len(self.current_socket_group["Gems"]), None)
 
         self.connect_skill_triggers()

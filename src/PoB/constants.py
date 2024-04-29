@@ -27,8 +27,8 @@ tree_versions = {
 }
 _VERSION_str = "3_24"
 _VERSION = tree_versions[_VERSION_str]
-default_view_mode = "TREE"
-# default_view_mode = "ITEMS"
+# default_view_mode = "TREE"
+default_view_mode = "ITEMS"
 # default_view_mode = "SKILLS"
 
 default_max_charges = 3

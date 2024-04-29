@@ -10,17 +10,17 @@ import re
 import requests
 from hashlib import sha1
 import xml.etree.ElementTree as ET
-from pprint import pprint
 
 from PySide6.QtWidgets import QDialog
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Slot
+from PySide6.QtGui import QStandardItem, QStandardItemModel
 
 from PoB.constants import bad_text, get_http_headers, valid_websites, website_list
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import write_json, read_json
 from PoB.utils import decode_base64_and_inflate, deflate_and_base64_encode, html_colour_text, unique_sorted
-from widgets.ui_utils import set_combo_index_by_text
+from widgets.ui_utils import HTMLDelegate, set_combo_index_by_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgBuildImport import Ui_BuildImport
@@ -306,6 +306,36 @@ class ImportDlg(Ui_BuildImport, QDialog):
         self.settings.last_account_name = text
         self.lineedit_Account.setText(text)
         self.character_data = None
+
+    @Slot()
+    def change_league_name2(self, text):
+        """
+        Fill the combo_CharList with character names based on league
+        :param text: current text of the league comboBox. "" will occur on .clear()
+        :return: N/A
+        ToDo: See if setting delete for the QlineEdit works and setting NotoMono font for dropdown view
+        """
+
+        def format_char_info(_name, _class, _level):
+            """"""
+            print(f"{_name=}, {_class=}, lvl {_level=}")
+            ll = 25 - len(_name) + len(_class)
+            lwi = QStandardItem(f'<span style="white-space: pre; color:red;">{_name:>24}:</span> {_class} {_level}')
+            # lwi = QStandardItem(f"{_name.ljust(ll)} {_class} lvl {_level}")
+            return lwi
+            # return f"{_name.ljust(ll)} {_class} lvl {_level}"
+
+        if self.account_json is None:
+            return
+        if text == "All" or text == "":
+            chars = [format_char_info(char["name"], char["class"], char["level"]) for char in self.account_json]
+        else:
+            chars = [format_char_info(char["name"], char["class"], char["level"]) for char in self.account_json if char["league"] == text]
+        model = QStandardItemModel()
+        for char in chars:
+            model.appendRow(char)
+        self.combo_CharList.setModel(model)
+        self.combo_CharList.setItemDelegate(HTMLDelegate(self))
 
     @Slot()
     def change_league_name(self, text):
