@@ -478,6 +478,38 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
        </property>
       </item>
      </widget>
+     <widget class="QLabel" name="label_Quality">
+      <property name="geometry">
+       <rect>
+        <x>702</x>
+        <y>12</y>
+        <width>111</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>&amp;Quality:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="buddy">
+       <cstring>spin_Quality</cstring>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="spin_Quality">
+      <property name="geometry">
+       <rect>
+        <x>820</x>
+        <y>10</y>
+        <width>42</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="maximum">
+       <number>30</number>
+      </property>
+     </widget>
     </widget>
    </item>
    <item>
@@ -616,13 +648,7 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="combo_Variants1">
-             <item>
-              <property name="text">
-               <string>Choose Variant</string>
-              </property>
-             </item>
-            </widget>
+            <widget class="QComboBox" name="combo_Variants1"/>
            </item>
           </layout>
          </item>
@@ -642,13 +668,7 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="combo_Variants2">
-             <item>
-              <property name="text">
-               <string>Choose Variant</string>
-              </property>
-             </item>
-            </widget>
+            <widget class="QComboBox" name="combo_Variants2"/>
            </item>
           </layout>
          </item>
@@ -668,13 +688,7 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QComboBox" name="combo_Variants3">
-             <item>
-              <property name="text">
-               <string>Choose Variant</string>
-              </property>
-             </item>
-            </widget>
+            <widget class="QComboBox" name="combo_Variants3"/>
            </item>
           </layout>
          </item>

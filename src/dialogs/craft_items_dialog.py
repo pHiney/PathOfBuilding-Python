@@ -118,21 +118,17 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         self.original_item = newitem
         # go via dict so we get a unique python object
         self._item.load_from_json(deepcopy(newitem.save()))
-        self.fill_widgets()
-        self.update_status_bar(f"Loaded {newitem.coloured_text}")
 
-    def fill_widgets(self):
-        """Fill the widgets with default values. Called when setting self.item"""
         self.setWindowTitle(self.item.name + " ....")
-        if self.item.type != "Flask":
-            base_item = self.base_items[self.item.base_name]
+        if self._item.type != "Flask":
+            base_item = self.base_items[self._item.base_name]
 
             # Ensure there is a proper socket setup
-            if self.item.sockets == "":
-                self.item.sockets = base_item.get("initial_sockets", "")
+            if self._item.sockets == "":
+                self._item.sockets = base_item.get("initial_sockets", "")
             # Some belts have sockets, but will not have a max_num_sockets entry, so setup a new max_num_sockets.
-            self.curr_socket_state = [char for char in " " + self.item.sockets if char in ("R", "G", "B", "W", "A")]
-            self.curr_connector_state = [char for char in " " + self.item.sockets if char in (" ", "-")]
+            self.curr_socket_state = [char for char in " " + self._item.sockets if char in ("R", "G", "B", "W", "A")]
+            self.curr_connector_state = [char for char in " " + self._item.sockets if char in (" ", "-")]
             self.max_num_sockets = max(base_item.get("max_num_sockets", 0), len(self.curr_socket_state))
 
         # Hide unused socket combos and connectors, yes this may hide them all
@@ -142,10 +138,10 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             for c_idx in range(max(self.max_num_sockets, 1), len(self.connector_widgets)):
                 self.connector_widgets[c_idx].setHidden(True)
 
-        print(f"{self.item.corrupted=}")
+        # print(f"{self.item.corrupted=}")
         self.radioBtn_Corrupted_Yes.setChecked(self.item.corrupted)
-        print(f"{len(self.item.variants)}, {self.item.variants=}")
-        self.variants = len(self.item.variants) != 0
+        # print(f"{len(self.item.variants)}, {self.item.variants=}")
+        self.variants = len(self._item.variants) != 0
         self.combo_Variants1.setVisible(self.variants)
         self.label_Variants1.setVisible(self.variants)
         self.combo_Variants2.setVisible(False)
@@ -153,16 +149,17 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         self.combo_Variants3.setVisible(False)
         self.label_Variants3.setVisible(False)
         # skip the leading ""
-        self.combo_Variants1.addItems(self.item.variants)
+        self.combo_Variants1.addItems(self._item.variants)
         self.combo_Variants1.view().setMinimumWidth(self.combo_Variants1.minimumSizeHint().width())
-        self.combo_Variants2.addItems(self.item.variants)
+        self.combo_Variants2.addItems(self._item.variants)
         self.combo_Variants2.view().setMinimumWidth(self.combo_Variants2.minimumSizeHint().width())
-        self.combo_Variants3.addItems(self.item.variants)
+        self.combo_Variants3.addItems(self._item.variants)
         self.combo_Variants3.view().setMinimumWidth(self.combo_Variants3.minimumSizeHint().width())
 
+        self.spin_Quality.setValue(self._item.quality)
         self.connect_triggers()
 
-        sockets = self.item.sockets
+        sockets = self._item.sockets
         if sockets:
             for idx, socket in enumerate(self.curr_socket_state):
                 # protect against data errors (or people fiddling)
@@ -171,9 +168,11 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
                         set_combo_index_by_text(self.socket_widgets[idx], socket)
 
         if self.variants:
-            curr_variant = self.item.current_variant == -1 and self.combo_Variants1.count() - 1 or self.item.current_variant
+            curr_variant = self._item.current_variant == -1 and self.combo_Variants1.count() - 1 or self._item.current_variant
             self.combo_Variants1.setCurrentIndex(curr_variant)
-        self.label_Item.setText(self.item.tooltip())
+        self.label_Item.setText(self._item.tooltip())
+
+        self.update_status_bar(f"Loaded {newitem.coloured_text}")
 
     def connect_triggers(self):
         def make_combo_connection(_idx, _combo):
@@ -313,6 +312,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         :return: N/A
         """
         self.item.sockets = self.sockets
+        self.item.quality = self.spin_Quality.value()
         if self.variants:
             curr_index = self.combo_Variants1.currentIndex()
             curr_variant = curr_index == 0 and self.combo_Variants1.count() or curr_index
@@ -322,8 +322,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
 
     @Slot()
     def change_variant1(self, index):
-        # print(f"change_variant1 {index=}")
-        if index <= 0:
+        print(f"change_variant1 {index=}")
+        if index < 0:
             return
         base_names = self.item.variant_entries.get("base_name", "")
         if base_names:

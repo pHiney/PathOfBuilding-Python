@@ -19,7 +19,7 @@ from PoB.constants import (
 )
 from PoB.settings import Settings
 from PoB.mod import Mod
-from PoB.utils import _debug, html_colour_text, search_stats_for_skill
+from PoB.utils import _debug, html_colour_text, search_stats_for_skill, print_call_stack
 from widgets.ui_utils import search_stats_list_for_regex
 
 
@@ -37,7 +37,6 @@ class Item:
         self.base_items = _base_items
         self.settings = _settings
         self.template = template
-        self.hidden_skills = _settings._hidden_skills  # a copy of the hidden_skills.json from skills_ui.
         # This item's entry from base_items
         self.base_item = None
         self.name = ""  # Combination of title and base_name
@@ -60,7 +59,7 @@ class Item:
         self.ilevel = 0
         # needs to be a string as there are entries like "Limited to: 1 Survival"
         self.limited_to = ""
-        self._quality = 0
+        # self._quality = 0
         self.influences = []
         self.two_hand = False
         self.abyss_jewel = None
@@ -228,36 +227,6 @@ class Item:
             self.pob_item.pop("Corrupted", False)
 
     @property
-    def current_variant(self) -> int:
-        """variants are numbered from 0, so -1 is no selection."""
-        return self.pob_item.get("Selected Variant", -1)
-
-    @current_variant.setter
-    def current_variant(self, new_value):
-        """variants are numbered from 0, so -1 is no selection."""
-        new_value = int(new_value)
-        if new_value < 0 < len(self.variants):
-            self.pob_item.pop("Selected Variant", -1)
-        else:
-            # Make sure there is nothing weird going on (validate input)
-            if new_value < 0 or new_value >= len(self.variants):
-                new_value = len(self.variants) - 1
-            self.pob_item["Selected Variant"] = new_value
-
-            # Now reset mod list
-        self.implicitMods.clear()
-        for mod in self.full_implicitMods_list:
-            # check for variants and if it's our variant, add it to the smaller implicit mod list
-            # if "variant" in line:
-            #     m = re.search(r"{variant:([\d,]+)}(.*)", line)
-            #     variants = [int(variant) for variant in m.group(1).split(",") if str(new_value) == variant]
-            #     if str(self.current_variant) in m.group(1).split(","):
-            #         self.implicitMods.append(mod)
-            # else:
-            #     self.implicitMods.append(mod)
-            self.implicitMods.append(mod)
-
-    @property
     def abyssal_sockets(self):
         return [char for char in " " + self.sockets if char == "A"]
 
@@ -275,7 +244,7 @@ class Item:
 
     @property
     def quality(self) -> int:
-        return self._quality
+        return self.get_attrib("Quality", 0)
 
     @quality.setter
     def quality(self, new_value):
@@ -374,9 +343,61 @@ class Item:
     def eater(self) -> bool:
         return "Eater" in self.influences
 
+    @property
+    def current_variant(self) -> int:
+        """variants are numbered from 0, so -1 is no selection."""
+        return self.pob_item.get("Selected Variant", -1)
+
+    @current_variant.setter
+    def current_variant(self, new_value):
+        """variants are numbered from 0, so -1 is no selection."""
+        new_value = int(new_value)
+        if new_value < 0 < len(self.variants):
+            self.pob_item.pop("Selected Variant", -1)
+        else:
+            # Make sure there is nothing weird going on (validate input)
+            if new_value < 0 or new_value >= len(self.variants):
+                new_value = len(self.variants) - 1
+            self.pob_item["Selected Variant"] = new_value
+
+        # don't needless calculate/process
+        if self.current_variant == new_value:
+            return
+
+        # Now reset mod list
+        self.implicitMods.clear()
+        for mod in self.full_implicitMods_list:
+            # print(f"\ncvi1: {new_value=}, {mod.line_for_save=}, {mod.line=}")
+            # Check for variants and if it's our variant, add it to the smaller implicit mod list
+            if new_value == -1 or mod.my_variants == [] or new_value in mod.my_variants:
+                self.implicitMods.append(mod)
+                if mod.grants_skill:
+                    self.grants_skill = mod.grants_skill
+                # print(f"cvi2: {mod.line_for_save=}, {mod.line=}")
+
+        self.explicitMods.clear()
+        for mod in self.full_explicitMods_list:
+            if mod.original_line == "Strength from Passives in Radius is Transformed to Intelligence":
+                print(f"\ncve1: {new_value=}, {mod.line_for_save=}, {mod.my_variants=}\n")
+            # Check for variants and if it's our variant, add it to the smaller explicit mod list
+            if new_value == -1 or mod.my_variants == [] or new_value in mod.my_variants:
+                self.explicitMods.append(mod)
+                if mod.grants_skill:
+                    self.grants_skill = mod.grants_skill
+            # print(f"cve2: {mod.line_for_save=}, {mod.line=}")
+
+        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods]
+
+        if self.variants:
+            self.alt_variants = self.pob_item.get("Alt Variants", {})
+
+            variant_base_names = self.pob_item.get("Variant Entries", {}).get("base_name", [])
+            if variant_base_names and new_value >= 0:
+                self.base_name = variant_base_names[new_value]
+
     def get_attrib(self, attrib_name, default_value):
         """
-        Return the value of an attribute, if it exists. elsewise return your supplied default.
+        Return the value of an attribute, if it exists - elsewise return your supplied default.
         :param attrib_name: str
         :param default_value: anything
         :return: attrib's value
@@ -472,7 +493,7 @@ class Item:
                 key = f'{influence.split("=")[0].title()} Item'
                 if key in influencers:
                     self.influences.append(key)
-        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line_with_range]
+        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line]
         self.tooltip()
         # load_from_ggg_json
 
@@ -515,7 +536,7 @@ class Item:
         for mod in _json.get("implicits", []):
             self.implicitMods.append(Mod(self.settings, mod))
 
-        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line_with_range]
+        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line]
         self.tooltip()
         # load_from_ggg_json
 
@@ -536,16 +557,6 @@ class Item:
 
         # trigger building of self.name and self.type
         self.base_name = self.base_name
-
-        # get all the variant information
-        self.variants = self.pob_item.get("Variants", [])
-        current_variant = self.pob_item.get("Selected Variant", 0)
-        if self.variants:
-            self.alt_variants = self.pob_item.get("Alt Variants", {})
-
-            variant_base_names = self.pob_item.get("Variant Entries", {}).get("base_name", [])
-            if variant_base_names and current_variant >= 0:
-                self.base_name = variant_base_names[current_variant]
 
         # get some common attribs. Less common ones can use item.get_attrib()
         self.armour = self.get_attrib("armour", 0)
@@ -573,35 +584,30 @@ class Item:
         for line in self.pob_item.get("Implicits", {}):
             mod = Mod(self.settings, line, self.template)
             self.full_implicitMods_list.append(mod)
-            # check for variants and if it's our variant, add it to the smaller implicit mod list
-            # if "variant" in line:
-            #     m = re.search(r"{variant:([\d,]+)}(.*)", line)
-            #     variants = [int(variant) for variant in m.group(1).split(",") if str(current_variant) == variant]
-            #     if str(self.current_variant) in m.group(1).split(","):
-            #         self.implicitMods.append(mod)
-            # else:
-            #     self.implicitMods.append(mod)
 
         # Explicits will be there, even if empty.
         for line in self.pob_item.get("Explicits", {}):
             mod = Mod(self.settings, line, self.template)
             self.full_explicitMods_list.append(mod)
             # check for variants and if it's our variant, add it to the smaller explicit mod list
-            if self.current_variant != 0 and "variant" in line:
-                v = re.search(r"{variant: ?([\d,]+)}(.*)", line)
-                if str(self.current_variant) in v.group(1).split(","):
-                    self.explicitMods.append(mod)
-                    skill, level = search_stats_for_skill(line, self.title == "United in Dream")
-                    if skill:
-                        self.grants_skill = (skill, level)
-            else:
-                self.explicitMods.append(mod)
-                # self.grants_skill = search_stats_for_skill(line, self.title == "Craiceann's Carapace")
-                skill, level = search_stats_for_skill(line)
-                if skill:
-                    self.grants_skill = (skill, level)
+            # if self.current_variant != 0 and "variant" in line:
+            #     v = re.search(r"{variant: ?([\d,]+)}(.*)", line)
+            #     if str(self.current_variant) in v.group(1).split(","):
+            #         self.explicitMods.append(mod)
+            #         skill, level = search_stats_for_skill(line, self.title == "United in Dream")
+            #         if skill:
+            #             self.grants_skill = (skill, level)
+            # else:
+            #     self.explicitMods.append(mod)
+            #     # self.grants_skill = search_stats_for_skill(line, self.title == "Craiceann's Carapace")
+            #     skill, level = search_stats_for_skill(line)
+            #     if skill:
+            #         self.grants_skill = (skill, level)
 
-        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods]
+        # get all the variant information. After creating the Mod()'s
+        self.variants = self.pob_item.get("Variants", [])
+        self.current_variant = self.pob_item.get("Selected Variant", 0)
+
         self.rarity_colour = ColourCodes[self.rarity].value  # needed as this function does need to set self.rarity
         self.tooltip()
         return True
@@ -610,7 +616,13 @@ class Item:
     def save(self):
         """"""
         # Need to work out what has changed in variables that don't directly access the json dict.
-        # The mods that have changed ???
+        self.pob_item["Implicits"].clear()
+        for mod in self.full_implicitMods_list:
+            self.pob_item["Implicits"].append(mod.line_for_save)
+        self.pob_item["Explicits"].clear()
+        for mod in self.full_explicitMods_list:
+            self.pob_item["Explicits"].append(mod.line_for_save)
+        print(f"save: {self.pob_item=}")
         return self.pob_item
 
     def find_base_stats(self):
@@ -618,7 +630,7 @@ class Item:
         Find base_armour, etc by removing any additions, quality or multipliers
         :return: N/A
         """
-        self.all_stats = [mod.line_with_range for mod in self.implicitMods + self.explicitMods + self.fracturedMods]  # if mod
+        self.all_stats = [mod.line for mod in self.implicitMods + self.explicitMods + self.fracturedMods]  # if mod
         if self.quality:
             if self._armour:
                 self.base_armour = int(self._armour * (1 - (self.quality / 100)))

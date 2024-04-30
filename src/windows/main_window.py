@@ -112,9 +112,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.calcs_ui = CalcsUI(self.settings, self.build, self)
         self.config_ui = ConfigUI(self.settings, self.build, self)
         self.notes_ui = NotesUI(self.settings, self)
-        # skills_ui before tree_ui and items_ui, as they need settings._hidden_skills.
+        # skills_ui before tree_ui and items_ui, as they need the hidden_skills.json loaded.
         self.skills_ui = SkillsUI(self.settings, self.build, self)
-        self.settings._hidden_skills = self.skills_ui.hidden_skills
         # tree_ui before items_ui, as it needs 'open_manage_trees' function.
         self.tree_ui = TreeUI(self.settings, self.build, self.frame_TreeTools, self)
         self.items_ui = ItemsUI(self.settings, self.build, self.tree_ui, self)
