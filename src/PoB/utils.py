@@ -234,7 +234,6 @@ def search_stats_for_skill(stats, debug=False):
     :param debug: bool:
     :return: set: ("skill name", int("skill level"))
     """
-    grants_skill = ()
     skill, level = "", 0
     if type(stats) is list:
         stats = " ".join(stats)
@@ -248,12 +247,6 @@ def search_stats_for_skill(stats, debug=False):
         skill, level = (t.group(2), int(t.group(1)))
 
     return skill, level
-    # if g:
-    #     grants_skill = (g.group(2), int(g.group(1)))
-    # if t:
-    #     grants_skill = (t.group(2), int(t.group(1)))
-    #
-    # return grants_skill
 
 
 def list_to_str(_input_list):

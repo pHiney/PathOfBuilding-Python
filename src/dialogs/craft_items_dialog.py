@@ -314,10 +314,12 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         self.item.sockets = self.sockets
         self.item.quality = self.spin_Quality.value()
         if self.variants:
-            curr_index = self.combo_Variants1.currentIndex()
-            curr_variant = curr_index == 0 and self.combo_Variants1.count() or curr_index
+            # curr_index = self.combo_Variants1.currentIndex()
+            # curr_variant = curr_index == 0 and self.combo_Variants1.count() or curr_index
+            curr_variant = self.combo_Variants1.currentIndex()
             self.combo_Variants1.setCurrentIndex(curr_variant)
-        self.item.current_variant = self.combo_Variants1.currentIndex()
+            self.item.current_variant = self.combo_Variants1.currentIndex()
+        self.item.corrupted = self.radioBtn_Corrupted_Yes.isChecked()
         self.accept()
 
     @Slot()
@@ -325,10 +327,17 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         print(f"change_variant1 {index=}")
         if index < 0:
             return
+        was_corrupted = [mod.corrupted for mod in self.item.implicitMods + self.item.explicitMods if mod.corrupted]
         base_names = self.item.variant_entries.get("base_name", "")
         if base_names:
             self.item.base_name = base_names[index]
         self.item.current_variant = index
+        is_corrupted = [mod.corrupted for mod in self.item.implicitMods + self.item.explicitMods if mod.corrupted]
+        if was_corrupted != is_corrupted:
+            if self.item.corrupted:
+                self.radioBtn_Corrupted_Yes.setChecked(True)
+            else:
+                self.radioBtn_Corrupted_No.setChecked(True)
         self.label_Item.setText(self.item.tooltip(True))
 
     def change_corrupted_radio_button(self, checked):

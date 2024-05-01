@@ -351,23 +351,18 @@ class Item:
     @current_variant.setter
     def current_variant(self, new_value):
         """variants are numbered from 0, so -1 is no selection."""
+        # print(f"current_variant: {new_value=}, {self.title=}")
+        # print(f"current_variant: {self.current_variant=}, {new_value=}, {self.title=}")
         new_value = int(new_value)
-        if new_value < 0 < len(self.variants):
+        if new_value < -1 or new_value >= len(self.variants):
             self.pob_item.pop("Selected Variant", -1)
         else:
-            # Make sure there is nothing weird going on (validate input)
-            if new_value < 0 or new_value >= len(self.variants):
-                new_value = len(self.variants) - 1
             self.pob_item["Selected Variant"] = new_value
-
-        # don't needless calculate/process
-        if self.current_variant == new_value:
-            return
 
         # Now reset mod list
         self.implicitMods.clear()
         for mod in self.full_implicitMods_list:
-            # print(f"\ncvi1: {new_value=}, {mod.line_for_save=}, {mod.line=}")
+            # print(f"\ncvi1: {mod} {new_value=}, {mod.line_for_save=}, {mod.line=}")
             # Check for variants and if it's our variant, add it to the smaller implicit mod list
             if new_value == -1 or mod.my_variants == [] or new_value in mod.my_variants:
                 self.implicitMods.append(mod)
@@ -377,16 +372,17 @@ class Item:
 
         self.explicitMods.clear()
         for mod in self.full_explicitMods_list:
-            if mod.original_line == "Strength from Passives in Radius is Transformed to Intelligence":
-                print(f"\ncve1: {new_value=}, {mod.line_for_save=}, {mod.my_variants=}\n")
+            # print(f"\ncve1: {mod=} {new_value=}, {mod.line_for_save=}, {mod.corrupted=}\n")
             # Check for variants and if it's our variant, add it to the smaller explicit mod list
             if new_value == -1 or mod.my_variants == [] or new_value in mod.my_variants:
                 self.explicitMods.append(mod)
-                if mod.grants_skill:
+                if mod.grants_skill is not None:
                     self.grants_skill = mod.grants_skill
             # print(f"cve2: {mod.line_for_save=}, {mod.line=}")
 
         self.all_stats = [mod for mod in self.implicitMods + self.explicitMods]
+        corrupted = [mod.corrupted for mod in self.implicitMods + self.explicitMods if mod.corrupted]
+        self.corrupted = corrupted != []
 
         if self.variants:
             self.alt_variants = self.pob_item.get("Alt Variants", {})
@@ -606,7 +602,7 @@ class Item:
 
         # get all the variant information. After creating the Mod()'s
         self.variants = self.pob_item.get("Variants", [])
-        self.current_variant = self.pob_item.get("Selected Variant", 0)
+        self.current_variant = self.pob_item.get("Selected Variant", -1)
 
         self.rarity_colour = ColourCodes[self.rarity].value  # needed as this function does need to set self.rarity
         self.tooltip()
@@ -622,7 +618,7 @@ class Item:
         self.pob_item["Explicits"].clear()
         for mod in self.full_explicitMods_list:
             self.pob_item["Explicits"].append(mod.line_for_save)
-        print(f"save: {self.pob_item=}")
+        # print(f"save: {self.pob_item=}")
         return self.pob_item
 
     def find_base_stats(self):

@@ -868,7 +868,7 @@ class ItemsUI:
         dlg.item = lwi.data(Qt.UserRole)
         _return = dlg.exec()
         if _return:
-            print(f"Saved: {dlg.item.name}")
+            print(f"Saved: {dlg.item.name}, {dlg.item.corrupted=}")
             self.itemlist_by_id[dlg.original_item.id] = dlg.item
             lwi.setData(Qt.UserRole, dlg.item)
             lwi.setText(html_colour_text(dlg.item.rarity, dlg.item.name))

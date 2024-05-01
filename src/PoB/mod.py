@@ -19,6 +19,9 @@ class Mod:
         """
         self.settings = settings
         self.template = template
+        self.grants_skill = ()
+        self.my_variants = []
+
         # this is the text without {variant}, {crafted}. At this point {range} is still present
         m = re.search(r"({.*})(.*)", _line)
         self.marks = m and m.group(1) or ""
@@ -33,9 +36,6 @@ class Mod:
         self.line = self.original_line
 
         self.corrupted = self.original_line == "Corrupted"
-        if self.corrupted:
-            self.tooltip = f'{html_colour_text("STRENGTH",self.original_line)}<br/>'
-            return
 
         # value for managing the range of values. EG: 20-40% of ... _range will be between 0 and 1
         self._range_value = -1
@@ -55,10 +55,14 @@ class Mod:
             self.tooltip_colour = ColourCodes.CRAFTED.value
         elif self.fractured:
             self.tooltip_colour = ColourCodes.FRACTURED.value
+        elif self.corrupted:
+            self.tooltip_colour = ColourCodes.STRENGTH.value
         # No range? Let's set the tooltip.
         self.tooltip = f"{html_colour_text(self.tooltip_colour, self.original_line)}<br/>"
 
-        self.grants_skill = search_stats_for_skill(self.original_line)
+        skill, level = search_stats_for_skill(self.original_line)
+        if skill:
+            self.grants_skill = (skill, level)
 
         # check for and keep tag information
         m = re.search(r"({tags:[\w,]+})", self.marks)
