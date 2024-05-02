@@ -381,8 +381,12 @@ class Item:
             # print(f"cve2: {mod.line_for_save=}, {mod.line=}")
 
         self.all_stats = [mod for mod in self.implicitMods + self.explicitMods]
-        corrupted = [mod.corrupted for mod in self.implicitMods + self.explicitMods if mod.corrupted]
-        self.corrupted = corrupted != []
+
+        # If there is a mod for Corrupted, override the "Corrupted" entry in the json
+        corrupted_mod = [mod.corrupted for mod in self.all_stats if mod.original_line == "Corrupted"]
+        if corrupted_mod:
+            corrupted = [mod.corrupted for mod in self.all_stats if mod.corrupted]
+            self.corrupted = corrupted != []
 
         if self.variants:
             self.alt_variants = self.pob_item.get("Alt Variants", {})

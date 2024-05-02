@@ -12,11 +12,10 @@ For the purposes of processing, the colour comboBox manages the connector to the
 """
 
 from copy import deepcopy
-import re
 
-from PySide6.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QMainWindow, QStatusBar
+from PySide6.QtWidgets import QComboBox, QDialog, QDialogButtonBox
 from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QColor, QBrush, QIcon
+from PySide6.QtGui import QBrush
 
 from PoB.constants import ColourCodes
 from PoB.settings import Settings
@@ -138,8 +137,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             for c_idx in range(max(self.max_num_sockets, 1), len(self.connector_widgets)):
                 self.connector_widgets[c_idx].setHidden(True)
 
-        # print(f"{self.item.corrupted=}")
-        self.radioBtn_Corrupted_Yes.setChecked(self.item.corrupted)
+        self.cbox_Corrupted.setChecked(self.item.corrupted)
         # print(f"{len(self.item.variants)}, {self.item.variants=}")
         self.variants = len(self._item.variants) != 0
         self.combo_Variants1.setVisible(self.variants)
@@ -204,7 +202,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         for idx, checkbox in enumerate(self.connector_widgets):  # Remember self.connector_widgets is a 1 based array
             make_checkbox_connection(idx, checkbox)
 
-        self.radioBtn_Corrupted_Yes.toggled.connect(self.change_corrupted_radio_button)
+        self.cbox_Corrupted.toggled.connect(self.change_corrupted_checkbox)
         self.combo_Variants1.currentIndexChanged.connect(self.change_variant1)
 
     @Slot()
@@ -319,7 +317,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             curr_variant = self.combo_Variants1.currentIndex()
             self.combo_Variants1.setCurrentIndex(curr_variant)
             self.item.current_variant = self.combo_Variants1.currentIndex()
-        self.item.corrupted = self.radioBtn_Corrupted_Yes.isChecked()
+        self.item.corrupted = self.cbox_Corrupted.isChecked()
         self.accept()
 
     @Slot()
@@ -333,14 +331,12 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             self.item.base_name = base_names[index]
         self.item.current_variant = index
         is_corrupted = [mod.corrupted for mod in self.item.implicitMods + self.item.explicitMods if mod.corrupted]
+        print(f"{was_corrupted=}, {is_corrupted=}")
         if was_corrupted != is_corrupted:
-            if self.item.corrupted:
-                self.radioBtn_Corrupted_Yes.setChecked(True)
-            else:
-                self.radioBtn_Corrupted_No.setChecked(True)
+            self.cbox_Corrupted.setChecked(is_corrupted != [])
         self.label_Item.setText(self.item.tooltip(True))
 
-    def change_corrupted_radio_button(self, checked):
-        print(f"change_corrupted_radio_button: {checked}")
+    def change_corrupted_checkbox(self, checked):
+        print(f"change_corrupted_checkbox: {checked}")
         self.item.corrupted = checked
         self.label_Item.setText(self.item.tooltip(True))

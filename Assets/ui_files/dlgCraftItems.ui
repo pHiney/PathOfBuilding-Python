@@ -581,7 +581,7 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
               <enum>Qt::LeftToRight</enum>
              </property>
              <property name="text">
-              <string>Corrupted :</string>
+              <string/>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -594,7 +594,7 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
               <number>30</number>
              </property>
              <item>
-              <widget class="QRadioButton" name="radioBtn_Corrupted_Yes">
+              <widget class="QCheckBox" name="cbox_Corrupted">
                <property name="minimumSize">
                 <size>
                  <width>40</width>
@@ -602,26 +602,10 @@ image : url(&quot;:/Art/Icons/cross.png&quot;)
                 </size>
                </property>
                <property name="text">
-                <string>&amp;Yes</string>
+                <string>&amp;Corrupted</string>
                </property>
                <property name="checked">
                 <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="radioBtn_Corrupted_No">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>&amp;No</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
                </property>
               </widget>
              </item>
