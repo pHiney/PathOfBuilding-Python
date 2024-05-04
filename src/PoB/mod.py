@@ -24,13 +24,11 @@ class Mod:
 
         # this is the text without {variant}, {crafted}. At this point {range} is still present
         m = re.search(r"({.*})(.*)", _line)
+        # All the {variants}, {tags} and such
         self.marks = m and m.group(1) or ""
         self.original_line = m and m.group(2) or _line
         # if m:
         #     print(f"{m.groups()=}")
-
-        # All the {variants}, {tags} and such
-        self.marks = m and m.group(1) or ""
 
         # The formatted line with the ranged values filled in, if range is present. Used by calc routines
         self.line = self.original_line
@@ -137,6 +135,7 @@ class Mod:
         fmt = self.value < 10 and "%0.3g" or "%0.5g"
         # put the crafted colour on the value only
         value_str = format_number(self.value, fmt, self.settings)
+        # print(f"range_value: {new_range=}, {value_str=}")
         value_colored_str = html_colour_text("CRAFTED", value_str)
         # print(f"range.setter: {self.line=}, {self.line_unformatted=}, {self.original_line=}")
         if self.min2:

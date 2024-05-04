@@ -71,6 +71,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         btn_reset = self.btnBox.button(QDialogButtonBox.Reset)
         btn_reset.clicked.connect(self.reset)
 
+        # list of mods thathave a range in their tags
+        self.range_mods = []
         self.variants = False
         self.max_num_sockets = 0
         self.socket_widgets = [  # 0 based array
@@ -157,6 +159,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         self.spin_Quality.setValue(self._item.quality)
         self.connect_triggers()
 
+        self.get_range_mods()
+
         sockets = self._item.sockets
         if sockets:
             for idx, socket in enumerate(self.curr_socket_state):
@@ -204,6 +208,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
 
         self.cbox_Corrupted.toggled.connect(self.change_corrupted_checkbox)
         self.combo_Variants1.currentIndexChanged.connect(self.change_variant1)
+        self.combo_Mods.currentIndexChanged.connect(self.change_mods_combobox)
+        self.spin_Mods.valueChanged.connect(self.change_mods_spinbox)
 
     @Slot()
     def update_status_bar(self, message="", timeout=10):
@@ -322,7 +328,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
 
     @Slot()
     def change_variant1(self, index):
-        print(f"change_variant1 {index=}")
+        """Change variant. Reset widgets that are dependant on mod lists"""
+        # print(f"change_variant1 {index=}")
         if index < 0:
             return
         was_corrupted = [mod.corrupted for mod in self.item.implicitMods + self.item.explicitMods if mod.corrupted]
@@ -331,12 +338,40 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             self.item.base_name = base_names[index]
         self.item.current_variant = index
         is_corrupted = [mod.corrupted for mod in self.item.implicitMods + self.item.explicitMods if mod.corrupted]
-        print(f"{was_corrupted=}, {is_corrupted=}")
+        # print(f"{was_corrupted=}, {is_corrupted=}")
         if was_corrupted != is_corrupted:
             self.cbox_Corrupted.setChecked(is_corrupted != [])
+        self.get_range_mods()
         self.label_Item.setText(self.item.tooltip(True))
 
+    @Slot()
     def change_corrupted_checkbox(self, checked):
-        print(f"change_corrupted_checkbox: {checked}")
+        # print(f"change_corrupted_checkbox: {checked}")
         self.item.corrupted = checked
         self.label_Item.setText(self.item.tooltip(True))
+
+    @Slot()
+    def change_mods_combobox(self, index):
+        """Switch between current range based mods"""
+        # print(f"change_mods_combobox: {index=}")
+        if index < 0:
+            return
+        self.spin_Mods.setValue(self.range_mods[index].range_value)
+
+    @Slot()
+    def change_mods_spinbox(self, value):
+        """Change the current mod's range value"""
+        # print(f"change_mods_spinbox: {value=}")
+        self.range_mods[self.combo_Mods.currentIndex()].range_value = value
+        self.label_Item.setText(self.item.tooltip(True))
+
+    def get_range_mods(self):
+        self.range_mods = [mod for mod in self._item.all_stats if "range" in mod.marks]
+        # print(f"get_range_mods: {self.range_mods=}")
+        self.combo_Mods.setVisible(self.range_mods != [])
+        self.label_Mods.setVisible(self.range_mods != [])
+        self.spin_Mods.setVisible(self.range_mods != [])
+        if self.range_mods:
+            self.combo_Mods.clear()
+            self.combo_Mods.addItems([mod.original_line for mod in self.range_mods])
+            self.combo_Mods.view().setMinimumWidth(self.combo_Variants1.minimumSizeHint().width())
