@@ -24,9 +24,9 @@ def search_stats_list_for_regex(stat_list, regex, default_value, debug=False) ->
         m = re.search(regex, stat)
         # print(f"{stat=}, {regex=}")
         if m:
+            value.append(int(m.group(1)))
             if debug:
                 print(f"{stat=}, {regex=}, {value=}, {m=}")
-            value.append(int(m.group(1)))
     return value == [] and [int(default_value)] or value
 
 

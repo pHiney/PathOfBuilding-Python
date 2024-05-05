@@ -395,7 +395,7 @@ class ItemsUI:
         # Trigger showing the correct itemset
         self.win.combo_ItemSet.setCurrentIndex(self.activeItemSet)
 
-    def load_from_ggg_json(self, json_items, delete_it_all):
+    def import_from_ggg_json(self, json_items, delete_it_all):
         """
         Load internal structures from the GGG build json.
 
@@ -403,7 +403,7 @@ class ItemsUI:
         :param delete_it_all: bool: delete all current items and itemsets
         :return: N/A
         """
-        # print("items_ui.load_from_ggg_json")
+        # print("items_ui.import_from_ggg_json")
         self.disconnect_item_triggers()
         self.alerting = False
         if delete_it_all:
@@ -418,7 +418,7 @@ class ItemsUI:
         # add the items to the list box
         for idx, text_item in enumerate(json_items["items"]):
             new_item = Item(self.settings, self.base_items)
-            new_item.load_from_ggg_json(text_item)
+            new_item.import_from_ggg_json(text_item)
             new_item.id = id_base + idx
             self.add_item_to_itemlist_lwi(new_item)
             self.itemlist_by_id[new_item.id] = new_item
@@ -755,14 +755,14 @@ class ItemsUI:
         self.win.list_ImportItems.addItem(lwi)
         return _item
 
-    def item_changed(self, combo: ItemSlotUI):
+    def item_changed(self, slot_ui: ItemSlotUI):
         """
-        Called when an item is changed. What shall we do ???
-        :param combo: QComboBox: The sender.
+        Called from ItemSlotUI() when an item is changed.
+        :param slot_ui: ItemSlotUI: The sender.
         :return: N/A
         """
-        slot_name = combo.slot_name
-        item: Item = combo.current_item
+        slot_name = slot_ui.slot_name
+        item: Item = slot_ui.current_item
 
         if slot_name in slot_map:
             # Show/Hide the abyssal socket slots.
@@ -775,6 +775,7 @@ class ItemsUI:
         if not self.alerting:
             return
         # Any other functionality that requires a loaded system
+        self.win.do_calcs()
 
     @Slot()
     def weapon_swap2(self, checked):
@@ -952,6 +953,9 @@ class ItemsUI:
         # _debug(f"show_itemset, {_itemset}, {self.current_itemset}, {self.itemsets}")
         if 0 <= itemset_num < len(self.itemsets):
             if self.current_itemset is not None:
+                for slot in self.current_itemset.get("Slots", {}):
+                    if slot.get("itemId", 0) != 0:
+                        self.itemlist_by_id[slot.get["itemId"]].active = False
                 self.save()
                 # self.clear_controls()
             self.current_itemset = self.itemsets[itemset_num]
@@ -983,31 +987,6 @@ class ItemsUI:
                                     slot_ui.setHidden(False)
                     else:
                         slot_ui.clear_default_item()
-
-                # slots = self.current_itemset["Slots"]
-                # if len(slots) > 0:
-                #     for slot_xml in slots:
-                #         # The regex is for a data error: 1Swap -> 1 Swap
-                #         slot_name = re.sub(r"([12])Swap", "\\1 Swap", slot_xml.get("name", ""))
-                #         item_id = int(slot_xml.get("itemId", "-1"))
-                #         if slot_name != "" and item_id >= 0:
-                #             # There are illegal entries in PoB xmls, like 'Belt Abyssal Socket 3'.
-                #             # They will create a KeyError. By absorbing them, we'll remove them from the xml.
-                #             try:
-                #                 slot_ui: ItemSlotUI = self.item_slot_ui_list[slot_name]
-                #                 # Clear the slot if not used
-                #                 if item_id == 0:
-                #                     slot_ui.clear_default_item()
-                #                 else:
-                #                     item = self.itemlist_by_id[item_id]
-                #                     slot_ui.set_default_by_text(item.name)
-                #                     slot_ui.itemPbURL = slot_xml.get("itemPbURL", "")
-                #                     if item.type == "Flask":
-                #                         slot_ui.active = str_to_bool(slot_xml.get("active", "False"))
-                #                     if "Abyssal" in slot_name:
-                #                         slot_ui.setHidden(False)
-                #             except KeyError:
-                #                 pass
             else:
                 # Have a guess at what could be - used for imports
                 for slot_name in self.item_slot_ui_list:
@@ -1122,11 +1101,11 @@ class ItemsUI:
         :return: list:
         """
         # print("itemset_list_active_items")
-        results = [i for i in self.itemlist_by_id.values() if i.active]
+        results = [item for item in self.itemlist_by_id.values() if item.active]
         # for item in results:
-        #     print(item.name)
+        #     print(f"itemset_list_active_items: {item.name=}")
         self.grant_skills_list = [item.grants_skill for item in results if item.grants_skill]
-        # print(f"{self.grant_skills_list=}")
+        # print(f"itemset_list_active_items: {self.grant_skills_list=}")
         return results
 
     @Slot()

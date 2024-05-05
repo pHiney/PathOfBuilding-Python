@@ -463,6 +463,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: N/A
         """
         # print("cb_level_auto_manual_changed", checked)
+        self.build.json_tree_view["level_auto_manual"] = checked
         self.spin_level.setEnabled(checked)
         self.estimate_player_progress()
 
@@ -675,7 +676,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             self.set_current_tab()
 
-        # # This is needed to make the jewels show. Without it, you need to select or deselect a node.
+        self.cb_level_auto_manual.setChecked(self.build.json_tree_view.get("level_auto_manual", False))
+        # This is needed to make the jewels show. Without it, you need to select or deselect a node.
         self.gview_Tree.switch_tree(True)
 
         # Make sure the Main and Alt weapons are active and shown as appropriate
@@ -924,6 +926,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Do some educated guessing of what level the build is up to.
         :return: N/A
         """
+        if self.cb_level_auto_manual.isChecked():
+            return
         acts = {
             1: {"level": 1, "quest": 0, "bandit_points": 0},
             2: {"level": 12, "quest": 2, "bandit_points": 0},
@@ -969,8 +973,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_points.setToolTip(html_colour_text(self.settings.qss_default_text, tip))
         self.label_level.setToolTip(html_colour_text(self.settings.qss_default_text, tip))
         self.spin_level.setToolTip(html_colour_text(self.settings.qss_default_text, tip))
-        if self.cb_level_auto_manual.isChecked():
-            self.spin_level.setValue(level)
+        self.build.level = level  # this will update self.spin_level
 
     @Slot()
     def set_tab_focus(self, index):

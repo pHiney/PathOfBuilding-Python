@@ -139,7 +139,7 @@ class Player:
         :return:
         """
         # ToDo: use  re.compile()
-        print("Calc_Stats")
+        # print(f"Calc_Stats: {active_items=}")
         # self.stats["WithPoisonDPS"] = 123.70
 
         self.clear()
@@ -147,19 +147,20 @@ class Player:
         self.json_player_class = self.build.current_tree.classes[self.player_class]
         self.items = active_items
 
-        # Get all nodes that have stat values
+        # Get all the nodes that have stat values
         for node_id in self.build.current_spec.nodes:
             node = self.build.current_tree.nodes.get(node_id, None)
-            # print(node_id, node.name, node.stats)
+            # print(f"{node_id=}, {node.name=}, {node.stats=}")
             if node is not None and node.stats:
                 # print(node_id, node.stats)
                 self.nodes.add(node)
                 for stat in node.stats:
                     if "Minion" in stat:
-                        self.node_minion_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
+                        self.node_minion_stats[f"{stat}::{node.id}"] = {"id": f"{node_id}", "name": f"{node.name}"}
                     else:
-                        self.node_player_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
+                        self.node_player_stats[f"{stat}::{node.id}"] = {"id": f"{node_id}", "name": f"{node.name}"}
 
+        # Get all the Mastery nodes that have stat values
         for node_id in self.build.current_spec.masteryEffects:
             node = self.build.current_tree.nodes.get(node_id, None)
             if node:
@@ -168,28 +169,23 @@ class Player:
                 effect_id = self.build.current_spec.get_mastery_effect(node_id)
                 effect = [effect for effect in node.masteryEffects if effect["effect"] == effect_id]
                 if effect:
-                    # the output from the list comprehansion is a list (wow), so add [0] to get the resultant dict
+                    # the output from the list comprehension is a list (wow), so add [0] to get the resultant dict
                     stat = effect[0]["stats"][0]
                     if "Minion" in stat:
-                        self.node_minion_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
+                        self.node_minion_stats[f"{stat}::{node.id}"] = {"id": f"{node_id}", "name": f"{node.name}"}
                     else:
-                        self.node_player_stats[f"{stat}::{node.id}::{node.name}"] = {"id": f"{node_id}", "name": f"{node.name}"}
+                        self.node_player_stats[f"{stat}::{node.id}"] = {"id": f"{node_id}", "name": f"{node.name}"}
         # print(f"{len(self.node_player_stats)=}, {self.node_player_stats=}")
 
         # Get stats from all active items
         # print(self.items)
         for item in self.items:
-            # print(item.name, item.active_mods)
-            for mod in item.active_mods:
-                if "Minion" in mod:
-                    self.item_minion_stats[f"{mod}::{item.id}::{item.name}"] = {"id": f"{item.id}", "name": f"{item.name}"}
+            # print(f"{item.name=}, {item.active_stats=}")
+            for stat in item.active_stats:
+                if "Minion" in stat:
+                    self.item_minion_stats[f"{stat}::{item.id}"] = {"id": f"{item.id}", "name": f"{item.name}"}
                 else:
-                    self.item_player_stats[f"{mod}::{item.id}::{item.name}"] = {"id": f"{item.id}", "name": f"{item.name}"}
-                # self.item_player_stats.append(f"{mod}::{item.name}")
-            # for mod in item.implicitMods:
-            #     self.item_player_stats.append(f"{mod.line_with_range}::{item.name}")
-            # for mod in item.explicitMods:
-            #     self.item_player_stats.append(f"{mod.line_with_range}::{item.name}")
+                    self.item_player_stats[f"{stat}::{item.id}"] = {"id": f"{item.id}", "name": f"{item.name}"}
 
         # print(f"{len(self.item_player_stats)=}, {self.item_player_stats=}")
         self.all_player_stats.update(self.node_player_stats)
@@ -295,10 +291,10 @@ class Player:
         # Setbase value.
         life = 38 + (12 * self.build.level)
         if debug:
-            print(f"calc_life: {life=}, {self.stats['Str']=}, ")
+            print(f"calc_life, Level: {self.build.level=},  {life=}, {self.stats['Str']=}, ")
         life += self.stats["Str"] / 2
         if debug:
-            print(f"calc_life: {life=}, {(self.stats['Str'] / 2)}")
+            print(f"calc_life, Level: {life=}, {(self.stats['Str'] / 2)}")
         self.stats["Life"] = int(self.get_simple_stat(life, "maximum Life", "Spec:LifeInc", debug=debug))
 
     def calc_mana(self, debug=False):
@@ -310,10 +306,10 @@ class Player:
         # Setbase value.
         mana = 34 + (6 * self.build.level)
         if debug:
-            print(f"{mana=}")
+            print(f"calc_mana, Level: {self.build.level=}, {mana=}, {self.stats['Int']=}, ")
         mana += self.stats["Int"] / 2
         if debug:
-            print(f"{mana=}, {self.stats['Int'] / 2}")
+            print(f"calc_mana, Stats: {mana=}, {self.stats['Int'] / 2}")
         self.stats["Mana"] = self.get_simple_stat(mana, "maximum Mana", "Spec:ManaInc", debug=debug)
 
     def calc_armour(self, debug=False):
@@ -351,6 +347,8 @@ class Player:
         # Setbase value.
         evasion = 15
         for item in self.items:
+            if debug:
+                print(f"Evasion: {item.title=} attribs: {item.evasion=}")
             evasion += int(item.evasion)
         if debug:
             print(f"Evasion: from item attribs: {evasion=}")

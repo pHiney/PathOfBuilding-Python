@@ -175,6 +175,7 @@ class TreeView(QGraphicsView):
             self.build.count_allocated_nodes()
             # ... and display them
             self.win.display_number_node_points(-1)
+            self.win.do_calcs()
 
     # Function Overridden
     def fitInView(self, scale=True, factor=None):

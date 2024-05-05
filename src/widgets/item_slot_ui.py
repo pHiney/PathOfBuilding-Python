@@ -68,9 +68,9 @@ class ItemSlotUI(QWidget):
         self.combo_item_list.setMaximumSize(QSize(16777215, 24))
         self.combo_item_list.setGeometry(indent and 110 or 100, 3, indent and 320 or 330, 24)
         self.combo_item_list.setDuplicatesEnabled(True)
-        self.combo_item_list.addItem("None", 0)
+        self.combo_item_list.addItem("Empty", 0)
         self.combo_item_list.setCurrentIndex(0)
-        self.combo_item_list.currentTextChanged.connect(self.combobox_change_text)
+        self.combo_item_list.currentIndexChanged.connect(self.combobox_change)
         self.combo_item_list.setInsertPolicy(QComboBox.InsertAlphabetically)
 
         if self.type == "Flask":
@@ -85,7 +85,7 @@ class ItemSlotUI(QWidget):
     def current_item_id(self) -> int:
         """Get the id number of the combo's current entry"""
         item = self.combo_item_list.currentData()
-        if item == 0:  # "None"
+        if item == 0:  # "Empty"
             return 0
         else:
             return item.id
@@ -94,7 +94,7 @@ class ItemSlotUI(QWidget):
     def current_item(self):
         """Get the id number of the combo's current entry"""
         item = self.combo_item_list.currentData()
-        if item == 0:  # "None"
+        if item == 0:  # "Empty"
             return None
         else:
             return item
@@ -141,16 +141,17 @@ class ItemSlotUI(QWidget):
             while self.combo_item_list.count() > 0:
                 self.clear_item_slot()
                 self.combo_item_list.removeItem(0)
-            self.combo_item_list.addItem("None", 0)
+            self.combo_item_list.addItem("Empty", 0)
         except RuntimeError:  # Timing error. During a clear, this is cleaned up before we complete.
             pass
         self.active = False
 
     @Slot()
-    def combobox_change_text(self, _text):
+    def combobox_change(self, index):
         """Set the comboBox's tooltip"""
-        # print(f"combobox_change_text, {self.slot_name=}, {_text=}, {self.lastSelectedItem=}")
-        if self.combo_item_list.currentIndex() == 0:
+        # print(f"combobox_change_text, {self.slot_name=}, {index=}, {self.lastSelectedItem=}")
+        # index == 0 means "Empty" has been selected.
+        if index == 0:
             self.combo_item_list.setToolTip("")
             if self.lastSelectedItem:
                 self.lastSelectedItem.active = False
@@ -247,6 +248,7 @@ class ItemSlotUI(QWidget):
         item = _item is None and self.current_item or _item
         if item is not None:
             item.slot = ""
+            item.active = False
 
     def clear_default_item(self):
         """Remove the default item, so the control is blank. Useful for offhand when using a two handed Weapon"""

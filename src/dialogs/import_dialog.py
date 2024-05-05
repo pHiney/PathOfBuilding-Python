@@ -278,7 +278,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
             self.download_character_data()
         json_character = self.character_data.get("character")
         # A lot of technology is built into the ItemsUI() class, lets reuse that
-        self.win.items_ui.load_from_ggg_json(
+        self.win.items_ui.import_from_ggg_json(
             self.character_data["items"],
             self.check_DeleteItems.isEnabled() and self.check_DeleteItems.isChecked(),
         )

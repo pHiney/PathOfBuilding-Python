@@ -366,7 +366,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         self.label_Item.setText(self.item.tooltip(True))
 
     def get_range_mods(self):
-        self.range_mods = [mod for mod in self._item.all_stats if "range" in mod.marks]
+        self.range_mods = [mod for mod in self._item.active_mods if "range" in mod.marks]
         # print(f"get_range_mods: {self.range_mods=}")
         self.combo_Mods.setVisible(self.range_mods != [])
         self.label_Mods.setVisible(self.range_mods != [])

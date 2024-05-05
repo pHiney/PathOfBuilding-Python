@@ -75,8 +75,9 @@ class Item:
         self.enchantMods = []
         self.fracturedMods = []
         self.active_mods = []
-        self.all_stats = []
+        self.active_stats = []
         self.slots = []
+        self.qual_ratio = 1.0  # a number between 1.0 and 1.3 (for 30%)
 
         # Some items have a smaller number of variants than the actual variant lists. Whilst these need to be fixed, this will get around it.
         self.max_variant = 0
@@ -85,13 +86,13 @@ class Item:
         # I think i need to store the variants separately, for crafting. Dict of string lists, var number is index
         self.variantMods = {}
 
-        self.base_armour = 0  # value without quality and +nn additions/multipliers
         self._armour = 0
         self._evasion = 0
         self._energy_shield = 0
         self.evasion_base_percentile = 0.0
-        self.base_evasion = 0  # value without quality and +nn additions/multipliers
         self.energy_shield_base_percentile = 0.0
+        self.base_armour = 0  # value without quality and +nn additions/multipliers
+        self.base_evasion = 0  # value without quality and +nn additions/multipliers
         self.base_energy_shield = 0  # value without quality and +nn additions/multipliers
         self.armour_base_percentile = 0.0
         self.radius = ""
@@ -137,17 +138,32 @@ class Item:
                 self.sub_type = self.type
                 self.type = "Weapon"
                 self.two_hand = "twohand" in self.base_item["tags"]
+            else:
+                armour_stats = self.base_item.get("armour", {})
+                for tag in armour_stats:
+                    val = armour_stats.get(tag, 0)
+                    # print(f"base_name: {tag=}, {val=}")
+                    match tag:
+                        case "ArmourBaseMax":
+                            self.base_armour = val
+                            self.armour = val * self.qual_ratio
+                        case "EvasionBaseMax":
+                            self.base_evasion = val
+                            self.evasion = val * self.qual_ratio
+                        case "EnergyShieldBaseMax":
+                            self.base_energy_shield = val
+                            self.energy_shield = val * self.qual_ratio
+                        # BlockChance, MovementPenalty
 
             # check for any extra requires. Just attributes for now.
-            reqs = self.base_item.get("req", None)
-            if reqs:
-                for tag in reqs:
-                    match tag:
-                        case "Dex" | "Int" | "Str" | "Level":
-                            val = reqs.get(tag, bad_text)
-                            # don't overwrite a current value
-                            if self.requires.get(tag, bad_text) == bad_text and val != bad_text and val != 0:
-                                self.requires[tag] = val
+            reqs = self.base_item.get("req", {})
+            for tag in reqs:
+                match tag:
+                    case "Dex" | "Int" | "Str" | "Level":
+                        val = reqs.get(tag, 0)
+                        # don't overwrite a current value
+                        if self.requires.get(tag, bad_text) == bad_text and val != 0:
+                            self.requires[tag] = val
         # elif "Flask" in new_value:
         #     self.type = "Flask"
         #     self.sub_type = "Flask"
@@ -249,6 +265,11 @@ class Item:
     @quality.setter
     def quality(self, new_value):
         self.set_attrib("Quality", int(new_value))
+        self.qual_ratio = (100 + int(new_value)) / 100  # for 20% this is 1.2
+        self.armour = self.base_armour * self.qual_ratio
+        self.evasion = self.base_evasion * self.qual_ratio
+        self.energy_shield = self.base_energy_shield * self.qual_ratio
+        # BlockChance, MovementPenalty
 
     @property
     def level_req(self) -> int:
@@ -380,12 +401,13 @@ class Item:
                     self.grants_skill = mod.grants_skill
             # print(f"cve2: {mod.line_for_save=}, {mod.line=}")
 
-        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods]
+        self.active_mods = [mod for mod in self.implicitMods + self.explicitMods]
+        self.get_active_stats()
 
         # If there is a mod for Corrupted, override the "Corrupted" entry in the json
-        corrupted_mod = [mod.corrupted for mod in self.all_stats if mod.original_line == "Corrupted"]
+        corrupted_mod = [mod.corrupted for mod in self.active_mods if mod.original_line == "Corrupted"]
         if corrupted_mod:
-            corrupted = [mod.corrupted for mod in self.all_stats if mod.corrupted]
+            corrupted = [mod.corrupted for mod in self.active_mods if mod.corrupted]
             self.corrupted = corrupted != []
 
         if self.variants:
@@ -416,7 +438,7 @@ class Item:
         else:
             self.attribs.pop(attrib_name, 0)
 
-    def load_from_ggg_json(self, _json):
+    def import_from_ggg_json(self, _json):
         """
         Load internal structures from the downloaded json
         """
@@ -493,9 +515,10 @@ class Item:
                 key = f'{influence.split("=")[0].title()} Item'
                 if key in influencers:
                     self.influences.append(key)
-        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line]
-        self.tooltip()
-        # load_from_ggg_json
+        self.current_variant = -1
+        # self.active_mods = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line]
+        self.tooltip(True)
+        # import_from_ggg_json
 
     def import_from_poep_json(self, _json):
         """
@@ -536,9 +559,10 @@ class Item:
         for mod in _json.get("implicits", []):
             self.implicitMods.append(Mod(self.settings, mod))
 
-        self.all_stats = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line]
-        self.tooltip()
-        # load_from_ggg_json
+        self.current_variant = -1
+        # self.active_mods = [mod for mod in self.implicitMods + self.explicitMods + self.fracturedMods if mod.line]
+        self.tooltip(True)
+        # import_from_ggg_json
 
     def load_from_json(self, json, default_rarity=bad_text):
         """
@@ -555,9 +579,6 @@ class Item:
         self.attribs = self.pob_item["Attribs"]
         self.requires = self.pob_item["Requires"]
 
-        # trigger building of self.name and self.type
-        self.base_name = self.base_name
-
         # get some common attribs. Less common ones can use item.get_attrib()
         self.armour = self.get_attrib("armour", 0)
         self.armour_base_percentile = float(self.get_attrib("armour_base_percentile", "0.0"))
@@ -570,6 +591,9 @@ class Item:
         # self.level_req = self.get_attrib("Level", 0)
         self.quality = self.get_attrib("Quality", 0)
         self.radius = self.get_attrib("Radius", "")  # Threshold Jewels have radius
+
+        # trigger building of self.name and self.type
+        self.base_name = self.base_name
 
         # This is for crafted items, Rare templates
         self.crafted_item = self.pob_item.get("Crafted", {})
@@ -609,7 +633,7 @@ class Item:
         self.current_variant = self.pob_item.get("Selected Variant", -1)
 
         self.rarity_colour = ColourCodes[self.rarity].value  # needed as this function does need to set self.rarity
-        self.tooltip()
+        self.tooltip(True)
         return True
         # load_from_json
 
@@ -630,7 +654,7 @@ class Item:
         Find base_armour, etc by removing any additions, quality or multipliers
         :return: N/A
         """
-        self.all_stats = [mod.line for mod in self.implicitMods + self.explicitMods + self.fracturedMods]  # if mod
+        # self.active_mods = [mod.line for mod in self.implicitMods + self.explicitMods + self.fracturedMods]  # if mod
         if self.quality:
             if self._armour:
                 self.base_armour = int(self._armour * (1 - (self.quality / 100)))
@@ -668,23 +692,23 @@ class Item:
         :return: int: The updated value.
         """
         # find increases and additions. Some objects have things like '+21 to Dexterity and Intelligence', so use .* in regex.
-        adds = sum(search_stats_list_for_regex(self.all_stats, rf"(?!Minions)([-+]?\d+) to .*{search_str}", default_value, debug))
+        adds = sum(search_stats_list_for_regex(self.active_stats, rf"(?!Minions)([-+]?\d+) to .*{search_str}", default_value, debug))
         value = start_value + adds
         if debug:
             print(f"get_simple_stat: {search_str}: {value=}, {start_value=}, {adds=}")
 
         multiples = sum(
-            search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% increased {search_str}", default_value, debug)
+            search_stats_list_for_regex(self.active_stats, rf"^(?!Minions)([-+]?\d+)% increased {search_str}", default_value, debug)
         )
         multiples -= sum(
-            search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% reduced {search_str}", default_value, debug)
+            search_stats_list_for_regex(self.active_stats, rf"^(?!Minions)([-+]?\d+)% reduced {search_str}", default_value, debug)
         )
         value += multiples / 100 * value
         if debug:
             print(f"get_simple_stat: {value=}, {multiples=}")
 
-        more = math.prod(search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% more {search_str}", 0, debug))
-        more -= math.prod(search_stats_list_for_regex(self.all_stats, rf"^(?!Minions)([-+]?\d+)% less {search_str}", 0, debug))
+        more = math.prod(search_stats_list_for_regex(self.active_stats, rf"^(?!Minions)([-+]?\d+)% more {search_str}", 0, debug))
+        more -= math.prod(search_stats_list_for_regex(self.active_stats, rf"^(?!Minions)([-+]?\d+)% less {search_str}", 0, debug))
         if debug:
             print(f"get_simple_stat: {value=}, {more=}, {((more  / 100 ) + 1 )=}")
         if more:
@@ -724,9 +748,9 @@ class Item:
             stats += f"Evasion Rating: {self.evasion}<br/>"
         if self.energy_shield:
             stats += f"Energy Shield: {self.energy_shield}<br/>"
-        if self.sub_type:
-            # print(f"{self.type}, {self.sub_type}")
-            stats += f"{self.sub_type}<br/>"
+        # if self.sub_type:
+        #     print(f"{self.type=}, {self.sub_type=}")
+        #     stats += f"{self.sub_type}<br/>"
         # if self.type in weapon_classes:
         #     print(f"{self.type}, {self.sub_type}")
         #     stats += f"{self.type}<br/>"
@@ -785,55 +809,59 @@ class Item:
         # self.base_tooltip_text = tip
         return tip
 
-    def get_active_mods(self) -> None:
+    def get_active_stats(self, force=False) -> list:
         """
         Account for mods that have updated the implicit values of items (like dmg, ES, armour, etc)
         Also find base stat value (EG base_armour = armour - quality) to enable quality to be edited.
         This is mainly used for calcs.
-        Updates self.active_mods: dict: List of all mods that can be used for calcs
+        Updates self.active_stats: list: List of all mods that can be used for calcs
+        force: bool: force the re calculation (maybe after changing variant ?)
         :return: N/A
         """
-        if self.active_mods:
-            return
+        # print(f"get_active_stats1: {self.title=}, {self.active_stats=}")
+        if self.active_stats and not force:
+            return self.active_stats
 
         # https://regex101.com/r/YRTdJY/1
         # Exclude stats for equipment that has innate mods (eg ES, Armour, Damage)
         debug = False
         if debug:
-            print(f"{self.name}=")
-        for stat in self.all_stats:
+            print(f"{self.title}=")
+        for mod in self.active_mods:
             if debug:
-                print(f"{stat}")
-                print("Armour", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Armour", stat))
-                print("Evasion", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Evasion", stat))
-                print("Energy Shield", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Energy Shield", stat))
-            if self._armour and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Armour", stat):
+                print(f"{mod.line}")
+                print("Armour", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Armour", mod.line))
+                print("Evasion", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Evasion", mod.line))
+                print("Energy Shield", re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Energy Shield", mod.line))
+            if self._armour and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Armour", mod.line):
                 pass
-            elif self._evasion and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Evasion", stat):
+            elif self._evasion and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Evasion", mod.line):
                 pass
-            elif self._energy_shield and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Energy Shield", stat):
+            elif self._energy_shield and re.search(rf"^(?!Minions).*(to|increased|reduced|more|less).*Energy Shield", mod.line):
                 pass
             else:
-                # self.active_mods[stat] = {"id": f"{self.id}", "name": f"{self.name}"}
-                self.active_mods.append(stat)
+                # self.active_stats[stat] = {"id": f"{self.id}", "name": f"{self.name}"}
+                self.active_stats.append(mod.line)
         if debug:
-            print(self.active_mods)
+            print(self.active_stats)
 
-        if self.quality:
-            # print(f"{self.name}, {self._armour}, {((100+self.quality) / 100)=}")
-            qual_ratio = (100 + self.quality) / 100  # for 20% this is 1.2
-            if self._armour:
-                self.base_armour = round(self._armour / qual_ratio)
-                # print(f"{self.base_armour=}")
+        # if self.quality:
+        #     # print(f"get_active_stats: {self.title=}, {self.quality=}, {((100+self.quality) / 100)=}")
+        #     if self._armour:
+        #         self.base_armour = round(self._armour / self.qual_ratio)
+        #         # print(f"get_active_stats: {self.title=}, {self.base_armour=}")
+        #
+        #     if self._evasion:
+        #         self.base_evasion = round(self._evasion / self.qual_ratio)
+        #         # print(f"get_active_stats: {self.title=}, {self.base_evasion=}")
+        #
+        #     if self._energy_shield:
+        #         self.base_energy_shield = round(self._energy_shield / self.qual_ratio)
+        #         # print(f"get_active_stats: {self.title=}, {self.base_energy_shield=}")
+        # else:
+        #     self.base_armour = self._armour
+        #     self.base_evasion = self._evasion
+        #     self.base_energy_shield = self._energy_shield
 
-            if self._evasion:
-                self.base_evasion = round(self._evasion / qual_ratio)
-                # print(f"{self.base_evasion=}")
-
-            if self._energy_shield:
-                self.base_energy_shield = round(self._energy_shield / qual_ratio)
-                # print(f"{self.base_energy_shield=}")
-        else:
-            self.base_armour = self._armour
-            self.base_evasion = self._evasion
-            self.base_energy_shield = self._energy_shield
+        # print(f"get_active_stats2: {self.title=}, {self.active_stats=}")
+        return self.active_stats

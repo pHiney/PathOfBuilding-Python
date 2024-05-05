@@ -519,6 +519,7 @@ class Build:
                         self.sockets_assigned += 1
 
         self.nodes_assigned += len(self.current_spec.extended_hashes)
+        self.win.estimate_player_progress()
 
     def change_tree(self, tree_id):
         """
