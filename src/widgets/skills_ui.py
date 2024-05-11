@@ -478,8 +478,6 @@ class SkillsUI:
         new_skillset = deepcopy(empty_skillset_dict)
         new_skillset["id"] = len(self.skillsets) + 1
         new_skillset["title"] = itemset_name
-        for key, item in self.active_hidden_skills.items():
-            self.win.add_item_or_node_with_skills(item, key, new_skillset)
         self.skillsets.append(new_skillset)
         self.win.combo_SkillSet.addItem(itemset_name, new_skillset)
         # set the SkillSet ComboBox dropdown width.
@@ -517,7 +515,6 @@ class SkillsUI:
     def show_skill_set(self, _index=0, trigger=False):
         """
         Show a set of skills.
-
         :param _index: int: set the current socket group active at the end of the function
         :param trigger: bool:  if True, this is called from a trigger, so don't disconnect/reconnect triggers
         :return: N/A
@@ -544,18 +541,20 @@ class SkillsUI:
             self.win.list_SocketGroups.setCurrentRow(0)
             # Use change_socket_group using mainActiveSkill -1
 
+            self.win.add_item_or_node_with_skills(self.current_skill_set)
+
     def delete_skill_set(self, itemset_num):
         """
         Delete ONE skillset
         :param itemset_num: int: the item to be removed.
         """
-        # print("delete_skill_set")
+        # print(f"delete_skill_set: {itemset_num=}, {self.skillsets=}")
         if self.current_skill_set == self.skillsets[itemset_num]:
             if len(self.skillsets) == 1:
                 self.current_skill_set = None
             else:
                 self.current_skill_set = self.skillsets[itemset_num == 0 and 0 or itemset_num - 1]
-        self.skillsets.remove(itemset_num)
+        self.skillsets.pop(itemset_num)
         self.win.combo_SkillSet.removeItem(itemset_num)
 
     def delete_all_skill_sets(self, prompt=True):

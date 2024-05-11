@@ -22,11 +22,14 @@ def search_stats_list_for_regex(stat_list, regex, default_value, debug=False) ->
     value = []
     for stat in stat_list:
         m = re.search(regex, stat)
-        # print(f"{stat=}, {regex=}")
+        # print(f"{stat=}, {regex=}, {m=}")
         if m:
-            value.append(int(m.group(1)))
-            if debug:
-                print(f"{stat=}, {regex=}, {value=}, {m=}")
+            # if debug:
+            # print(f"{stat=}, {regex=}, {value=}, {m.groups()=}")
+            if "." in m.group(1):
+                value.append(float(m.group(1)))
+            else:
+                value.append(int(m.group(1)))
     return value == [] and [int(default_value)] or value
 
 
@@ -100,8 +103,6 @@ class HTMLDelegate(QStyledItemDelegate):
         doc.documentLayout().draw(painter, ctx)
 
         painter.restore()
-
-    """ PSH: 20240427 Commented out to suit QComboBox testing. Noted ListViews seemed to still work """
 
     def sizeHint(self, option, index):
         """Inherited function to return the max width of all text items"""

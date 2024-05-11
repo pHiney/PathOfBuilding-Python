@@ -345,8 +345,6 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
     else:
         json_item["title"] = line
         line = lines.pop(0)
-        # if "{variant" not in line:
-        #     json_item["base_name"] = line
         if "{variant" in line:
             # Separate Basename variants into an expanded list, not '{variant:1}Coral Amulet\n{variant:2,3}Marble Amulet'
             while "{variant" in line:  # EG: Bloodgrip

@@ -144,9 +144,7 @@ class TreeView(QGraphicsView):
                         self.build.current_spec.remove_mastery_effect(g_item.node_id)
                     # elif g_item.node_type == "Socket":
                     #     del self.build.current_spec.sockets[g_item.node_id]
-                    self.build.current_spec.nodes.remove(g_item.node_id)
-                    if g_item.node.grants_skill:
-                        self.win.remove_item_or_node_with_skills(f"Tree:{g_item.node_id}")
+                    self.build.current_spec.remove_node(g_item.node)
                 else:
                     node = g_item.node
                     # Check to see if node is connected to an active node
@@ -155,15 +153,13 @@ class TreeView(QGraphicsView):
                             if g_item.node_type == "Mastery":
                                 # print("mastery_popup", self.build.current_tree.nodes[g_item.node_id])
                                 if self.mastery_popup(self.build.current_tree.nodes[g_item.node_id]):
-                                    self.build.current_spec.nodes.add(g_item.node_id)
+                                    self.build.current_spec.add_node(g_item.node)
                             elif g_item.node_type == "Socket":
                                 # ToDo: Do we need a popup to select a jewel ?
-                                self.build.current_spec.nodes.add(g_item.node_id)
+                                self.build.current_spec.add_node(g_item.node)
                             else:
                                 print(f"mouseReleaseEvent, {g_item.node_type=}")
-                                self.build.current_spec.nodes.add(g_item.node_id)
-                                if g_item.node.grants_skill:
-                                    self.win.add_item_or_node_with_skills(g_item.node.grants_skill, f"Tree:{g_item.node_id}")
+                                self.build.current_spec.add_node(g_item.node)
                             break
             elif event.button() == Qt.RightButton:
                 # look for Mastery and popup a dialog

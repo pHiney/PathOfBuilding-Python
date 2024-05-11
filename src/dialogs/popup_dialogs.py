@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from PoB.constants import ColourCodes, _VERSION_str, get_http_headers, tree_versions
-from PoB.utils import  html_colour_text
+from PoB.utils import html_colour_text
 from widgets.ui_utils import HTMLDelegate
 
 from ui.PoB_Main_Window import Ui_MainWindow
@@ -113,7 +113,7 @@ class MasteryPopup(QDialog):
             self.listbox.addItem(item)
 
         # Allow us to print in colour.
-        delegate = HTMLDelegate()
+        delegate = HTMLDelegate(self)
         delegate._list = self.listbox
         self.listbox.setItemDelegate(delegate)
         size = delegate.sizeHint(0, 0)

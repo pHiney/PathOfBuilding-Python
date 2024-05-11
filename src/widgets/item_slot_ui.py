@@ -155,8 +155,6 @@ class ItemSlotUI(QWidget):
             self.combo_item_list.setToolTip("")
             if self.lastSelectedItem:
                 self.lastSelectedItem.active = False
-                if self.lastSelectedItem.grants_skill:
-                    self.win.remove_item_or_node_with_skills(f"Item:{self.lastSelectedItem.id}:{self.lastSelectedItem.name}")
             self.lastSelectedItem = None
         else:
             item = self.combo_item_list.currentData()
@@ -164,14 +162,10 @@ class ItemSlotUI(QWidget):
                 self.combo_item_list.setToolTip(item.tooltip())
                 if self.lastSelectedItem:
                     self.lastSelectedItem.active = False
-                    if self.lastSelectedItem.grants_skill:
-                        self.win.remove_item_or_node_with_skills(f"Item:{self.lastSelectedItem.id}:{self.lastSelectedItem.name}")
+                    print(f"combobox_change: {self.lastSelectedItem.name=}, {self.lastSelectedItem.grants_skill=}, {self.title}")
                 item.active = True
+                # print(f"combobox_change: {item.name=}, {item.grants_skill=}, {self.title}")
                 self.lastSelectedItem = item
-                if self.lastSelectedItem.grants_skill:
-                    self.win.add_item_or_node_with_skills(
-                        self.lastSelectedItem.grants_skill, f"Item:{self.lastSelectedItem.id}:{self.lastSelectedItem.name}"
-                    )
                 # Clear the other slot if this is a two-hander
                 if item.two_hand:
                     self.other_weapon_slot.clear_default_item()

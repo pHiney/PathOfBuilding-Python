@@ -265,7 +265,7 @@ class Player:
         :param debug: bool: Ease of printing facts for a given specification
         :return: N/A
         """
-        all_attribs = sum(search_stats_list_for_regex(self.all_player_stats, "to all Attributes", 0, debug))
+        all_attribs = sum(search_stats_list_for_regex(self.all_player_stats, r"^([-+]?[\d\.]+) to all Attributes", 0, debug))
         for attrib in ("Str", "Dex", "Int"):
             # attrib = "Str"
             long_str = player_stats_list[attrib]["label"]

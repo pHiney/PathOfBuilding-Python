@@ -665,7 +665,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Items contain Jewels, the Tree needs Jewels, so load Items before Tree
             self.items_ui.load_from_json(self.build.json_items)
             self.tree_ui.load(self.build.json_tree, self.build.json_tree_view)
-            # Skills want to know about Items and Nodes that Grant/Trigger skills, so load Skills after Items and Nodes.
+            # Skills want to know about Items and Nodes that Grant/Trigger skills, so load Skills after Items and Tree.
             self.skills_ui.load_from_json(self.build.json_skills)
             self.notes_ui.load(self.build.json_notes, self.build.json_notes_html)
             # Set UI elements that depend on the above.
@@ -1215,23 +1215,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     )
                     just_added_blank = False
 
-    def add_item_or_node_with_skills(self, source, source_text, _skillset=None):
+    def add_item_or_node_with_skills(self, _skillset=None):
         """
-        Add a skill from an equipped Item or assigned Node. Only called from ItemSlotUI(), TreeView() and Items_UI new_skill_set
-        :param source: list: The Node() or Item()'s grants_skill param
-        :param source_text: str: the text to go into the gem's source field
-        :param _skillset: dict: Used by new_skill_set
+        Add a skill from an equipped Item or assigned Node. Only called from ItemSlotUI(), TreeView() and Items_UI new_skill_set.
+        :param _skillset: dict: Used by new_skill_set.
         :return: N/A
         """
-        # print(f"equip_item_or_node_with_skills: {type(source)}, {source=}, {source_text=}")
-        skill_name, level = source
-        skill_set = _skillset is None and _skillset or self.skills_ui.current_skill_set
-        found = [sg for sg in skill_set["SGroups"] if sg.get("source", "") == source_text]
-        skill = self.skills_ui.hidden_skills_by_name_or_id.get(skill_name, None)
-        # print(f"1. {found=}, {skill=}")
-        # Don't add if it's already there. Multiple Items of the same type might cause this ?? or just it's an error ?
-        if skill:
-            if not found:
+        # print(f"equip_item_or_node_with_skills: {self.items_ui.active_hidden_skills=}, {self.build.current_spec.active_hidden_skills=}")
+        for source_text, source in self.items_ui.active_hidden_skills.items() | self.build.current_spec.active_hidden_skills.items():
+            # print(f"{source_text=}, {source=}")
+            skill_name, level = source
+            # print(skill_name, level)
+            if skill_name == "":
+                continue
+            skill = self.skills_ui.hidden_skills_by_name_or_id.get(skill_name, {})
+            if skill == {}:
+                continue
+            skill_set = _skillset is None and self.skills_ui.current_skill_set or _skillset
+            found = [sg for sg in skill_set["SGroups"] if sg.get("source", "") == source_text]
+            # print(f"2. {skill=}")
+            if not found:  # no duplicates
                 # add gem
                 new_gem = deepcopy(empty_gem_dict)
                 new_gem["nameSpec"] = skill["name"]
@@ -1246,8 +1249,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 new_sg["source"] = source_text
                 new_sg["Gems"] = [new_gem]
                 self.skills_ui.update_socket_group_labels()
-            # Update this irregardless. This allow us to call this during loading a socket group, etc - when it is initially empty
-            self.skills_ui.active_hidden_skills[source_text] = source
 
     def remove_item_or_node_with_skills(self, source_text):
         """
@@ -1256,8 +1257,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: N/A
         """
         found = [sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") == source_text]
-        # print(f"remove_item_or_node_with_skills: {source_text=}, {found=}")
+        print(f"remove_item_or_node_with_skills: {source_text=}, {found=}")
         if found:
-            _sg = found[0]
-            self.skills_ui.remove_socket_group(_sg)
-            self.skills_ui.active_hidden_skills.pop(source_text, "")
+            self.skills_ui.remove_socket_group(found[0])

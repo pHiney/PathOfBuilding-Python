@@ -103,9 +103,9 @@ def is_str_a_number(in_str):
     """
     Check if this string is a number
     :param: in_str: String: The setting to be evaluated
-    :returns: True if it looks like it could be afloat or integer
+    :returns: True if it looks like it could be a float or integer
     """
-    return in_str.startswith("-") and in_str[1:].isdigit() or in_str.isdigit()
+    return in_str.startswith(r"[-+]") and in_str[1:].isdigit() or in_str.isdigit()
 
 
 def index_exists(_list_or_dict, index):

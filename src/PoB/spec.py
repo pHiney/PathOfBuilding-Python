@@ -27,18 +27,11 @@ class Spec:
         self.extended_hashes = []
         self.masteryEffects = {}
         self.sockets = {}
+        self.active_hidden_skills = {}
 
         self.set_nodes_from_string(self.spec.get("nodes", f"{starting_scion_node}"))
         self.set_mastery_effects_from_string(self.spec["masteryEffects"])
         self.set_sockets_from_string(self.spec.get("Sockets", ""))
-
-    # @property
-    # def title(self):
-    #     return self.spec.get("title", "Default")
-    #
-    # @title.setter
-    # def title(self, new_title):
-    #     self.spec["title"] = new_title
 
     @property
     def classId(self) -> int:
@@ -87,7 +80,7 @@ class Spec:
     @treeVersion.setter
     def treeVersion(self, new_version):
         """
-        Set the tree version string in the XML
+        Set the tree version string in the dict
         :param new_version: str
         :return:
         """
@@ -95,6 +88,7 @@ class Spec:
         # Do not remove the leading \. despite what python grammar checkers might say.
         tmp_list = re.split(r"[._/]", new_version)
         self.spec["treeVersion"] = f"{tmp_list[0]}_{tmp_list[1]}"
+        self.get_hidden_skills_from_nodes()
 
     @property
     def title(self):
@@ -477,6 +471,28 @@ class Spec:
         """
         pass
 
+    def add_node(self, node):
+        """Things to do when adding a node"""
+        self.nodes.add(node.id)
+        if node.grants_skill:
+            self.active_hidden_skills[f"Tree:{node.id}"] = node.grants_skill
+
+    def remove_node(self, node):
+        """Things to do when removing a node"""
+        self.nodes.remove(node.id)
+        if node.grants_skill:
+            # self.win.remove_item_or_node_with_skills(f"Tree:{node.id}")
+            self.active_hidden_skills.pop(f"Tree:{node.id}", 0)
+
+    def get_hidden_skills_from_nodes(self):
+        """Search selected node, from the current tree's nodes for hidden skills.
+        Called when changing tree versions or setting nodes (eg import)"""
+        ctree_nodes = self.build.current_tree.nodes
+        for n_id in [n_id for n_id in self.nodes if ctree_nodes[n_id].grants_skill != ("", 0)]:
+            self.add_node(ctree_nodes[n_id])
+        # self.active_hidden_skills = [ctree_nodes[n_id].grants_skill for n_id in self.nodes if ctree_nodes[n_id].grants_skill != ("", 0)]
+        # print(f"get_hidden_skills_from_nodes: {self.active_hidden_skills}")
+
     def set_nodes_from_string(self, new_nodes):
         """
         Turn the string list of numbers into a list of numbers
@@ -484,7 +500,8 @@ class Spec:
         :return: N/A
         """
         if new_nodes:
-            self.nodes = set([int(node) for node in new_nodes.split(",")])
+            self.nodes = set([int(s_node) for s_node in new_nodes.split(",")])
+            self.get_hidden_skills_from_nodes()
 
     def set_extended_hashes_from_string(self, new_nodes):
         """

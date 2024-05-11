@@ -60,7 +60,7 @@ class ItemsUI:
         # Flag to stop some actions happening in triggers during loading
         self.alerting = False
         # full list of all items that grant skills
-        self.grant_skills_list = []
+        self.active_hidden_skills = {}
 
         self.base_items = read_json(Path(self.settings._data_dir, "base_items.json"))
         self.mods = read_json(Path(self.settings._data_dir, "mods.json"))
@@ -775,6 +775,7 @@ class ItemsUI:
         if not self.alerting:
             return
         # Any other functionality that requires a loaded system
+        self.itemset_list_active_items()
         self.win.do_calcs()
 
     @Slot()
@@ -934,7 +935,7 @@ class ItemsUI:
             print(f"Discarded: {dlg.item.name}")
 
     # def set_list_items_size_hint(self):
-    # Keeping it for stamps. Maybe something will need it
+    # Keeping it for stamps. Maybe something will need it.
     #     return
     #     _list = self.win.list_Items
     #     _list.setFixedSize(
@@ -952,10 +953,10 @@ class ItemsUI:
         """
         # _debug(f"show_itemset, {_itemset}, {self.current_itemset}, {self.itemsets}")
         if 0 <= itemset_num < len(self.itemsets):
-            if self.current_itemset is not None:
-                for slot in self.current_itemset.get("Slots", {}):
+            if self.current_itemset is not None and self.itemlist_by_id:
+                for key, slot in self.current_itemset.get("Slots", {}).items():
                     if slot.get("itemId", 0) != 0:
-                        self.itemlist_by_id[slot.get["itemId"]].active = False
+                        self.itemlist_by_id[slot["itemId"]].active = False
                 self.save()
                 # self.clear_controls()
             self.current_itemset = self.itemsets[itemset_num]
@@ -992,6 +993,7 @@ class ItemsUI:
                 for slot_name in self.item_slot_ui_list:
                     self.item_slot_ui_list[slot_name].set_default_item()
         self.define_item_labels()
+        self.itemset_list_active_items()
 
     def new_itemset(self, itemset_name="Default"):
         """
@@ -1004,12 +1006,6 @@ class ItemsUI:
         new_itemset["title"] = itemset_name
         self.itemsets.append(new_itemset)
         self.win.combo_ItemSet.addItem(itemset_name, new_itemset)
-        # Add slot information
-        # for slot_ui_name in self.item_slot_ui_list:
-        #     slot_ui = self.item_slot_ui_list[slot_ui_name]
-        #     item_id = slot_ui.current_item_id
-        #     slot_xml = ET.fromstring(f'<Slot name="{slot_ui_name}" itemId="0"/>')
-        #     new_itemset.append(slot_xml)
         return new_itemset
 
     @Slot()
@@ -1097,15 +1093,16 @@ class ItemsUI:
 
     def itemset_list_active_items(self):
         """
-        Return a list() of Item() for items that are currently selected in the left
+        Return a list() of ("",n) for items that are currently selected in the left
         :return: list:
         """
         # print("itemset_list_active_items")
         results = [item for item in self.itemlist_by_id.values() if item.active]
         # for item in results:
         #     print(f"itemset_list_active_items: {item.name=}")
-        self.grant_skills_list = [item.grants_skill for item in results if item.grants_skill]
-        # print(f"itemset_list_active_items: {self.grant_skills_list=}")
+        for item in [item for item in results if item.grants_skill]:
+            self.active_hidden_skills[f"Item:{item.id}:{item.name}"] = item.grants_skill
+        # print(f"itemset_list_active_items: {self.active_hidden_skills=}")
         return results
 
     @Slot()

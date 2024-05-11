@@ -385,6 +385,7 @@ class Item:
         for mod in self.full_implicitMods_list:
             # print(f"\ncvi1: {mod} {new_value=}, {mod.line_for_save=}, {mod.line=}")
             # Check for variants and if it's our variant, add it to the smaller implicit mod list
+            # add it if there are no variants, too
             if new_value == -1 or mod.my_variants == [] or new_value in mod.my_variants:
                 self.implicitMods.append(mod)
                 if mod.grants_skill:
@@ -395,9 +396,10 @@ class Item:
         for mod in self.full_explicitMods_list:
             # print(f"\ncve1: {mod=} {new_value=}, {mod.line_for_save=}, {mod.corrupted=}\n")
             # Check for variants and if it's our variant, add it to the smaller explicit mod list
+            # add it if there are no variants, too
             if new_value == -1 or mod.my_variants == [] or new_value in mod.my_variants:
                 self.explicitMods.append(mod)
-                if mod.grants_skill is not None:
+                if mod.grants_skill:
                     self.grants_skill = mod.grants_skill
             # print(f"cve2: {mod.line_for_save=}, {mod.line=}")
 
