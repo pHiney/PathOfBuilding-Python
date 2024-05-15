@@ -994,6 +994,7 @@ class ItemsUI:
                     self.item_slot_ui_list[slot_name].set_default_item()
         self.define_item_labels()
         self.itemset_list_active_items()
+        self.win.show_skillset()
 
     def new_itemset(self, itemset_name="Default"):
         """
@@ -1100,6 +1101,7 @@ class ItemsUI:
         results = [item for item in self.itemlist_by_id.values() if item.active]
         # for item in results:
         #     print(f"itemset_list_active_items: {item.name=}")
+        self.active_hidden_skills.clear()
         for item in [item for item in results if item.grants_skill]:
             self.active_hidden_skills[f"Item:{item.id}:{item.name}"] = item.grants_skill
         # print(f"itemset_list_active_items: {self.active_hidden_skills=}")

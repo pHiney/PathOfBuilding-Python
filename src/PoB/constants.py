@@ -48,6 +48,8 @@ proxyURL="" buildPath="" open_build=""/>
    <size width="800" height="600"/>
 </PathOfBuilding>"""
 empty_settings = {
+    "left": -1,
+    "top": -1,
     "width": 800,
     "height": 600,
     "theme": "{def_theme}",

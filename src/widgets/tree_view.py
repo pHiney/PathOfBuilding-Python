@@ -137,7 +137,7 @@ class TreeView(QGraphicsView):
             and not g_item.node_isAscendancyStart
             and g_item.node_classStartIndex < 0
         ):
-            print("mouseReleaseEvent", g_item.node_id)
+            # print("mouseReleaseEvent", g_item.node_id)
             if event.button() == Qt.LeftButton:
                 if g_item.node_id in self.build.current_spec.nodes:
                     if g_item.node_type == "Mastery":
@@ -158,7 +158,7 @@ class TreeView(QGraphicsView):
                                 # ToDo: Do we need a popup to select a jewel ?
                                 self.build.current_spec.add_node(g_item.node)
                             else:
-                                print(f"mouseReleaseEvent, {g_item.node_type=}")
+                                # print(f"mouseReleaseEvent, {g_item.node_type=}")
                                 self.build.current_spec.add_node(g_item.node)
                             break
             elif event.button() == Qt.RightButton:

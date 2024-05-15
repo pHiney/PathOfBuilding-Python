@@ -13,7 +13,7 @@ from typing import Union
 from pathlib import Path
 import psutil
 
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, QPoint, Slot
 from PySide6.QtGui import QAction, QColor, QPalette
 from PySide6.QtWidgets import (
     QApplication,
@@ -342,6 +342,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not success:
             event.ignore()
         super(MainWindow, self).keyPressEvent(event)
+
+    # Overridden function
+    def moveEvent(self, e):
+        # print(f"MainWindow moveEvent: {self.pos()=}")
+        self.settings.pos = self.pos()
+        super(MainWindow, self).moveEvent(e)
 
     def setup_ui(self):
         """Called after show(). Call setup_ui for all UI classes that need it"""
@@ -803,6 +809,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.refresh_tree = True
         self.gview_Tree.add_tree_images(full_clear)
         self.items_ui.fill_jewel_slot_uis()
+        self.show_skillset()
         self.do_calcs()
 
     @Slot()
@@ -1257,6 +1264,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :return: N/A
         """
         found = [sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") == source_text]
-        print(f"remove_item_or_node_with_skills: {source_text=}, {found=}")
-        if found:
-            self.skills_ui.remove_socket_group(found[0])
+        # print(f"remove_item_or_node_with_skills: {source_text=}, {found=}")
+        for sg in found:
+            self.skills_ui.remove_socket_group(sg)
+
+    def show_skillset(self):
+        """Function called by Tree_UI() and Items_UI() when changing trees and Itemsets
+        Remove current socket groups provided by Items or Tree nodes"""
+        if self.skills_ui.current_skill_set:
+            found = [sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") != ""]
+            # print(f"MainWindow show_skillset: : {found=}")
+            for sg in found:
+                self.skills_ui.remove_socket_group(sg)
+            self.add_item_or_node_with_skills(self.skills_ui.current_skill_set)
+            # print(f'{[sg for sg in self.skills_ui.current_skill_set["SGroups"] if sg.get("source", "") != ""]=}')

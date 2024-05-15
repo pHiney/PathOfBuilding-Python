@@ -12,7 +12,7 @@ from pathlib import Path
 import os
 import tempfile
 
-from PySide6.QtCore import QSize, Slot
+from PySide6.QtCore import QPoint, QSize, Slot
 
 from PoB.pob_file import read_json, write_json
 from PoB.constants import ColourCodes, pob_debug, def_theme, default_settings, empty_settings, locale
@@ -37,8 +37,6 @@ class Settings(PoBDict):
         self._screen_rect = self._app.primaryScreen().size()
         self._qss_background = "32, 33, 36, 1.000"
         self._qss_default_text = "#FFFFFF"
-
-        # self.PoB: PoBDict = PoBDict(empty_settings)
         self.reset()
 
         # this is the xml tree representing the xml
@@ -316,7 +314,7 @@ class Settings(PoBDict):
     #     self.misc.set("betaMode", str(new_bool))
 
     @property
-    def size(self):
+    def size(self) -> QSize:
         """
         Return the window size as they were last written to settings. This ensures the user has the same experience.
         800 x 600 was chosen as the default as it has been learnt, with the lua version,
@@ -325,18 +323,17 @@ class Settings(PoBDict):
           This could happen if someone changes their desktop size or copies the program from another machine.
         :returns: a QSize(width, height)
         """
-        width = max(self.width, 800)
-        height = max(self.height, 600)
+        self.width = max(self.width, 800)
+        self.height = max(self.height, 600)
         srw = self._screen_rect.width()
-        if width > srw:
-            print(f"Width: {width} is bigger than screen: {srw}. Correcting ...")
-            width = srw
+        if self.width > srw:
+            print(f"Width: {self.width} is bigger than screen: {srw}. Correcting ...")
+            self.width = srw
         srh = self._screen_rect.height()
-        if height > srh:
-            print(f"Height: {height} is bigger than screen: {srh}. Correcting ...")
-            height = srh
-        # self.size = QSize(width, height)
-        return QSize(width, height)
+        if self.height > srh:
+            print(f"Height: {self.height} is bigger than screen: {srh}. Correcting ...")
+            self.height = srh
+        return QSize(self.width, self.height)
 
     @size.setter
     def size(self, new_size: QSize):
@@ -345,6 +342,32 @@ class Settings(PoBDict):
         # _size.set("height", f"{new_size.height()}")
         self.width = new_size.width()
         self.height = new_size.height()
+
+    @property
+    def pos(self):
+        """
+        Return the window size as they were last written to settings. This ensures the user has the same experience.
+        Attempt to protect against silliness by limiting size to the screen size.
+          This could happen if someone changes their desktop size or copies the program from another machine.
+        :returns: int, int
+        """
+        size = self.size  # check width / height values are valid
+        srw = self._screen_rect.width()
+        if self.left > srw or self.left < 0:
+            print(f"Left: {self.left} is bigger than screen: {srw}. Correcting ...")
+            self.left = (srw - self.width) / 2
+        srh = self._screen_rect.height()
+        if self.top > srh or self.top < 0:
+            print(f"Top: {self.top} is bigger than screen: {srh}. Correcting ...")
+            self.top = (srh - self.height) / 2
+        self.left = max(self.left, 20)
+        self.top = max(self.top, 20)
+        return self.left, self.top
+
+    @pos.setter
+    def pos(self, new_pos: QPoint):
+        self.left = new_pos.x()
+        self.top = new_pos.y()
 
     def get_recent_builds(self):
         """

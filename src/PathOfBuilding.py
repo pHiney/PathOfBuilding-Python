@@ -26,8 +26,8 @@ Splashscreen by https://creator.nightcafe.studio
 import sys
 
 from PySide6.QtGui import QFont, QFontDatabase
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QCoreApplication, Qt
+from PySide6.QtWidgets import QApplication, QStyle
+from PySide6.QtCore import QCoreApplication, QSize, Qt
 
 from windows.main_window import MainWindow
 
@@ -72,6 +72,9 @@ QFontDatabase.addApplicationFont(":/Font/Font/NotoSansMono-Regular.ttf")
 QApplication.setFont(QFont(":Font/Font/NotoSans-Regular.ttf", 9))
 
 window = MainWindow(main_app)
+x, y = window.settings.pos
+# why do we need to add 31 to y value to keep the window in position (and not drift up the screen).
+window.setGeometry(x, y + 31, window.settings.width, window.settings.height)
 window.show()
 window.setup_ui()
 main_app.exec()
