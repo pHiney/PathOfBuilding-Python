@@ -324,7 +324,7 @@ class SkillsUI:
                 case 3:
                     colour = ColourCodes.INTELLIGENCE.value
                 case _:
-                    colour = ColourCodes.NORMAL.value
+                    colour = ColourCodes.GOLD.value
             return colour
 
         # read in all gems but remove all invalid/unreleased ones
@@ -349,6 +349,7 @@ class SkillsUI:
 
         hidden = read_json(Path(self.settings._data_dir, "hidden_skills.json"))
         for variantId, _gem in hidden.items():
+            # "colour" comes from luaPoB
             _gem["colour"] = get_coloured_int(_gem)
             _gem["coloured_text"] = html_colour_text(_gem["colour"], _gem["name"])
             self.hidden_skills_by_name_or_id[variantId] = _gem
@@ -880,8 +881,9 @@ class SkillsUI:
                                     label = (
                                         f"This is a special group created for the {hskill['coloured_text']} skill, which is being provided by "
                                         f"{tree_node.name}.<br>You cannot delete this group, but it will disappear if you un-allocate the node."
+                                        f"<br><br>{hskill.get('description', '')}"
                                     )
-                                    # print(label)
+                                    print(label)
                                     self.list_label.setText(label)
                                     self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
                             else:
@@ -895,6 +897,7 @@ class SkillsUI:
                                     f"{_item.coloured_text}. You cannot delete this group, but it will disappear if you un-equip "
                                     f"the item.<br><br>You cannot add support gems to this group, but support gems in any other group "
                                     f"socketed into {_item.coloured_text} will automatically apply to the skill."
+                                    f"<br><br>{hskill.get('description', '')}"
                                 )
                                 self.list_label.setText(label)
                                 self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)

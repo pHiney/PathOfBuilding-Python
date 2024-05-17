@@ -4,11 +4,12 @@
 # nuitka-project: --enable-plugin=pyside6
 # nuitka-project: --include-data-dir=src/data=data
 # nuitka-project: --windows-icon-from-ico=Assets/Icons/PathOfBuilding.ico
-# nuitka-project: --onefile-tempdir-spec="%TEMP%/PoB_%PID%"
+# nuitka-project: --onefile-tempdir-spec='{TEMP}/PoB_{PID}'
 # nuitka-project: --onefile-no-compression
 # nuitka-project: --include-plugin-directory=src/dialogs
 # nuitka-project: --clean-cache=all
 # nuitka-project: --python-flag=static_hashes
+# nuitka-project: --disable-console
 # nuitka -project: --quiet
 # nuitka- project: --debug
 # nuitka- project: --trace
@@ -23,7 +24,10 @@ External components are the status bar, toolbar (if exists), menus
 Icons by  Yusuke Kamiyamane (https://p.yusukekamiyamane.com/)
 Splashscreen by https://creator.nightcafe.studio
 """
+import glob
+import os
 import sys
+import tempfile
 
 from PySide6.QtGui import QFont, QFontDatabase
 from PySide6.QtWidgets import QApplication, QStyle
@@ -46,7 +50,6 @@ from windows.main_window import MainWindow
 
 # This is pyInstaller debugging info so folk can understand the difference between the extracted directory and
 # the directory the Executable was run from:
-import os
 
 # print("os.getcwd", os.getcwd())
 # if getattr(sys, "_MEIPASS", 0) != 0:
@@ -57,6 +60,17 @@ import os
 
 # from time import sleep
 # sleep(60)
+
+
+def clear_splash_screen():
+    """
+    Remove splash screen if we are an executable.
+    Use this code to signal the splash screen removal.
+    """
+    splash_filenames = glob.glob(f"{tempfile.gettempdir()}/onefile_*_splash_feedback.tmp")
+    for filename in splash_filenames:  # splash_filenames is a [list]
+        os.unlink(filename)
+
 
 # Logging to a file, not spam to screen or get lost if no console
 # ToDo: Remove comment when we stop building.
@@ -75,6 +89,8 @@ window = MainWindow(main_app)
 x, y = window.settings.pos
 # why do we need to add 31 to y value to keep the window in position (and not drift up the screen).
 window.setGeometry(x, y + 31, window.settings.width, window.settings.height)
-window.show()
 window.setup_ui()
+window.show()
+if "NUITKA_ONEFILE_PARENT" in os.environ:
+    clear_splash_screen()
 main_app.exec()

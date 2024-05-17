@@ -7,7 +7,6 @@ import platform
 import pyperclip
 import re
 import sys
-import tempfile
 
 from typing import Union
 from pathlib import Path
@@ -282,24 +281,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Start the statusbar self updating
         self.update_status_bar()
 
-        # setup Scion by default, and this will trigger it's correct ascendancy to appear in combo_ascendancy
-        # and other ui's to display properly
-        open_build = self.settings.open_build  # this will get wiped by the next command so keep it
-        self.build_loader("Default")
-        # Check to see if there is a previous build to load and load it here
-        if open_build:
-            self.build_loader(open_build)
-
-        # Remove splash screen if we are an executable
-        if "NUITKA_ONEFILE_PARENT" in os.environ:
-            self.settings.pob_debug = False
-            # Use this code to signal the splash screen removal.
-            splash_filenames = glob.glob(f"{tempfile.gettempdir()}/onefile_*_splash_feedback.tmp")
-            for filename in splash_filenames:  # splash_filenames is a [list]
-                if self.settings.pob_debug:
-                    print("Splash found: ", filename)
-                os.unlink(filename)
-
     # init
 
     # Overridden function
@@ -353,6 +334,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """Called after show(). Call setup_ui for all UI classes that need it"""
         self.items_ui.setup_ui()
         self.skills_ui.setup_ui()
+
+        open_build = self.settings.open_build  # this will get wiped by the next command so keep it
+        # self.build_loader("Default")
+        # Check to see if there is a previous build to load and load it here
+        if open_build:
+            self.build_loader(open_build)
 
     def connect_widget_triggers(self):
         """re-connect widget triggers that need to be disconnected during loading and other processing"""
