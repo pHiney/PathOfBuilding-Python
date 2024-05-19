@@ -83,8 +83,10 @@ class Mod:
             if not self.template:
                 match len(m2.groups()):
                     case 2:
-                        # Not sure what this could be (or how I found it), but it's probably an error.
-                        print(f"2: {m2.groups()=}, original_line: {_line}")
+                        # Adds 1 to 40 Lightning Damage to Attacks
+                        # This is not an error, just not a ranged mod
+                        # print(f"2: {m2.groups()=}, original_line: {_line}")
+                        pass
                     case 3:  # '{range:0.5}+(12-16)% to Fire and Cold Resistances'
                         self.min = float(m2.group(1))
                         self.max = float(m2.group(2))

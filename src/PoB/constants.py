@@ -79,8 +79,7 @@ empty_settings = {
     "accounts": [],
 }
 
-""" ############################################### DICT / JSON ############################################### """
-
+""" ############################################### Build DICT for json ############################################### """
 empty_spec_dict = {
     "title": "Default",
     "treeVersion": _VERSION_str,
@@ -866,13 +865,7 @@ post_http_headers = {
     "Content-Type": "text/html; charset=utf-8",
 }
 
-valid_websites = [
-    "pastebin.com",
-    "pastebinp.com",
-    "pobb.in",
-    "rentry.co",
-    "poe.ninja/pob",
-]
+# valid_websites = ("pastebin.com", "pastebinp.com", "pobb.in", "rentry.co", "poe.ninja/pob")
 website_list = {
     "pobb.in": {
         "id": "POBBin",
@@ -889,7 +882,7 @@ website_list = {
         # "postFields": "api_dev_key=c4757f22e50e65e21c53892fd8e0a9ff&api_paste_private=1&api_option=paste&api_paste_code=CODE",
         "api_dev_key": "c4757f22e50e65e21c53892fd8e0a9ff",
     },
-    "poe.ninja": {
+    "poe.ninja/pob": {
         "id": "PoeNinja",
         "downloadURL": "https://poe.ninja/pob/raw/CODE",
         "codeOut": "",
@@ -905,7 +898,7 @@ website_list = {
         "id": "Rentry",
         "downloadURL": "https://rentry.co/paste/CODE/raw",
     },
-    "Error": {"note": "If you get here, it's broken"},
+    # "Error": {"note": "If you get here, it's broken"},
 }
 
 # names for importing from json converting to xml entry names

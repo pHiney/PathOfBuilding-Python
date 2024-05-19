@@ -15,11 +15,12 @@ from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QStandardItem, QStandardItemModel
 
-from PoB.constants import bad_text, get_http_headers, valid_websites, website_list
+from PoB.constants import bad_text, get_http_headers, website_list
 from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import write_json, read_json
 from PoB.utils import decode_base64_and_inflate, deflate_and_base64_encode, html_colour_text, unique_sorted
+from PoB.pob_xml import write_xml
 from widgets.ui_utils import HTMLDelegate, set_combo_index_by_text
 
 from ui.PoB_Main_Window import Ui_MainWindow
@@ -142,7 +143,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
                 and text_json.get("tree", bad_text) != bad_text
             )
         except (AttributeError, KeyError, json.decoder.JSONDecodeError):
-            print("test_import_text_for_poeplanner_json test failed")
+            # print("test_import_text_for_poeplanner_json test failed")
             return False
 
     @Slot()
@@ -162,9 +163,10 @@ class ImportDlg(Ui_BuildImport, QDialog):
         self.poep_json_import = self.test_import_text_for_poeplanner_json(text)
         # get the website and the code as separate 'group' variables
         #   (1) is the website and (2) is the code (not used here)
-        self.pob_valid_url = re.search(r"http[s]?://([a-z0-9.\-]+)/(.*)", text)
+        self.pob_valid_url = re.search(r"http[s]?://([a-z0-9.\-].*)/(.*)", text)
+        # print(f"{self.pob_valid_url.groups()=}")
         if (
-            (self.pob_valid_url is not None and self.pob_valid_url.group(1) in valid_websites)
+            (self.pob_valid_url is not None and self.pob_valid_url.group(1) in website_list.keys())
             or self.pob_base64_encoded
             or self.poep_json_import
         ):
@@ -225,6 +227,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
             return
         else:
             self.xml = ET.ElementTree(ET.fromstring(code))
+            # write_xml(f"{self.pob_valid_url.group(2)}.xml", ET.fromstring(code))
             self.done(0)
 
     def import_all_from_poep_json(self, poep_json):

@@ -694,7 +694,6 @@ def load_from_xml(filename_or_xml):
 
     """Items"""
     xml_items = xml_PoB["Items"]
-    json_PoB["Items"]["activeItemSet"] = int(get_param_value(xml_items.get("@activeItemSet", "1"), "1")) - 1
     # Items
     if type(xml_items["Item"]) is dict:  # list or dict if only one
         xml_items["Item"] = [xml_items["Item"]]
@@ -729,6 +728,16 @@ def load_from_xml(filename_or_xml):
                     {"name": name, "nodeId": int(s_id.get("@nodeId", "")), "itemPbURL": s_id.get("@itemPbURL", "")}
                 )
         json_PoB["Items"]["ItemSets"].append(json_set)
+
+        # Renumber Itemset cause we want to have a nice clean start (and we really don't rely on them).
+        active_item_set = int(get_param_value(xml_items.get("@activeItemSet", "1"), "1")) - 1
+        for idx, item_set in enumerate(json_PoB["Items"]["ItemSets"]):
+            if item_set["id"] == active_item_set:
+                active_item_set = idx
+            item_set["id"] = idx
+        json_PoB["Items"]["activeItemSet"] = active_item_set
+
+    # Renumber ItemSets
 
     return new_build
 

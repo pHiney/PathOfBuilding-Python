@@ -397,7 +397,7 @@ class Spec:
                 nodes.append(node)
 
         byte_stream.append(len(nodes))
-        for node in self.nodes:
+        for node in nodes:
             byte_stream.extend(node.to_bytes(2, endian))
         # print(''.join('{:02x} '.format(x) for x in byte_stream))
 
@@ -485,13 +485,13 @@ class Spec:
             self.active_hidden_skills.pop(f"Tree:{node.id}", 0)
 
     def get_hidden_skills_from_nodes(self):
-        """Search selected node, from the current tree's nodes for hidden skills.
+        """Search selected nodes, from the current tree's nodes for hidden skills.
         Called when changing tree versions or setting nodes (eg import)"""
         ctree_nodes = self.build.current_tree.nodes
-        for n_id in [n_id for n_id in self.nodes if ctree_nodes[n_id].grants_skill != ("", 0)]:
+        # ToDo: Cluster Jewel nodes won't be in the tree, they are items. So check the selected node exists.
+        for n_id in [n_id for n_id in self.nodes if ctree_nodes.get(n_id, "") and ctree_nodes[n_id].grants_skill != ("", 0)]:
+            # trigger add_node procedures by calling add_node()
             self.add_node(ctree_nodes[n_id])
-        # self.active_hidden_skills = [ctree_nodes[n_id].grants_skill for n_id in self.nodes if ctree_nodes[n_id].grants_skill != ("", 0)]
-        # print(f"get_hidden_skills_from_nodes: {self.active_hidden_skills}")
 
     def set_nodes_from_string(self, new_nodes):
         """

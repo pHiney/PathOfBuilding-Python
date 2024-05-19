@@ -130,6 +130,9 @@
      <height>24</height>
     </rect>
    </property>
+   <property name="placeholderText">
+    <string>Type Character Name Here</string>
+   </property>
   </widget>
   <widget class="QPushButton" name="btn_StartImport">
    <property name="geometry">
@@ -446,6 +449,9 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+    <property name="placeholderText">
+     <string>Paste Import URL here</string>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_ImportBuildSharing">

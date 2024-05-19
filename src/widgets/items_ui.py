@@ -392,8 +392,11 @@ class ItemsUI:
         self.fill_jewel_slot_uis()
         self.alerting = True
         self.connect_item_triggers()
-        # Trigger showing the correct itemset
-        self.win.combo_ItemSet.setCurrentIndex(self.activeItemSet)
+        # Trigger showing the correct itemset, checking for silliness, especially if activeItemSet has been played with by a Human ...
+        itemset_num = self.activeItemSet
+        if not 0 <= itemset_num < len(self.itemsets):
+            itemset_num = 0
+        self.win.combo_ItemSet.setCurrentIndex(itemset_num)
 
     def import_from_ggg_json(self, json_items, delete_it_all):
         """
