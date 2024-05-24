@@ -719,19 +719,20 @@ class Item:
             print(f"get_simple_stat: {value=}")
         return adds, multiples, more
 
-    def tooltip(self, force=False):
+    def tooltip(self, force=False, nl="\n"):
         """
         Create a tooltip. Hand crafted html anyone ?
 
         :param force: Bool. Set to true to force recalculation of TT. EG: Use for when changing variants.
-        :return: str: the tooltip
+        :param nl: str. NewLine. For jewel tooltip in treeview, they need "\n". Edit: seems item's tooltip will work with \n too.
+        :return: str: the tooltip.
         """
         if not force and self.base_tooltip_text != "":
             return
         tip = (
             f"<style>"
             f"table, th, td {{border: 1px solid {self.rarity_colour}; border-collapse: collapse;}}"
-            f"td {{text-align: center;}}"
+            f"td  {{padding-left:9px; padding-right:9px; text-align: center;}}"
             f"</style>"
             f'<table width="425">'
             f"<tr><th>"
@@ -739,25 +740,25 @@ class Item:
         item_id = self.settings._pob_debug and f"#{self.id}" or ""
         tip += html_colour_text(self.rarity_colour, f"{self.name}   {item_id}")
         for influence in self.influences:
-            tip += f"<br/>{html_colour_text(influence_colours[influence], influence)}"
+            tip += f"{nl}{html_colour_text(influence_colours[influence], influence)}"
         tip += "</th></tr>"
 
         # stats
         stats = ""
         if self.armour:
-            stats += f"Armour: {self.armour}<br/>"
+            stats += f"Armour: {self.armour}{nl}"
         if self.evasion:
-            stats += f"Evasion Rating: {self.evasion}<br/>"
+            stats += f"Evasion Rating: {self.evasion}{nl}"
         if self.energy_shield:
-            stats += f"Energy Shield: {self.energy_shield}<br/>"
+            stats += f"Energy Shield: {self.energy_shield}{nl}"
         # if self.sub_type:
         #     print(f"{self.type=}, {self.sub_type=}")
-        #     stats += f"{self.sub_type}<br/>"
+        #     stats += f"{self.sub_type}{nl}"
         # if self.type in weapon_classes:
         #     print(f"{self.type}, {self.sub_type}")
-        #     stats += f"{self.type}<br/>"
+        #     stats += f"{self.type}{nl}"
         if self.quality != 0:
-            stats += f"Quality: {self.quality}%<br/>"
+            stats += f"Quality: {self.quality}%{nl}"
         if self.sockets != "":
             socket_text = ""
             for socket in self.sockets:
@@ -765,9 +766,9 @@ class Item:
                     socket_text += html_colour_text(ColourCodes[socket].value, socket)
                 else:
                     socket_text += socket
-            stats += f'Sockets: {socket_text.replace("-", "=")}<br/>'
+            stats += f'Sockets: {socket_text.replace("-", "=")}{nl}'
         if stats:
-            tip += f'<tr><td>{stats.rstrip("<br/>")}</td></tr>'
+            tip += f'<tr><td>{stats.rstrip("{nl}")}</td></tr>'
 
         if self.limited_to != "":
             tip += f"<tr><td>Limited to: <b>{self.limited_to}</b></td></tr>"
@@ -790,20 +791,22 @@ class Item:
         if len(self.implicitMods) > 0:
             mods = ""
             for mod in self.implicitMods:
-                mods += mod.tooltip
-            tip += f'<tr><td>{mods.rstrip("<br/>")}</td></tr>'
-        fractured = ""
+                # mods += f"<nobr>{mod.tooltip}"
+                mods += f"{mod.tooltip}{nl}"
+            tip += f'<tr><td><pre>{mods.rstrip("{nl}")}</pre></td></tr>'
         if len(self.fracturedMods) > 0:
             mods = ""
             for mod in self.fracturedMods:
-                fractured += mod.tooltip
-            # tip += f'<tr><td>{fractured.rstrip("<br/>")}</td></tr>'
+                # mods += f"<nobr>{mod.tooltip}"
+                mods += f"{mod.tooltip}{nl}"
+            tip += f'<tr><td><pre>{mods.rstrip("{nl}")}</pre></td></tr>'
         if len(self.explicitMods) > 0:
             mods = ""
             for mod in self.explicitMods:
                 if not mod.corrupted:
-                    mods += mod.tooltip
-            tip += f'<tr><td>{fractured}{mods.rstrip("<br/>")}</td></tr>'
+                    # mods += f"<nobr>{mod.tooltip}"
+                    mods += f"{mod.tooltip}{nl}"
+            tip += f'<tr><td><pre>{mods.rstrip("{nl}")}</pre></td></tr>'
 
         if self.corrupted:
             tip += f'<tr><td>{html_colour_text("STRENGTH", "Corrupted")}</td></tr>'

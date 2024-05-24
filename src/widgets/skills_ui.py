@@ -883,7 +883,6 @@ class SkillsUI:
                                         f"{tree_node.name}.<br>You cannot delete this group, but it will disappear if you un-allocate the node."
                                         f"<br><br>{hskill.get('description', '')}"
                                     )
-                                    print(label)
                                     self.list_label.setText(label)
                                     self.win.vlayout_SkillsRight.addItem(self.vSpacer_list_label)
                             else:

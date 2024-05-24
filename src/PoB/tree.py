@@ -210,7 +210,6 @@ class Tree:
         image.setPos(x, y)
         image.setOffset(ox, oy)
         if _layer not in [Layers.active, Layers.active_effect]:
-            # if nonactive:
             self.graphics_items.append(image)
         return image
 
@@ -393,7 +392,7 @@ class Tree:
                         self.add_line(node.x, node.y, other_node.x, other_node.y)
 
         # Add the group backgrounds
-        # DO NOT join this 'for g' loop with the one above. It makes the backgrounds disappear
+        # DO NOT join this 'for g' loop with the one above. It makes the backgrounds disappear.
         for g in self.groups:
             group = self.groups[g]
             if not group.get("isProxy", False):
@@ -434,15 +433,7 @@ class Tree:
             :return: a reference to the tree graphic image added
             """
             sprite = self.add_picture(_sprite["handle"], _node.x, _node.y, _sprite["ox"], _sprite["oy"], _layer, _node)
-            sprite.name = _sprite["name"]
-            sprite.node_id = _node.id
-            sprite.filename = _node.icon
-            sprite.node_sd = _node.sd
-            sprite.node_name = _node.name
-            sprite.node_type = _node.type
-            sprite.node_reminder = _node.reminderText
-            # sprite.node_tooltip = node.tooltip
-
+            sprite.data = _sprite["name"]
             return sprite
 
         node.inactive_sprite = None
@@ -654,18 +645,7 @@ class Tree:
             painter.end()
             return _result
 
-        def add_jewel_sprite(_name):
-            """
-            add a sprite to our graphics list
-            :param _name: the jewel sprite name
-            :return: a reference to the tree graphic image added
-            """
-            sprite = TreeGraphicsItem(self.settings, self.spriteMap[_name]["jewel"]["handle"], None, Layers.active, True)
-            sprite.name = _name
-            return sprite
-
-            # _type will be like normalActive, normalInactive, background
-
+        # _type will be like normalActive, normalInactive, background
         for _type in sprite_list:
             # We don't use a background tile
             if _type == "background":

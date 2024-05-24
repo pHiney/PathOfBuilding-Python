@@ -84,7 +84,6 @@ class Node:
         self.oidx = _node.get("orbitIndex", 0)
         self.passivePointsGranted = _node.get("passivePointsGranted", 0)
         self.stats = _node.get("stats", [])
-        self.sd = _node.get("stats", [])
         self.reminderText = _node.get("reminderText", "")
         self.ascendancyName = _node.get("ascendancyName", "")
         self.nodes_in = set(int(node) for node in _node.get("in", []))

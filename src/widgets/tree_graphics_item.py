@@ -7,7 +7,8 @@ This class represents a graphical instance of one visual element of a Passive Tr
 
 from copy import deepcopy
 
-from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap, QGuiApplication
 from PySide6.QtWidgets import QGraphicsPixmapItem
 
 from PoB.settings import Settings
@@ -32,17 +33,14 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
 
         # ToDo: Do we need selectable ?
         # self.setFlag(QGraphicsItem.ItemIsSelectable, selectable)
-        self.setAcceptTouchEvents(selectable)
-        # ToDo: Temporary
-        self.setAcceptHoverEvents(True)
-        # self.setAcceptHoverEvents(selectable)
+        self.selectable = selectable
 
         # these are to have a fast way for a graphic item to identify its owner node's params. Used by mouse events
         # Maybe have just the node reference ?
         self.node = node
         self.node_id = 0
         self.node_tooltip = ""
-        self.node_sd = ""
+        self.node_stats = ""
         self.node_name = ""
         self.node_type = ""
         self.node_reminder = ""
@@ -51,12 +49,15 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
         self.node_isAscendancyStart = False
         if node is not None:
             self.node_id = node.id
-            self.node_sd = node.sd
-            self.node_name = node.name
+            self.node_stats = node.stats
+            if "Socket" not in node.name:
+                self.node_name = node.name
             self.node_type = node.type
             self.node_reminder = node.reminderText
             self.node_classStartIndex = node.classStartIndex
             self.node_isAscendancyStart = node.isAscendancyStart
+
+        self._item = None  # reference to a Jewel, if this is a socket
 
     @property
     def layer(self):
@@ -66,6 +67,24 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
     def layer(self, z_value):
         self._z_value = z_value
         self.setZValue(z_value)
+
+    @property
+    def selectable(self):
+        return False
+
+    @selectable.setter
+    def selectable(self, selectable):
+        self.setAcceptTouchEvents(selectable)
+        self.setAcceptHoverEvents(selectable)
+
+    @property
+    def item(self):
+        return self._item
+
+    @item.setter
+    def item(self, new_item):
+        self._item = new_item
+        self.name = new_item.name
 
     # Inherited, don't change definition
     def setScale(self, scale: int = 1):
@@ -83,15 +102,28 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
 
         :return: str: the tooltip
         """
-        tool_tip = self.node_name and f"{self.node_name}, {self.node_id}" or f"{self.node_id}"
-        tool_tip += self.name and f", {self.name}" or ""
-        tool_tip += self.data and f", {self.data}" or ""
-        if self.node_sd != "":
-            for line in self.node_sd:
-                tool_tip += f"\n{line}"
-        tool_tip += self.node_reminder and f"\n{self.node_reminder}" or ""
-        # tool_tip += self.filename and f"\n{self.filename}" or ""
-        return html_colour_text(self.settings.qss_default_text, tool_tip)
+        # print(f"TreeGraphicsItem.build_tooltip: {self.node_type=}, {self.name=}, {self.item=}")
+        if self.item:
+            return self.item.tooltip()
+
+        tool_tip = ""
+        if self.node_name:
+            if Qt.KeyboardModifier.AltModifier in QGuiApplication.keyboardModifiers():
+                tool_tip = f"{self.node_name}, {self.node_id}"
+            else:
+                tool_tip = f"{self.node_name}"
+        tool_tip += self.name and f"<nobr>{self.name}" or ""
+        if self.node_stats != "":
+            for line in self.node_stats:
+                # This was tough. HTML lines break after a -, unless there is a punctuation mark next to it.
+                #   '.-.' is an example of what works.
+                # Ended up searching for invisble characters: https://www.quora.com/How-do-you-insert-an-invisible-character-in-HTML
+                tool_tip += f"\n<nobr>{line.replace('-', '&#8205;-&#8205;')}</nobr>"
+        tool_tip += self.node_reminder and f"\n<nobr>{self.node_reminder}" or ""
+        if tool_tip:
+            return html_colour_text(self.settings.qss_default_text, tool_tip)
+        else:
+            return ""
 
     # not sure if this is needed
     # def hoverLeaveEvent(self, event):

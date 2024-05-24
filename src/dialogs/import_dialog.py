@@ -201,7 +201,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
                 url_code = self.pob_valid_url.group(2)
                 url = website_list[website]["downloadURL"].replace("CODE", url_code)
                 response = requests.get(url, headers=get_http_headers, timeout=6.0)
-                code = decode_base64_and_inflate(response.content)
+                build_str = decode_base64_and_inflate(response.content)
             except requests.RequestException as e:
                 self.status = html_colour_text(
                     "RED",
@@ -210,8 +210,8 @@ class ImportDlg(Ui_BuildImport, QDialog):
                 print(f"Error retrieving 'Data': {e}.")
                 return
         elif self.pob_base64_encoded:
-            # decode the string and return a possibly valid code.
-            code = decode_base64_and_inflate(text)
+            # decode the string and return a possibly valid build.
+            build_str = decode_base64_and_inflate(text)
         elif self.poep_json_import:
             # import the json for better or worse. No errors. Just do it.
             self.import_all_from_poep_json(json.loads(text))
@@ -219,16 +219,15 @@ class ImportDlg(Ui_BuildImport, QDialog):
             return
         else:
             # If we can't get a resolution, return with a standard error.
-            code = None
+            build_str = ""
 
-        if code is None:
+        if build_str:
+            self.xml = ET.ElementTree(ET.fromstring(build_str))
+            # write_xml(f"{self.pob_valid_url.group(2)}.xml", ET.fromstring(build_str))
+            self.done(0)
+        else:
             self.status = html_colour_text("RED", f"Code failed to decode.")
             print(f"Code failed to decode.")
-            return
-        else:
-            self.xml = ET.ElementTree(ET.fromstring(code))
-            # write_xml(f"{self.pob_valid_url.group(2)}.xml", ET.fromstring(code))
-            self.done(0)
 
     def import_all_from_poep_json(self, poep_json):
         """

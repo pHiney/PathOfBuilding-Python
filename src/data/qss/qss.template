@@ -15,8 +15,8 @@ QWidget {
 }
 
 QGroupBox {
-	color: rgba( qss_default_text );
-	margin: 5px;
+    color: rgba( qss_default_text );
+    margin: 5px;
 }
 QGroupBox#groupbox_Items_2,
 QGroupBox#groupbox_SocketedJewels_2 {border:0;}
@@ -26,7 +26,7 @@ QGroupBox#groupbox_SocketedJewels_2 {border:0;}
     /* border:1px solid blue; */
 /* } */
 QGroupBox::title {
-	padding-top: -5px;
+    padding-top: -5px;
     padding-left: 10px;
 /* } */
     subcontrol-origin: margin;
@@ -68,46 +68,46 @@ QCheckBox::indicator {
     left: 2px;
 }
 QCheckBox::indicator::unchecked  {
-	border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
-	border-radius: 4px;
+    border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
+    border-radius: 4px;
 }
 QCheckBox::indicator::checked {
-	background-color: qradialgradient( cx:0.5, cy:0.5, fx:0.5, fy:0.5, radius:0.8, stop:0 rgba( qss_checkbox_radio_enabled_indicator ), stop:1 rgba( qss_background ) );
-	border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
-	border-radius: 4px;
+    background-color: qradialgradient( cx:0.5, cy:0.5, fx:0.5, fy:0.5, radius:0.8, stop:0 rgba( qss_checkbox_radio_enabled_indicator ), stop:1 rgba( qss_background ) );
+    border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
+    border-radius: 4px;
 }
 
 
 /* QRadioButton */
 QRadioButton::indicator::unchecked {
-	border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
-	border-radius: 4px;
+    border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
+    border-radius: 4px;
 }
 QRadioButton::indicator::checked {
-	background-color: qradialgradient( cx:0.5, cy:0.5, fx:0.5, fy:0.5, radius:0.8, stop:0 rgba( qss_checkbox_radio_enabled_indicator ), stop:1 rgba( qss_background ) );
-	border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
-	border-radius: 4px;
+    background-color: qradialgradient( cx:0.5, cy:0.5, fx:0.5, fy:0.5, radius:0.8, stop:0 rgba( qss_checkbox_radio_enabled_indicator ), stop:1 rgba( qss_background ) );
+    border: 1px solid rgba( qss_checkbox_radio_indicator_borders );
+    border-radius: 4px;
 }
 
 QMenuBar::drop-down {
     border: 1px solid rgba( qss_box_borders );
 }
 QMenu {
-	padding-left: 2px;
+    padding-left: 2px;
 }
 QAction::separator,
 QMenu::separator {
-	height: 1px;
-	background: rgba( qss_menu_sep );
-	margin-left: 10px;
-	margin-right: 10px;
-	margin-top: 5px;
-	margin-bottom: 5px;
+    height: 1px;
+    background: rgba( qss_menu_sep );
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 QMenu::item {
-	padding-left: 2px;
-	margin-top: 3px;
-	margin-bottom: 3px;
+    padding-left: 2px;
+    margin-top: 3px;
+    margin-bottom: 3px;
 }
 QMenuBar::item:selected {
     padding: 4px;
@@ -131,7 +131,7 @@ QTabWidget::pane {
 /* QTabBar */
 QTabBar::tab {
     border-style: solid;
-	min-width: 15ex;
+    min-width: 15ex;
     padding: 5px;
     margin-left: 4px;
     margin-right: 4px;
@@ -175,9 +175,9 @@ QListView {
 ListBox,
 QListView,
 QAbstractItemView {
-	alternate-background-color: rgba( qss_alt_background );
-	padding: 0px;
-	margin: 0px;
+    alternate-background-color: rgba( qss_alt_background );
+    padding: 0px;
+    margin: 0px;
 }
 
 ListBox::item,
@@ -187,12 +187,11 @@ QListWidget::item {
 }
 QListWidget::item:selected,
 QListWidgetItem:selected {
-	padding: 0px;
-	margin: 0px;
+    padding: 0px;
+    margin: 0px;
 }
 
-QToolButton, QAction, QWidgetAction,
-QToolTip {
+QToolButton, QAction, QWidgetAction, QToolTip{
     border: 1px solid rgba( qss_box_borders );
     background-color: rgba( qss_background );
     color: rgba( qss_default_text );
@@ -202,13 +201,13 @@ QToolTip {
 
 /* Spinboxes arrow */
 QAbstractSpinBox::up-arrow {
-	/* There cannot be a space after ( or before ) */
+    /* There cannot be a space after ( or before ) */
     image: url(qss_spin_up_arrow);
     width: 7px;
     height: 7px;
 }
 QAbstractSpinBox::down-arrow {
-	/* There cannot be a space after ( or before ) */
+    /* There cannot be a space after ( or before ) */
     image: url(qss_spin_dn_arrow);
     width: 7px;
     height: 7px;

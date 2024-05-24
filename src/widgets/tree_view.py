@@ -128,7 +128,7 @@ class TreeView(QGraphicsView):
             return
         # for i in graphic_items:
         #     if type(i) is TreeGraphicsItem:
-        #         print(i.node_id, i.name)
+        #         print(f"{i.node_id=}, {i.name=}")
         g_item = next((i for i in graphic_items if isinstance(i, TreeGraphicsItem)), None)
         if (
             g_item
@@ -213,21 +213,21 @@ class TreeView(QGraphicsView):
             self.build.current_spec.set_mastery_effect(node.id, dlg.selected_effect)
         return _return == 1
 
-    def add_picture(self, pixmap, x, y, z=0):
+    def add_picture(self, pixmap, x, y, z=0, _node=None, selectable=False):
         """
         Add a picture or pixmap
-        :param pixmap: string or pixmap to be added
-        :param x: it's position in the scene
-        :param y: it's position in the scene
-        :param z: which layer to use:  -2: background, -1: connectors, 0: inactive,
-                                        1: sprite overlay
-                                        1: active (overwriting its inactive equivalent ???)
+        :param pixmap: string or pixmap to be added.
+        :param x: it's position in the scene.
+        :param y: it's position in the scene.
+        :param z: Layers: which layer to use: -2: background, -1: connectors, etc
+        :param _node:Node(): The affiliated node
+        :param selectable:bool: Selectable
         :return: ptr to the created TreeGraphicsItem
         """
         if pixmap is None or pixmap == "":
             print(f"tree_view.add_picture called with wrong information. pixmap: {pixmap},  x:{x}, y: {y}")
             return None
-        image = TreeGraphicsItem(self.settings, pixmap, None, z, False)
+        image = TreeGraphicsItem(self.settings, pixmap, _node, z, selectable)
         image.setPos(x, y)
         self._scene.addItem(image)
         return image
@@ -357,10 +357,7 @@ class TreeView(QGraphicsView):
             if self.build.current_class != PlayerClasses.SCION:
                 bkgnd = class_backgrounds[self.build.current_class]
                 self._char_class_bkgnd_image = self.add_picture(
-                    QPixmap(f":/Art/TreeData/{bkgnd['n']}"),
-                    bkgnd["x"],
-                    bkgnd["y"],
-                    Layers.backgrounds,
+                    QPixmap(f":/Art/TreeData/{bkgnd['n']}"), bkgnd["x"], bkgnd["y"], Layers.backgrounds
                 )
                 self._char_class_bkgnd_image.filename = bkgnd["n"]
         else:
@@ -396,22 +393,17 @@ class TreeView(QGraphicsView):
                 if node.type == "Socket":
                     jewels = self.build.current_spec.sockets
                     image = None
-                    if self.items_jewels and node.id in set(jewels.keys()):
+                    if self.items_jewels and node.id in jewels.keys():
                         jewel_node_id = jewels[node.id]
                         if jewel_node_id != 0:
                             jewel_item = self.items_jewels.get(jewel_node_id, None)
                             if jewel_item:
                                 sprite = node.sprites.get(jewel_item.base_name, None)
                                 if sprite is not None:
-                                    image = self.add_picture(sprite["handle"], node.x, node.y, Layers.jewels)
+                                    image = self.add_picture(sprite["handle"], node.x, node.y, Layers.jewels, node, True)
                                     image.setOffset(sprite["ox"], sprite["oy"])
-                                    image.name = jewel_item.name
-                                    image.node_id = node.id
-                                    image.node_sd = node.sd
-                                    image.filename = node.icon
-                                    image.node_name = node.name
-                                    image.node_type = node.type
-                                    image.node_reminder = node.reminderText
+                                    # image.name = jewel_item.name
+                                    image.item = jewel_item
                     if image:
                         self.active_nodes.append(image)
                     self.active_nodes.append(node.active_overlay_image)

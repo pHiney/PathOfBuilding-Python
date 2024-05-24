@@ -56,7 +56,7 @@ class Mod:
         elif self.corrupted:
             self.tooltip_colour = ColourCodes.STRENGTH.value
         # No range? Let's set the tooltip.
-        self.tooltip = f"{html_colour_text(self.tooltip_colour, self.original_line)}<br/>"
+        self.tooltip = f"{html_colour_text(self.tooltip_colour, self.original_line)}"
 
         skill, level = search_stats_for_skill(self.original_line)
         if skill:
@@ -150,5 +150,5 @@ class Mod:
             self.line = self.line_unformatted.format(value_str)
             tooltip = self.line_unformatted.format(value_colored_str)
         # colour the whole tip
-        self.tooltip = f"{html_colour_text(self.tooltip_colour, tooltip)}<br/>"
+        self.tooltip = f"{html_colour_text(self.tooltip_colour, tooltip)}"
         # print(f"range.setter: {self.line=}, {self.tooltip=}")
