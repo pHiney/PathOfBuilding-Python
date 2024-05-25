@@ -194,44 +194,6 @@ class Tree:
         self.json_file_path = Path(self.tree_version_path, "tree.json")
         self.legion_path = Path(self.settings._data_dir, "legion")
 
-    def add_picture(self, name, x, y, ox, oy, _layer=Layers.inactive, node=None):
-        """
-        Add a picture
-        :param name: string or pixmap to be added
-        :param x: it's position in the scene
-        :param y: it's position in the scene
-        :param ox: offset to it's position in the scene
-        :param oy: offset to it's position in the scene
-        :param _layer: Layers: which layer to use:
-        :param node: Node: The associated node, so we can load up TreeGraphicsItem variables
-        :return: ptr to the created TreeGraphicsItem
-        """
-        image = TreeGraphicsItem(self.settings, name, node, _layer, True)
-        image.setPos(x, y)
-        image.setOffset(ox, oy)
-        if _layer not in [Layers.active, Layers.active_effect]:
-            self.graphics_items.append(image)
-        return image
-
-    def add_line(self, x1, y1, x2, y2, z=Layers.connectors):
-        """
-        Add a line
-        :param x1: it's start position in the scene
-        :param y1: it's start position in the scene
-        :param x2: it's end position in the scene
-        :param y2: it's end position in the scene
-        :param z: Layers: which layer to use:
-        :return: ptr to the created TreeGraphicsItem
-        """
-        line = QGraphicsLineItem(x1, y1, x2, y2)
-        line.setAcceptTouchEvents(False)
-        line.setAcceptHoverEvents(False)
-        line.setZValue(z)
-        line.setPen(QPen(QColor(ColourCodes.CURRENCY.value), 1, Qt.SolidLine))
-        if z != Layers.active:
-            self.lines.append(line)
-        return line
-
     def load(self):
         """
         Load the tree json of this Tree()'s version and process it
@@ -417,20 +379,58 @@ class Tree:
 
         # load
 
+    def add_picture(self, name, x, y, ox, oy, _layer=Layers.inactive, node=None):
+        """
+        Add a picture.
+        :param name: string or pixmap to be added
+        :param x: it's position in the scene
+        :param y: it's position in the scene
+        :param ox: offset to it's position in the scene
+        :param oy: offset to it's position in the scene
+        :param _layer: Layers: which layer to use:
+        :param node: Node: The associated node, so we can load up TreeGraphicsItem variables
+        :return: ptr to the created TreeGraphicsItem
+        """
+        image = TreeGraphicsItem(self.settings, name, node, _layer, True)
+        image.setPos(x, y)
+        image.setOffset(ox, oy)
+        if _layer not in [Layers.active, Layers.active_effect]:
+            self.graphics_items.append(image)
+        return image
+
+    def add_line(self, x1, y1, x2, y2, z=Layers.connectors):
+        """
+        Add a line
+        :param x1: it's start position in the scene
+        :param y1: it's start position in the scene
+        :param x2: it's end position in the scene
+        :param y2: it's end position in the scene
+        :param z: Layers: which layer to use:
+        :return: ptr to the created TreeGraphicsItem
+        """
+        line = QGraphicsLineItem(x1, y1, x2, y2)
+        line.setAcceptTouchEvents(False)
+        line.setAcceptHoverEvents(False)
+        line.setZValue(z)
+        line.setPen(QPen(QColor(ColourCodes.CURRENCY.value), 1, Qt.SolidLine))
+        if z != Layers.active:
+            self.lines.append(line)
+        return line
+
     def process_node(self, node: Node):
         """
-
+        Process tree nodes and get images. Inactive images only. TreeView() holds the active images.
         :param node:
         :return:
         """
 
         def add_sprite(_sprite, _node, _layer=Layers.inactive):
             """
-            add a sprite to our graphics list
-            :param _sprite: the inactive sprite or overlay to be added
-            :param _layer: the layer this sprite is to be added in
-            :param _node: the node
-            :return: a reference to the tree graphic image added
+            Add a sprite to our graphics list.
+            :param _sprite: the inactive sprite or overlay to be added.
+            :param _layer: the layer this sprite is to be added in.
+            :param _node: the node.
+            :return: a reference to the tree graphic image added.
             """
             sprite = self.add_picture(_sprite["handle"], _node.x, _node.y, _sprite["ox"], _sprite["oy"], _layer, _node)
             sprite.data = _sprite["name"]

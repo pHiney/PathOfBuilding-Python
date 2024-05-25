@@ -62,8 +62,8 @@ class Item:
         # self._quality = 0
         self.influences = []
         self.two_hand = False
-        self.abyss_jewel = None
-        self.synthesised = None
+        self.abyss_jewel = False
+        self.synthesised = False
         self.properties = {}
         # implicit/explicit mods affecting this item with current variants
         self.implicitMods = []
@@ -131,6 +131,13 @@ class Item:
         if self.base_item is not None:
             self.type = self.base_item["type"]
             self.sub_type = self.base_item.get("subType", "")
+            self.abyss_jewel = "abyss_jewel" in self.base_item["tags"]
+            if self.type == "Jewel":
+                # sub_type is used to look up the jewel's image
+                if self.abyss_jewel:
+                    self.sub_type = "Abyss Jewel"
+                else:
+                    self.sub_type = self.base_name
             # setup weapon's subType
             if self.type in weapon_classes:
                 if self.sub_type != "":

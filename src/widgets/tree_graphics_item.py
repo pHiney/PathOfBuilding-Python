@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QGuiApplication
 from PySide6.QtWidgets import QGraphicsPixmapItem
 
+from PoB.constants import ColourCodes
 from PoB.settings import Settings
 from PoB.utils import html_colour_text
 
@@ -39,20 +40,18 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
         # Maybe have just the node reference ?
         self.node = node
         self.node_id = 0
-        self.node_tooltip = ""
-        self.node_stats = ""
         self.node_name = ""
-        self.node_type = ""
+        self.node_stats = ""
+        self.node_recipe = ""
         self.node_reminder = ""
         self.node_isoverlay = False  # If this is an overlay, then the search ring needs to be bigger
         self.node_classStartIndex = -1
         self.node_isAscendancyStart = False
         if node is not None:
             self.node_id = node.id
+            self.node_name = node.name
             self.node_stats = node.stats
-            if "Socket" not in node.name:
-                self.node_name = node.name
-            self.node_type = node.type
+            self.node_recipe = node.recipe
             self.node_reminder = node.reminderText
             self.node_classStartIndex = node.classStartIndex
             self.node_isAscendancyStart = node.isAscendancyStart
@@ -96,34 +95,46 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
     def hoverEnterEvent(self, event):
         self.setToolTip(self.build_tooltip())
 
-    def build_tooltip(self):
+    def build_tooltip(self, mastery_id=0):
         """
         Build a tooltip from the node information and damage data (later).
 
+        :param: mastery_id: if none 0, add mastery stats.
         :return: str: the tooltip
         """
-        # print(f"TreeGraphicsItem.build_tooltip: {self.node_type=}, {self.name=}, {self.item=}")
+        # if self.node:
+        #     print(f"TreeGraphicsItem.build_tooltip: {self.node.type=}, {self.node_name=}, {self.name=}, {self.node.masteryEffects=}")
         if self.item:
             return self.item.tooltip()
 
-        tool_tip = ""
-        if self.node_name:
-            if Qt.KeyboardModifier.AltModifier in QGuiApplication.keyboardModifiers():
-                tool_tip = f"{self.node_name}, {self.node_id}"
-            else:
-                tool_tip = f"{self.node_name}"
-        tool_tip += self.name and f"<nobr>{self.name}" or ""
+        nl = "\n"
+        tool_tip = (
+            f"<style>"
+            f"table, th, td {{border: 1px solid {ColourCodes.UNIQUE.value}; border-collapse: collapse; vertical-align: middle;}}"
+            f"td  {{padding-left:9px; padding-right:9px; text-align: center;}}"
+            f"</style>"
+            f'<table width="425">'
+            f"<tr><th>"
+        )
+        tool_tip += f"<font size='4' color='white'>{self.node_name and self.node_name or self.name}</font>&nbsp;&nbsp;&nbsp;"
+        if self.node_recipe:
+            for recipe in self.node_recipe:
+                tool_tip += f"&nbsp;&nbsp;&nbsp;{recipe.replace('Oil','')}<img src=':/Art/TreeData/{recipe}.png' width='25' height='25'/>"
+        if Qt.KeyboardModifier.AltModifier in QGuiApplication.keyboardModifiers():
+            tool_tip += f", {self.node_id}"
+        tool_tip += "</th></tr>"
         if self.node_stats != "":
-            for line in self.node_stats:
+            stats = ""
+            for line in self.node.stats:
                 # This was tough. HTML lines break after a -, unless there is a punctuation mark next to it.
                 #   '.-.' is an example of what works.
                 # Ended up searching for invisble characters: https://www.quora.com/How-do-you-insert-an-invisible-character-in-HTML
-                tool_tip += f"\n<nobr>{line.replace('-', '&#8205;-&#8205;')}</nobr>"
-        tool_tip += self.node_reminder and f"\n<nobr>{self.node_reminder}" or ""
-        if tool_tip:
-            return html_colour_text(self.settings.qss_default_text, tool_tip)
-        else:
-            return ""
+                stats += f"{line.replace('-', '&#8205;-&#8205;')}{nl}"
+            if stats:
+                tool_tip += f'<tr><td><pre>{html_colour_text(self.settings.qss_default_text, stats.rstrip(f"{nl}"))}</pre></td></tr>'
+        tool_tip += self.node_reminder and f"<tr><td><pre>{self.node_reminder}</pre></td></tr>" or ""
+        tool_tip += f"</table>"
+        return tool_tip
 
     # not sure if this is needed
     # def hoverLeaveEvent(self, event):

@@ -395,15 +395,14 @@ class TreeView(QGraphicsView):
                     image = None
                     if self.items_jewels and node.id in jewels.keys():
                         jewel_node_id = jewels[node.id]
-                        if jewel_node_id != 0:
-                            jewel_item = self.items_jewels.get(jewel_node_id, None)
-                            if jewel_item:
-                                sprite = node.sprites.get(jewel_item.base_name, None)
-                                if sprite is not None:
-                                    image = self.add_picture(sprite["handle"], node.x, node.y, Layers.jewels, node, True)
-                                    image.setOffset(sprite["ox"], sprite["oy"])
-                                    # image.name = jewel_item.name
-                                    image.item = jewel_item
+                        # if jewel_node_id != 0:
+                        jewel_item = self.items_jewels.get(jewel_node_id, None)
+                        if jewel_item:
+                            sprite = node.sprites.get(jewel_item.sub_type, None)
+                            if sprite is not None:
+                                image = self.add_picture(sprite["handle"], node.x, node.y, Layers.jewels, node, True)
+                                image.setOffset(sprite["ox"], sprite["oy"])
+                                image.item = jewel_item
                     if image:
                         self.active_nodes.append(image)
                     self.active_nodes.append(node.active_overlay_image)
