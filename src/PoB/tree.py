@@ -151,7 +151,7 @@ class Tree:
         self.clusterNodeMap = {}
         self.constants = {}
         self.keystoneMap = {}
-        self.masteryEffects = {}
+        # self.masteryEffects = {}
         self.notableMap = {}
         self.sockets = {}
         # Should this be a dict of GraphicItems
@@ -577,12 +577,11 @@ class Tree:
                 self.ascendancy_start_nodes[node.ascendancyName] = node.id
         elif node.isMastery:
             node.type = "Mastery"
-            if node.masteryEffects:
-                for effect in node.masteryEffects:
-                    _id = str(effect["effect"])
-                    if self.masteryEffects.get(_id, None) is not None:
-                        self.masteryEffects[_id] = {"id": _id, "sd": effect["stats"]}
-                        # self.ProcessStats(self.masteryEffects[_id])
+            # if node.masteryEffects:
+            #     for _id, effect in node.masteryEffects.items():
+            #         if self.masteryEffects.get(_id, None) is not None:
+            #             self.masteryEffects[_id] = {"id": _id, "sd": effect["stats"]}
+            #             #self.ProcessStats(self.masteryEffects[_id])
         elif node.isJewelSocket:
             node.type = "Socket"
             self.sockets[node.id] = node

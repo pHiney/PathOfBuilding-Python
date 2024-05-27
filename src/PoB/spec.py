@@ -447,10 +447,10 @@ class Spec:
                 self.sockets[int(socket[0])] = int(socket[1])
 
     def get_mastery_effect(self, node_id):
-        """return one node id from mastery effects"""
-        return self.masteryEffects.get(node_id, -1)
+        """return node id's effect or 0"""
+        return self.masteryEffects.get(node_id, 0)
 
-    def set_mastery_effect(self, node_id, effect_id):
+    def add_mastery_effect(self, node_id, effect_id):
         """add one node id from mastery effects"""
         print("set_mastery_effect", node_id, effect_id)
         self.masteryEffects[node_id] = int(effect_id)

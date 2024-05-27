@@ -129,7 +129,7 @@ class TreeView(QGraphicsView):
         # for i in graphic_items:
         #     if type(i) is TreeGraphicsItem:
         #         print(f"{i.node_id=}, {i.name=}")
-        g_item = next((i for i in graphic_items if isinstance(i, TreeGraphicsItem)), None)
+        g_item: TreeGraphicsItem = next((i for i in graphic_items if isinstance(i, TreeGraphicsItem)), None)
         if (
             g_item
             and type(g_item) is TreeGraphicsItem
@@ -152,8 +152,10 @@ class TreeView(QGraphicsView):
                         if node_id in self.build.current_spec.nodes:
                             if g_item.node_type == "Mastery":
                                 # print("mastery_popup", self.build.current_tree.nodes[g_item.node_id])
-                                if self.mastery_popup(self.build.current_tree.nodes[g_item.node_id]):
+                                m_effect = self.mastery_popup(self.build.current_tree.nodes[g_item.node_id])
+                                if m_effect != 0:
                                     self.build.current_spec.add_node(g_item.node)
+                                    g_item.build_tooltip(m_effect)
                             elif g_item.node_type == "Socket":
                                 # ToDo: Do we need a popup to select a jewel ?
                                 self.build.current_spec.add_node(g_item.node)
@@ -198,7 +200,7 @@ class TreeView(QGraphicsView):
         Popup a list of mastery effects for this node and set the currect spec with the choice, if needed.
 
         :param node: node(): this mastery
-        :return: bool: True if an effect was chosen
+        :return: bool: effect id if one was chosen
         """
         dlg = MasteryPopup(
             self.settings._app.tr,
@@ -210,8 +212,8 @@ class TreeView(QGraphicsView):
         # 0 is discard, 1 is save
         _return = dlg.exec()
         if _return:
-            self.build.current_spec.set_mastery_effect(node.id, dlg.selected_effect)
-        return _return == 1
+            self.build.current_spec.add_mastery_effect(node.id, dlg.selected_effect)
+        return _return and dlg.selected_effect or 0
 
     def add_picture(self, pixmap, x, y, z=0, _node=None, selectable=False):
         """
@@ -345,11 +347,12 @@ class TreeView(QGraphicsView):
             # don't delete the images for the nodes as they are owned by the relevant Tree() class.
             for g_item in self.items():
                 self._scene.removeItem(g_item)
-            # inactive tree assets
+
+            # Add inactive tree assets
             for image in tree.graphics_items:
                 self._scene.addItem(image)
 
-            # inactive tree lines
+            # Add inactive tree lines
             for line in tree.lines:
                 self._scene.addItem(line)
 
@@ -362,12 +365,15 @@ class TreeView(QGraphicsView):
                 self._char_class_bkgnd_image.filename = bkgnd["n"]
         else:
             # don't delete the images for the nodes as they are owned by the relevant Tree() class.
+            # Remove active tree assets
             for item in self.active_nodes:
                 if item is not None:
                     self._scene.removeItem(item)
+            # Remove active tree lines
             for item in self.active_lines:
                 self._scene.removeItem(item)
                 del item
+            # Remove search rings
             for item in self.compare_nodes_items:
                 self._scene.removeItem(item)
                 del item
@@ -388,6 +394,7 @@ class TreeView(QGraphicsView):
                     if node.active_overlay_image is not None:
                         self._scene.addItem(node.active_overlay_image)
                 if node.masteryEffects:
+                    node.activeEffectImage.build_tooltip(self.build.current_spec.get_mastery_effect(node_id))
                     self.active_nodes.append(node.activeEffectImage)
                     self._scene.addItem(node.activeEffectImage)
                 if node.type == "Socket":

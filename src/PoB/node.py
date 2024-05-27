@@ -92,7 +92,9 @@ class Node:
         # self.nodes_out = [int(node) for node in _node.get("out", [])]
         self.recipe = _node.get("recipe", [])
         self.classStartIndex = _node.get("classStartIndex", -1)
-        self.masteryEffects = _node.get("masteryEffects", {})
+        self.masteryEffects = {}
+        for _effect in _node.get("masteryEffects", []):  # turn the list into a lookup -> dict)
+            self.masteryEffects[_effect["effect"]] = {"stats": _effect["stats"], "reminder": _effect.get("reminderText", "")}
         self.isNotable = _node.get("isNotable", False)
         self.isAscendancyStart = _node.get("isAscendancyStart", False)
         self.isMastery = _node.get("isMastery", False)

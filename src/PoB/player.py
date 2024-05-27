@@ -167,10 +167,9 @@ class Player:
                 # print(f"{node_id=}, {node.stats=}")
                 self.nodes.add(node)
                 effect_id = self.build.current_spec.get_mastery_effect(node_id)
-                effect = [effect for effect in node.masteryEffects if effect["effect"] == effect_id]
+                effect = node.masteryEffects[effect_id]
                 if effect:
-                    # the output from the list comprehension is a list (wow), so add [0] to get the resultant dict
-                    stat = effect[0]["stats"][0]
+                    stat = effect["stats"][0]
                     if "Minion" in stat:
                         self.node_minion_stats[f"{stat}::{node.id}"] = {"id": f"{node_id}", "name": f"{node.name}"}
                     else:

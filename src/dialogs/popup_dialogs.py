@@ -72,7 +72,7 @@ class MasteryPopup(QDialog):
         super().__init__(_win)
 
         self.id = node.id
-        self.effects = node.masteryEffects
+        self.node_effects = node.masteryEffects  # Dict [id] = [stats]
         self.selected_effect = -1
         self.selected_row = -1
         self.starting = True
@@ -86,30 +86,35 @@ class MasteryPopup(QDialog):
 
         # Fill list box with effects' name
         self.listbox = QListWidget()
-        for idx, effect in enumerate(self.effects):
+        for idx, (e_id, effect) in enumerate(self.node_effects.items()):
             item = QListWidgetItem()
-            item.setData(20, idx)
-            tooltip = effect.get("reminderText", None)
+            item.setData(20, e_id)
+            tooltip = effect.get("reminderText", "")
             stats = " ".join(effect["stats"])
-            effects_assigned_node = assigned_effects.get(effect["effect"], -1)
+            effects_assigned_node = assigned_effects.get(e_id, -1)
             # if effect is assigned elsewhere, make it unselectable. Make this node's effect green if it's assigned.
             match effects_assigned_node:
                 case -1:
                     # unassigned
                     item.setText(html_colour_text("WHITE", stats))
+                    preamble = "Unassigned"
                 case node.id:
                     # assigned to this node
                     item.setText(html_colour_text("GREEN", stats))
-                    tooltip = tr(f"(Currently Assigned), {effect}")
+                    preamble = "Currently Assigned"
                     self.selected_row = idx
-                    self.selected_effect = effect["effect"]
+                    self.selected_effect = e_id
                 case _:
                     # assigned to another node
                     item.setFlags(Qt.NoItemFlags)
                     item.setText(html_colour_text("RED", stats))
-                    tooltip = tr(f"(Already Assigned), {effect}")
-            if tooltip is not None:
-                item.setToolTip(" ".join(tooltip))
+                    preamble = "Already Assigned"
+                # strip brackets from reminder.
+            tooltip = "  ".join(effect["reminder"]).replace("(", "").replace(")", ";")
+            if tooltip:
+                item.setToolTip(tr(f"({preamble}),\t{tooltip.rstrip(';')}"))
+            else:
+                item.setToolTip(tr(f"({preamble})"))
             self.listbox.addItem(item)
 
         # Allow us to print in colour.
@@ -117,8 +122,8 @@ class MasteryPopup(QDialog):
         delegate._list = self.listbox
         self.listbox.setItemDelegate(delegate)
         size = delegate.sizeHint(0, 0)
-        self.listbox.setMinimumWidth(size.width() + 20)
-        self.listbox.setMaximumHeight(size.height() * len(self.effects) + 20)
+        self.listbox.setMinimumWidth(size.width() + 40)
+        self.listbox.setMaximumHeight(size.height() * len(self.node_effects) + 20)
 
         self.setWindowTitle(node.name)
         self.setWindowIcon(node.active_image.pixmap())
@@ -145,10 +150,7 @@ class MasteryPopup(QDialog):
         :param: current_item: QListWidgetItem: the selected item. Not used
         :return: N/A
         """
-        current_row = current_item.data(20)
-        self.selected_row = current_row
-        effect = self.effects[current_row]
-        self.selected_effect = effect["effect"]
+        self.selected_effect = current_item.data(20)
         # print("effect_selected: item, row, effect", QListWidgetItem(current_item).data(20), current_row, effect)
         self.accept()
 
