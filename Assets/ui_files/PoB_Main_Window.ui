@@ -3193,7 +3193,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   </widget>
   <action name="action_New">
    <property name="icon">
-    <iconset theme="appointment-new" resource="../PoB.qrc">
+    <iconset resource="../PoB.qrc">
      <normaloff>:/Art/Icons/add-folder.png</normaloff>:/Art/Icons/add-folder.png</iconset>
    </property>
    <property name="text">
@@ -3205,13 +3205,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <property name="shortcut">
     <string>Ctrl+N</string>
    </property>
-   <property name="iconVisibleInMenu">
-    <bool>false</bool>
-   </property>
   </action>
   <action name="action_Save">
    <property name="icon">
-    <iconset theme="document-open" resource="../PoB.qrc">
+    <iconset resource="../PoB.qrc">
      <normaloff>:/Art/Icons/downloads-folder.png</normaloff>:/Art/Icons/downloads-folder.png</iconset>
    </property>
    <property name="text">
@@ -3223,13 +3220,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <property name="shortcut">
     <string>Ctrl+S</string>
    </property>
-   <property name="iconVisibleInMenu">
-    <bool>false</bool>
-   </property>
   </action>
   <action name="action_Exit">
    <property name="icon">
-    <iconset theme="application-exit" resource="../PoB.qrc">
+    <iconset resource="../PoB.qrc">
      <normaloff>:/Art/Icons/door-open-out.png</normaloff>:/Art/Icons/door-open-out.png</iconset>
    </property>
    <property name="text">
@@ -3240,9 +3234,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="shortcut">
     <string>Ctrl+X</string>
-   </property>
-   <property name="iconVisibleInMenu">
-    <bool>false</bool>
    </property>
   </action>
   <action name="action_Open">
@@ -3259,9 +3250,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <property name="shortcut">
     <string>Ctrl+O</string>
    </property>
-   <property name="iconVisibleInMenu">
-    <bool>false</bool>
-   </property>
   </action>
   <action name="action_ManageTrees">
    <property name="icon">
@@ -3277,7 +3265,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   </action>
   <action name="action_Settings">
    <property name="icon">
-    <iconset theme="application-exit" resource="../PoB.qrc">
+    <iconset resource="../PoB.qrc">
      <normaloff>:/Art/Icons/construction.png</normaloff>:/Art/Icons/construction.png</iconset>
    </property>
    <property name="text">
@@ -3319,7 +3307,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   </action>
   <action name="action_SaveAs">
    <property name="icon">
-    <iconset theme="document-open" resource="../PoB.qrc">
+    <iconset resource="../PoB.qrc">
      <normaloff>:/Art/Icons/downloads-folder.png</normaloff>:/Art/Icons/downloads-folder.png</iconset>
    </property>
    <property name="text">
@@ -3330,9 +3318,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="shortcut">
     <string>Ctrl+A</string>
-   </property>
-   <property name="iconVisibleInMenu">
-    <bool>false</bool>
    </property>
   </action>
  </widget>
