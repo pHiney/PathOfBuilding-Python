@@ -742,11 +742,12 @@ def load_from_xml(filename_or_xml):
     return new_build
 
 
-def save_item_to_xml(_item):
+def save_item_to_xml(_item, text_only=False):
     """
     Save internal structures back to a xml object. Not used.
 
-    :return: xml.etree.ElementTree:
+    :param: bool: Only return the text, not the ET - for copying items
+    :return: xml.etree.ElementTree or str:
     """
 
     text = f"Rarity: {_item['Rarity']}\n"
@@ -776,7 +777,9 @@ def save_item_to_xml(_item):
     if _item.get("Corrupted", False):
         text += "Corrupted"
 
-    if int(_item.get("Selected Variant", -1)) >= 0:
+    if text_only:
+        return text
+    elif int(_item.get("Selected Variant", -1)) >= 0:
         return ET.fromstring(f'<Item variant="{str(_item["Selected Variant"]+1)}" id="{str(_item["id"])}">{text}</Item>')
     else:
         return ET.fromstring(f'<Item id="{str(_item["id"])}">{text}</Item>')

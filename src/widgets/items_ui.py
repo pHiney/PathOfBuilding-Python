@@ -7,10 +7,12 @@ Abyssal sockets are precreated and are made visble or hidden based on what is in
 from copy import deepcopy
 from pathlib import Path
 import enum
+import pyperclip
 import re
 
-from PySide6.QtCore import Qt, Slot
-from PySide6.QtWidgets import QListWidgetItem
+from PySide6.QtCore import Qt, Slot, QThread
+from PySide6.QtWidgets import QListWidgetItem, QApplication
+from PySide6.QtGui import QClipboard
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from PoB.settings import Settings
@@ -19,6 +21,7 @@ from PoB.constants import ColourCodes, empty_item_dict, empty_itemset_dict, empt
 from PoB.item import Item
 from PoB.pob_file import read_json
 from PoB.utils import _debug, html_colour_text, print_call_stack
+from PoB.pob_xml import save_item_to_xml
 from dialogs.craft_items_dialog import CraftItemsDlg
 from dialogs.itemsets_dialog import ManageItemsetDlg
 from widgets.item_slot_ui import ItemSlotUI
@@ -855,7 +858,22 @@ class ItemsUI:
         match key:
             case Qt.Key_C:
                 if ctrl_pressed:
-                    print("item_list_keypressed: Ctrl-C pressed")
+                    print("item_list_keypressed: Ctrl-C pressed.")
+                    if self.win.list_Items.selectedItems():
+                        self.internal_clipboard = self.win.list_Items.selectedItems()
+                        lwi = self.win.list_Items.selectedItems()[0]  # we only copy one item at a time, so ignore any more.
+                        item = lwi.data(Qt.UserRole)
+                        # Convert it to text
+                        copy, paste = pyperclip.determine_clipboard()
+                        copy(save_item_to_xml(item.save(), True))
+                        clipboard = QApplication.clipboard()
+                        # print("1.", clipboard.text())
+                        # clipboard.clear()
+                        # clipboard.setText(save_item_to_xml(item.save(), True), QClipboard.Selection)
+                        QThread.msleep(10)  # workaround for copied text not being available...
+                        print("2.", clipboard.text())
+                        print("3.", paste())
+                        event.accept()
             case Qt.Key_V:
                 if ctrl_pressed:
                     self.get_item_from_clipboard()

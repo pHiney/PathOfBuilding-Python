@@ -300,7 +300,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         match event.key():
             case Qt.Key_V:
                 if ctrl_pressed:
-                    print("MainWindow: Ctrl-V pressed")
+                    print(f"MainWindow: Ctrl-V pressed. {self.skills_ui.internal_clipboard=}, {self.items_ui.internal_clipboard=}")
                     if self.skills_ui.internal_clipboard is not None:
                         self.set_tab_focus()
                         success = self.skills_ui.get_item_from_clipboard()
@@ -310,6 +310,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     else:
                         # Assume it is going to come from outside the application, ingame or trade site
                         data = pyperclip.paste()
+                        print(f"MainWindow: Ctrl-V pressed. External Data: {data=}")
                         if data is not None and type(data) is str and "Item Class:" in data:
                             if "Skill Gems" in data:
                                 success = self.skills_ui.get_item_from_clipboard(data)
