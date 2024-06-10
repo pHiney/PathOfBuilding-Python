@@ -162,7 +162,7 @@ class ItemSlotUI(QWidget):
                 self.combo_item_list.setToolTip(item.tooltip())
                 if self.lastSelectedItem:
                     self.lastSelectedItem.active = False
-                    print(f"combobox_change: {self.lastSelectedItem.name=}, {self.lastSelectedItem.grants_skill=}, {self.title}")
+                    # print(f"combobox_change: {self.lastSelectedItem.name=}, {self.lastSelectedItem.grants_skill=}, {self.title}")
                 item.active = True
                 # print(f"combobox_change: {item.name=}, {item.grants_skill=}, {self.title}")
                 self.lastSelectedItem = item

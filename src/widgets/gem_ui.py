@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QListWidgetItem, QPushButton
 
 from PoB.constants import ColourCodes, empty_gem_dict
 from PoB.settings import Settings
-from PoB.utils import _debug, bool_to_str, html_colour_text, print_call_stack, str_to_bool
+from PoB.utils import _debug, bool_to_str, html_colour_text, print_call_stack, str_to_bool, index_exists
 from widgets.ui_utils import set_combo_index_by_data
 
 
@@ -390,6 +390,9 @@ class GemUI(QWidget):
         # print(f"combo_gem_list_changed, {item=}, {self.combo_gem_list.currentData()=}")
         self.variantId = self.combo_gem_list.currentData()
         self.save(notify)
+        if index_exists(self.gems_by_name_or_id, self.variantId):
+            gem = self.gems_by_name_or_id[self.variantId]
+            self.combo_gem_list.setToolTip(f'<font color={gem["colour"]}>{gem["grantedEffect"]["description"]}</font>')
 
     def fill_gem_list(self, base_gems, show_support_gems):
         """

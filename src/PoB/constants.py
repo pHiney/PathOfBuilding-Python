@@ -52,6 +52,7 @@ empty_settings = {
     "top": -1,
     "width": 800,
     "height": 600,
+    "maximized": False,
     "theme": "{def_theme}",
     "slot_only_tooltips": True,
     "show_titlebar_name": True,
@@ -309,7 +310,7 @@ empty_build = {
         "Party": {"destination": "All", "ShowAdvanceTools": False, "append": False},
         "TreeView": {"searchStr": "", "showStatDifferences": True},
         "Notes": "",
-        "NotesHTML": """&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"&gt;,""",
+        "NotesHTML": "",
     },
 }
 

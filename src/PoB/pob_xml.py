@@ -488,7 +488,7 @@ def load_from_xml(filename_or_xml):
                     match key:
                         case "@string":
                             _value = _dict[key]
-                            if _name == "customMods":
+                            if _name == "customMods" and type(filename_or_xml) is not xml.etree.ElementTree.ElementTree:
                                 # EG:
                                 #   ['name="customMods" string="+1 to Maximum Endurance Charges\n+14% increased maximum Life\n']
                                 _value = read_v1_custom_mods(filename_or_xml)
@@ -526,7 +526,7 @@ def load_from_xml(filename_or_xml):
     }
     for stat_type in ("PlayerStat", "MinionStat"):
         stats = xml_build.get(stat_type, [])
-        if type(stats) is dict:  # list or dict if only one
+        if type(stats) is dict:  # list or dict if only one entry
             stats = [stats]
         for stat in stats:
             name = stat.get("@stat", "")
@@ -589,7 +589,7 @@ def load_from_xml(filename_or_xml):
         "activeSpec": int(xml_tree.get("@activeSpec", "1")) - 1,
         "Specs": [],
     }
-    if type(xml_tree["Spec"]) is dict:  # list or dict if only one
+    if type(xml_tree["Spec"]) is dict:  # list or dict if only one entry
         xml_tree["Spec"] = [xml_tree["Spec"]]
     for xml_spec in xml_tree["Spec"]:
         spec = {
@@ -605,7 +605,10 @@ def load_from_xml(filename_or_xml):
         }
         if xml_spec["Sockets"]:
             str_sockets = ""
-            for socket in xml_spec["Sockets"]["Socket"]:
+            sockets = xml_spec["Sockets"]["Socket"]
+            if type(sockets) is dict:  # list or dict if only one entry
+                sockets = [sockets]
+            for socket in sockets:
                 str_sockets += f"{{{socket['@nodeId']},{socket['@itemId']}}}"
             spec["Sockets"] = str_sockets.rstrip(",")
         # Ignoring Overrides
@@ -623,7 +626,7 @@ def load_from_xml(filename_or_xml):
         "showAltQualityGems": str_to_bool(get_param_value(xml_skills.get("@showAltQualityGems", "True"), "True")),
         "SkillSets": [],
     }
-    if type(xml_skills["SkillSet"]) is dict:  # list or dict if only one
+    if type(xml_skills["SkillSet"]) is dict:  # list or dict if only one entry
         xml_skills["SkillSet"] = [xml_skills["SkillSet"]]
     for xml_skillset in xml_skills["SkillSet"]:
         skillset = {
@@ -631,7 +634,7 @@ def load_from_xml(filename_or_xml):
             "title": remove_lua_colours(xml_skillset.get("@title", "Default")),
             "SGroups": [],
         }
-        if type(xml_skillset.get("Skill", bad_text)) is dict:  # list or dict if only one
+        if type(xml_skillset.get("Skill", bad_text)) is dict:  # list or dict if only one entry
             xml_skillset["Skill"] = [xml_skillset["Skill"]]
         for xml_sgroup in xml_skillset.get("Skill", []):
             xml_gem = xml_sgroup.get("Gem", bad_text)
@@ -647,7 +650,7 @@ def load_from_xml(filename_or_xml):
             }
             # Some socket groups have no skills in them as content creators just use the label.
             if xml_gem != bad_text:
-                if type(xml_gem) is dict:  # list or dict if only one
+                if type(xml_gem) is dict:  # list or dict if only one entry
                     xml_gem = [xml_gem]
                 for xml_gem in xml_gem:
                     """
@@ -695,13 +698,13 @@ def load_from_xml(filename_or_xml):
     """Items"""
     xml_items = xml_PoB["Items"]
     # Items
-    if type(xml_items["Item"]) is dict:  # list or dict if only one
+    if type(xml_items["Item"]) is dict:  # list or dict if only one entry
         xml_items["Item"] = [xml_items["Item"]]
     for xml_item in xml_items["Item"]:
         json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item["#text"], int(xml_item.get("@id", "0"))))
     # ItemSets
     json_PoB["Items"]["ItemSets"].clear()  # get rid of the default itemset
-    if type(xml_items["ItemSet"]) is dict:  # list or dict if only one
+    if type(xml_items["ItemSet"]) is dict:  # list or dict if only one entry
         xml_items["ItemSet"] = [xml_items["ItemSet"]]
     for xml_itemset in xml_items["ItemSet"]:
         json_set = {

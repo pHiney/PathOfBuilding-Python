@@ -25,7 +25,7 @@ from PoB.build import Build
 from PoB.pob_file import read_json
 
 # from PoB.gem import Gem
-from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, print_call_stack, str_to_bool
+from PoB.utils import _debug, bool_to_int, bool_to_str, html_colour_text, index_exists, print_call_stack, str_to_bool
 from widgets.ui_utils import set_combo_index_by_data, set_combo_index_by_text
 from dialogs.popup_dialogs import yes_no_dialog
 from dialogs.skillsets_dialog import ManageSkillsDlg
@@ -83,7 +83,7 @@ class SkillsUI:
         self.base_gems, self.hidden_skills = self.load_base_gems_json()
         # tracks the state of the triggers, to stop setting triggers more than once or disconnecting when not connected
         self.triggers_connected = False
-        self.internal_clipboard = None
+        self.internal_clipboard = []
         self.dlg = None  # Is a dialog active
         # dictionary list of active nodes and items that 'Grant' skills, for use with new_skill_set
         self.active_hidden_skills = {}
@@ -774,20 +774,20 @@ class SkillsUI:
             self.connect_skill_triggers()
 
     @Slot()
-    def new_socket_group(self):
+    def new_socket_group(self, new_sg=None):
         """Create a new socket group. Actions for when the new socket group button is pressed."""
         # print("new_socket_group")
-        self.add_socket_group()
+        self.add_socket_group(new_sg)
         # Trigger the filling out of the right hand side UI elements using change_socket_group -> load_socket_group
         idx = len(self.current_skill_set) - 1
         self.win.list_SocketGroups.setCurrentRow(idx)
 
-    def add_socket_group(self):
+    def add_socket_group(self, new_sg=None):
         """
         Create a new socket group.
         return: Socket Group: dict:
         """
-        new_socket_group = deepcopy(empty_socket_group_dict)
+        new_socket_group = new_sg if new_sg else deepcopy(empty_socket_group_dict)
         if self.current_skill_set is None:
             self.current_skill_set = self.new_skill_set()
         self.current_skill_set["SGroups"].append(new_socket_group)
@@ -980,20 +980,75 @@ class SkillsUI:
         # print("socket_groups_rows_about_to_be_moved")
         self.socket_group_to_be_moved = source_parent
 
-    def get_item_from_clipboard(self, data=None):
+    def get_gem_from_clipboard(self, data=None):
         """
-
-        :param data: str: the clipboard data or None. Sanity checked to be an Item Class of Gem
+        Get gem from the external or internal clipboard and create a new socket group.
+        :param data: str: the clipboard data or None.
         :return: bool: success
         """
-        """Get an item from the windows or internal clipboard"""
-        print("SkillsUI.get_item_from_clipboard: Ctrl-V pressed")
-        if self.internal_clipboard is None:
-            print("real clipboard")
-        else:
+        print("SkillsUI.get_gem_from_clipboard: Ctrl-V pressed")
+        if self.internal_clipboard:
             print("Internal clipboard")
-            self.internal_clipboard = None
+            self.internal_clipboard = []
+        else:
+            print("real clipboard")
         return False
+
+    def get_sg_from_clipboard(self, data=None):
+        """
+        Get socket group from the external (from luaPoB) or internal clipboard and create a new socket group.
+        :param data: str: the clipboard data or None.
+        :return: bool: success
+        """
+        # print("SkillsUI.get_sg_from_clipboard: Ctrl-V pressed")
+        if self.internal_clipboard:  # Internal clipboard
+            for sg in self.internal_clipboard:
+                self.new_socket_group(sg)
+            self.internal_clipboard = []
+            return True
+        elif data and "Slot:" in data:  # External clipboard
+            lines = data.splitlines()
+            sg = deepcopy(empty_socket_group_dict)
+            sg["slot"] = lines.pop(0).replace("Slot: ", "")
+            for line in lines:
+                # "<gem name> <level>/<quality> <count>"
+                g = re.search(r"([\w ]+)[ \t]+(\d+)/(\d+)[ \t]+(\d+)", line.replace("DISABLED", "").replace("Default", ""))
+                if g:
+                    _name = g.group(1)
+                    gem = deepcopy(empty_gem_dict)
+                    gem["enabled"] = "DISABLED" not in line
+                    gem["nameSpec"] = _name
+                    gem["variantId"] = self.gems_by_name_or_id[_name]["variantId"]
+                    gem["skillId"] = self.gems_by_name_or_id[_name]["grantedEffectId"]
+                    gem["level"] = int(g.group(2))
+                    gem["quality"] = int(g.group(3))
+                    gem["count"] = int(g.group(4))
+                    sg["Gems"].append(gem)
+            self.new_socket_group(sg)
+            return True
+
+        return False
+
+    def copy_sg_as_text(self, current_list):
+        """Return socket group as text
+        :param current_list: ListBox:
+        :return: str
+        EG:         Slot: Body Armour
+                    Haste 18/0 Default  1
+                    Divine Blessing 15/0 Default  1
+                    Tempest Shield 18/0 Default  1
+        """
+        text = ""
+        self.internal_clipboard = current_list.selectedItems()  # Many items can be on the internal clipboard
+        # print(f"copy_sg_as_text: {current_list=}, {self.current_socket_group=}, {self.internal_clipboard=}")
+        if self.current_socket_group:  # is a dict(), not a QListWidget()
+            gems = self.current_socket_group["Gems"]
+            if gems:
+                text = f"Slot: {self.current_socket_group['slot']}"
+                for gem in gems:
+                    disabled = "" if gem["enabled"] else " DISABLED"
+                    text += f"\n{gem['variantId']} {gem['level']}/{gem['quality']} Default{disabled} {gem['count']}"
+        return text
 
     """ ################################################### GEM UI ################################################### """
 

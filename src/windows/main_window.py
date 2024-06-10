@@ -19,9 +19,11 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QPushButton,
     QSpinBox,
+    QTextEdit,
     QToolButton,
     QWidget,
     QWidgetAction,
@@ -55,6 +57,7 @@ from widgets.calcs_ui import CalcsUI
 from widgets.config_ui import ConfigUI
 from widgets.flow_layout import FlowLayout
 from widgets.items_ui import ItemsUI
+from widgets.listbox import ListBox
 from widgets.notes_ui import NotesUI
 from widgets.player_stats import PlayerStats
 from widgets.skills_ui import SkillsUI
@@ -96,14 +99,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
         self.resize(self.settings.size)
+        if self.settings.get("maximized", False):
+            self.showMaximized()
         self.last_messages = []
+        self.clipboard = QApplication.clipboard()
+        self.clipboard.dataChanged.connect(self.check_clipboard_contents)
 
         atexit.register(self.exit_handler)
         self.setWindowTitle(program_title)  # Do not translate
 
-        # Start with an empty build
+        # Start with an empty build. This ensures there are values for widgets as they set themselves up.
         self.build = Build(self.settings, self)
-        self.current_filename = self.settings.build_path
+        # self.current_filename = self.settings.build_path
         self.player = Player(self.settings, self.build, self)
 
         # Setup UI Classes()
@@ -281,7 +288,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Start the statusbar self updating
         self.update_status_bar()
 
-    # init
+        # init
 
     # Overridden function
     def keyReleaseEvent(self, event):
@@ -292,37 +299,69 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :param: QKeyEvent. The event matrix
         :return: N/A
         """
-        # print("MainWindow", event)
         ctrl_pressed = event.keyCombination().keyboardModifiers() == Qt.ControlModifier
         alt_pressed = event.keyCombination().keyboardModifiers() == Qt.AltModifier
         shift_pressed = event.keyCombination().keyboardModifiers() == Qt.ShiftModifier
         success = False
+        active_widget = self.app.focusWidget()
+        # print(f"MainWindow: {type(active_widget)=}", event)
+        # if the action came from a edit widget, ignore the message and get outa here ...
+        # if active_widget and active_widget.objectName() == "textedit_Notes":
+        if active_widget and type(active_widget) in (QLineEdit, QTextEdit):
+            event.ignore()
+            super(MainWindow, self).keyPressEvent(event)
+            return
         match event.key():
+            case Qt.Key_C:
+                if ctrl_pressed:
+                    print(f"MainWindow: Ctrl-C pressed.")
+                    if type(active_widget) is ListBox:
+                        self.clipboard.dataChanged.connect(self.check_clipboard_contents)
+                        match active_widget.objectName():
+                            case "list_Items" | "list_ImportItems":
+                                pyperclip.copy(self.items_ui.copy_item_as_text(active_widget))
+                                event.accept()
+                            case "list_SocketGroups":
+                                pyperclip.copy(self.skills_ui.copy_sg_as_text(active_widget))
+                                event.accept()
+                            case "list_Skills":
+                                # pyperclip.copy(self.items_ui.copy_item_as_text(active_widget))
+                                event.accept()
+                            case _:
+                                event.ignore()
+                        super(MainWindow, self).keyPressEvent(event)
+                        self.clipboard.dataChanged.connect(self.check_clipboard_contents)
             case Qt.Key_V:
                 if ctrl_pressed:
                     print(f"MainWindow: Ctrl-V pressed. {self.skills_ui.internal_clipboard=}, {self.items_ui.internal_clipboard=}")
-                    if self.skills_ui.internal_clipboard is not None:
-                        self.set_tab_focus()
-                        success = self.skills_ui.get_item_from_clipboard()
-                    elif self.items_ui.internal_clipboard is not None:
-                        self.set_tab_focus()
+                    data = pyperclip.paste()
+                    if self.skills_ui.internal_clipboard or "slot:" in data:
+                        self.set_tab_focus(1)
+                        success = self.skills_ui.get_sg_from_clipboard(data)
+                    elif "Rarity: Gem" in data:
+                        self.set_tab_focus(1)
+                        success = self.skills_ui.get_gem_from_clipboard(data)
+                    elif self.items_ui.internal_clipboard:
+                        self.set_tab_focus(2)
                         success = self.items_ui.get_item_from_clipboard()
                     else:
                         # Assume it is going to come from outside the application, ingame or trade site
                         data = pyperclip.paste()
-                        print(f"MainWindow: Ctrl-V pressed. External Data: {data=}")
-                        if data is not None and type(data) is str and "Item Class:" in data:
-                            if "Skill Gems" in data:
-                                success = self.skills_ui.get_item_from_clipboard(data)
-                            else:
+                        print(f"MainWindow: Ctrl-V pressed. External Data: {type(data)=} {data=}")
+                        if data is not None and type(data) is str:
+                            if "Item Class: Skill Gems" in data:
+                                success = self.skills_ui.get_gem_from_clipboard(data)
+                            elif "Rarity" in data:
                                 success = self.items_ui.get_item_from_clipboard(data)
+                            elif "Slot:" in data:
+                                success = self.skills_ui.get_sg_from_clipboard(data)
                         # match self.build.viewMode:
                         #     case "SKILLS":
                         #         self.skills_ui.get_item_from_clipboard()
                         #     case "ITEMS":
                         #         self.items_ui.get_item_from_clipboard()
-        if not success:
-            event.ignore()
+                    if not success:
+                        event.ignore()
         super(MainWindow, self).keyPressEvent(event)
 
     # Overridden function
@@ -336,11 +375,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.items_ui.setup_ui()
         self.skills_ui.setup_ui()
 
-        open_build = self.settings.open_build  # this will get wiped by the next command so keep it
-        # self.build_loader("Default")
         # Check to see if there is a previous build to load and load it here
-        if open_build:
-            self.build_loader(open_build)
+        if self.settings.open_build:
+            self.build_loader(self.settings.open_build)
+        else:
+            self.build_new()
 
     def connect_widget_triggers(self):
         """re-connect widget triggers that need to be disconnected during loading and other processing"""
@@ -439,7 +478,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Ensure the build can be saved before exiting if needed.
         Save the configuration to settings.xml. Any other activities that might be needed
         """
-        self.settings.size = self.size()
+        self.settings.maximized = self.isMaximized()
+        if not self.settings.maximized:
+            # don't disturb the previous settings if you are maximized.
+            self.settings.size = self.size()
         self.settings.write()
         # Logic for checking we need to save and save if needed, goes here...
         # filePtr = open("edit.html", "w")
@@ -982,7 +1024,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab_focus = {
             0: self.tab_main,
             1: self.list_SocketGroups,
-            2: self.tab_main,
+            2: self.list_Items,
             3: self.textedit_Notes,
             4: self.tab_main,
             5: self.tab_main,
@@ -1209,6 +1251,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         f'<span style="white-space: pre; color:{_colour};">{stat["label"]:>24}:</span> {_str_value} {_extra_value}'
                     )
                     just_added_blank = False
+
+    @Slot()
+    def check_clipboard_contents(self):
+        """React to the O/S clipboard changing. If it's another PoB or in game copy, erase internal clipboards"""
+        # print(f"QClipboard.dataChanged:  {self.clipboard.text()}")
+        text = self.clipboard.text()
+        # Don't react to anything that doesn't look like we want it to.
+        if "Rarity:" in text or "Slot:" in text:
+            self.skills_ui.internal_clipboard = []
+            self.items_ui.internal_clipboard = []
 
     def add_item_or_node_with_skills(self, _skillset=None):
         """

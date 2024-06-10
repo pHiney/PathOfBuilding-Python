@@ -163,8 +163,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
         self.poep_json_import = self.test_import_text_for_poeplanner_json(text)
         # get the website and the code as separate 'group' variables
         #   (1) is the website and (2) is the code (not used here)
-        self.pob_valid_url = re.search(r"http[s]?://([a-z0-9.\-].*)/(.*)", text)
-        # print(f"{self.pob_valid_url.groups()=}")
+        self.pob_valid_url = re.search(r"http[s]?://([a-z0-9.\-]+)/(.*)", text)
         if (
             (self.pob_valid_url is not None and self.pob_valid_url.group(1) in website_list.keys())
             or self.pob_base64_encoded
@@ -201,6 +200,7 @@ class ImportDlg(Ui_BuildImport, QDialog):
                 url_code = self.pob_valid_url.group(2)
                 url = website_list[website]["downloadURL"].replace("CODE", url_code)
                 response = requests.get(url, headers=get_http_headers, timeout=6.0)
+                # print(f"{response.content=}")
                 build_str = decode_base64_and_inflate(response.content)
             except requests.RequestException as e:
                 self.status = html_colour_text(

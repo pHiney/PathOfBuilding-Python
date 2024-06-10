@@ -66,6 +66,13 @@ class PoBDict(object):
         """Does key exist ?"""
         return getattr(self, key, None) is not None
 
+    def get(self, key, default):
+        """get an entry or return it's default"""
+        if self.exists(key):
+            return getattr(self, key)
+        else:
+            return default
+
     def new_child(self, key):
         if not self.exists(key):
             setattr(self, key, PoBDict({}))
@@ -97,6 +104,15 @@ def bool_to_str(in_bool):
 
 
 is_str_a_boolean = str_to_bool
+
+
+def bool_to_int(in_bool):
+    """
+    Return a string from a boolean.
+    :param: in_bool: Boolean: The setting to be evaluated
+    :returns: String: true or false
+    """
+    return in_bool and "1" or "0"
 
 
 def is_str_a_number(in_str):

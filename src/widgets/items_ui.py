@@ -58,7 +58,7 @@ class ItemsUI:
         self.current_itemset = None
         self.itemsets = None
         self.triggers_connected = False
-        self.internal_clipboard = None
+        self.internal_clipboard = []
         self.dlg = None  # Is a dialog active
         # Flag to stop some actions happening in triggers during loading
         self.alerting = False
@@ -184,15 +184,16 @@ class ItemsUI:
         :param data: str: the clipboard data or None. Sanity checked to be an Item Class, but not of what type
         :return: bool: success
         """
-        # print("ItemsUI.get_item_from_clipboard: Ctrl-V pressed")
-        if self.internal_clipboard is None:
+        print("ItemsUI.get_item_from_clipboard: Ctrl-V pressed")
+        if self.internal_clipboard:
+            # print("Internal clipboard")
+            self.internal_clipboard = []
+        else:
             if data is None:
                 return False
             else:
+                # print("External clipboard")
                 return self.process_item_from_clipboard(data)
-        else:
-            print("Internal clipboard")
-            self.internal_clipboard = None
 
     def process_item_from_clipboard(self, data):
         """
@@ -351,7 +352,7 @@ class ItemsUI:
         if find_line("Corrupted") != "":
             new_item["Corrupted"] = new_item != ""
 
-        # print("new_item", new_item)
+        print("new_item", new_item)
         dlg = CraftItemsDlg(self.settings, self.base_items, self.mods, "add", self.win)
         item = Item(self.settings, self.base_items)
         item.load_from_json(new_item)
@@ -387,7 +388,6 @@ class ItemsUI:
             if "Jewel" in new_item.base_name:
                 self.jewels[new_item.id] = new_item
 
-        active_set_title = "Default"
         self.itemsets = self.items["ItemSets"]
         titles = [item["title"] for item in self.itemsets]
         self.win.combo_ItemSet.addItems(titles)
@@ -502,6 +502,7 @@ class ItemsUI:
 
         # As these entries do not delete if not used, remove the old entries, and add the new ones.
         # self.current_itemset["Slots"] = deepcopy(empty_item_slots_dict)
+        # print(f"items_ui.save, {self.items=}")
         self.items["Items"].clear()
         for _id in self.itemlist_by_id:
             self.items["Items"].append(self.itemlist_by_id[_id].save())
@@ -744,7 +745,6 @@ class ItemsUI:
         lwi.setWhatsThis(_item.name)
         lwi.setData(Qt.UserRole, _item)
         self.win.list_Items.addItem(lwi)
-
         return _item
 
     def add_item_to_importlist_lwi(self, _item, idx):
@@ -758,6 +758,7 @@ class ItemsUI:
         lwi = QListWidgetItem(html_colour_text(_item.rarity, _item.name))
         lwi.setToolTip(_item.tooltip())
         lwi.setWhatsThis(_item.name)
+        lwi.setData(Qt.UserRole, _item)
         self.win.list_ImportItems.addItem(lwi)
         return _item
 
@@ -856,32 +857,53 @@ class ItemsUI:
         """
         # print("item_list_keypressed", key, event)
         match key:
-            case Qt.Key_C:
-                if ctrl_pressed:
-                    print("item_list_keypressed: Ctrl-C pressed.")
-                    if self.win.list_Items.selectedItems():
-                        self.internal_clipboard = self.win.list_Items.selectedItems()
-                        lwi = self.win.list_Items.selectedItems()[0]  # we only copy one item at a time, so ignore any more.
-                        item = lwi.data(Qt.UserRole)
-                        # Convert it to text
-                        copy, paste = pyperclip.determine_clipboard()
-                        copy(save_item_to_xml(item.save(), True))
-                        clipboard = QApplication.clipboard()
-                        # print("1.", clipboard.text())
-                        # clipboard.clear()
-                        # clipboard.setText(save_item_to_xml(item.save(), True), QClipboard.Selection)
-                        QThread.msleep(10)  # workaround for copied text not being available...
-                        print("2.", clipboard.text())
-                        print("3.", paste())
-                        event.accept()
-            case Qt.Key_V:
-                if ctrl_pressed:
-                    self.get_item_from_clipboard()
+            # case Qt.Key_C:
+            #     if ctrl_pressed:
+            #         # print("item_list_keypressed: Ctrl-C pressed.", QThread.currentThread())
+            #         if self.win.list_Items.selectedItems():
+            #             self.internal_clipboard = self.win.list_Items.selectedItems()
+            #             lwi = self.win.list_Items.selectedItems()[0]  # we only copy one item at a time, so ignore any more.
+            #             item = lwi.data(Qt.UserRole)
+            #             # Convert it to text
+            #             # copy, paste = pyperclip.determine_clipboard()
+            #             # copy(save_item_to_xml(item.save(), True))
+            #             clipboard = QApplication.clipboard()
+            #             # print("1.", clipboard.text())
+            #             # print("1.", clipboard.mimeData().formats())
+            #             # clipboard.clear()
+            #             clipboard.setText(save_item_to_xml(item.save(), True), mode=QClipboard.Clipboard)
+            #             QThread.msleep(10)  # workaround for copied text not being available ...
+            #             QApplication.processEvents()
+            #             print("2.", clipboard.text(mode=QClipboard.Clipboard))
+            #             print("2.", clipboard.mimeData().formats())
+            #             # print("3.", paste())
+            #             event.accept()
+            # case Qt.Key_V:
+            #     if ctrl_pressed:
+            #         self.get_item_from_clipboard()
             case Qt.Key_E:
                 if ctrl_pressed:
                     print("item_list_keypressed: Ctrl-E pressed")
             case Qt.Key_Delete:
                 print("item_list_keypressed: Delete pressed")
+
+        event.ignore()
+
+    def copy_item_as_text(self, current_list):
+        """
+        Find the current item and convert it to text. Called from MainWindow.keyReleaseEvent()
+        :param current_list: ListBox:
+        :return: str
+        """
+        text = ""
+        self.internal_clipboard = current_list.selectedItems()  # Many items can be on the internal clipboard
+        # print(f"copy_item_as_text: {current_list=}, {self.internal_clipboard=}")
+        if self.internal_clipboard:
+            lwi = current_list.selectedItems()[0]  # we only copy one item at a time, so ignore any more.
+            item = lwi.data(Qt.UserRole)
+            if item:
+                text = save_item_to_xml(item.save(), True)
+        return text
 
     @Slot()
     def item_list_double_clicked(self, lwi: QListWidgetItem):
@@ -1178,24 +1200,6 @@ class ItemsUI:
             uniques = 0
             rares = 1
 
-        # items = []
-        # self.win.list_ImportItems.clear()
-        # import_from = ImportFromType(self.win.combo_ItemsImportFrom.currentIndex())
-        # import_slot = self.win.combo_ItemsImportSlot.currentText()
-        # match import_from:
-        #     case ImportFromType.uniques:
-        #         items = self.uniques_items
-        #         self.win.combo_ItemsImportSort.setHidden(False)
-        #         self.win.combo_ItemsImportLeague.setHidden(False)
-        #         self.win.combo_ItemsImportRequirements.setHidden(False)
-        #         self.win.combo_ItemsImportSource.setHidden(False)
-        #     case ImportFromType.rares:
-        #         items = self.rare_template_items
-        #         self.win.combo_ItemsImportSort.setHidden(True)
-        #         self.win.combo_ItemsImportLeague.setHidden(True)
-        #         self.win.combo_ItemsImportRequirements.setHidden(True)
-        #         self.win.combo_ItemsImportSource.setHidden(True)
-
         items = []
         self.win.list_ImportItems.clear()
         import_from = ImportFromType(self.win.combo_ItemsImportFrom.currentIndex())
@@ -1286,10 +1290,8 @@ class ItemsUI:
         if import_from == ImportFromType.uniques:
             match self.win.combo_ItemsImportSort.currentText():
                 case "Sort by Name":
-                    # self.win.list_ImportItems.sortItems()
                     self.win.list_ImportItems.sortItems()
         else:
-            # self.win.list_ImportItems.sortItems()
             self.win.list_ImportItems.sortItems()
 
     @Slot()

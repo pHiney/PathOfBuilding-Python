@@ -19,6 +19,7 @@ class NotesUI:
         self.settings = _settings
         self.win = _win
         self.modified = False
+        self.notes = self.notes_html = ""
 
         # Add content to Colour ComboBox
         self.win.combo_Notes_Colour.addItems([colour.name.title() for colour in ColourCodes])
@@ -26,13 +27,13 @@ class NotesUI:
             colour = ColourCodes[self.win.combo_Notes_Colour.itemText(index).upper()].value
             self.win.combo_Notes_Colour.setItemData(index, QBrush(colour), Qt.ForegroundRole)
 
-        self.win.btn_ConvertToText.setVisible(False)
-        self.win.btn_ConvertToText.clicked.connect(self.convert_to_text)
+        self.win.btn_ConvertToHTML.setVisible(False)
+        self.win.btn_ConvertToHTML.clicked.connect(self.convert_to_html)
         self.win.combo_Notes_Font.currentFontChanged.connect(self.set_notes_font)
         self.win.spin_Notes_FontSize.valueChanged.connect(self.set_notes_font_size)
         self.win.combo_Notes_Colour.currentTextChanged.connect(self.set_notes_font_colour)
 
-    def load(self, _notes_html, _notes):
+    def load(self, _notes, _notes_html):
         """
         Load internal structures from the build object
         If there are no HTML notes, then get the Text based ones
@@ -41,13 +42,17 @@ class NotesUI:
         :param _notes: String: Plain text version of notes
         :return: N/A
         """
-        if _notes_html is not None:
-            self.win.btn_ConvertToText.setVisible("^7" in _notes_html)
-            self.win.textedit_Notes.setHtml(_notes_html.strip())
+        # print(f"Notes.load: {_notes=}\n\n\n{_notes_html=}")
+        self.notes = _notes
+        self.notes_html = _notes_html
+        if _notes_html:
+            self.win.btn_ConvertToHTML.setVisible("^7" in _notes_html)
+            self.win.textedit_Notes.setHtml(_notes_html)
         else:
-            if _notes is not None:
-                self.win.btn_ConvertToText.setVisible(True)
-                self.win.textedit_Notes.setPlainText(_notes.strip())
+            if _notes:
+                self.win.btn_ConvertToHTML.setVisible(True)
+                # self.win.textedit_Notes.setPlainText(_notes.strip())
+                self.win.textedit_Notes.setPlainText(_notes)
 
     def save(self):
         """
@@ -55,19 +60,24 @@ class NotesUI:
 
         :return: two strings representing the plain text and the html text
         """
+        print(f"Notes.save: {self.win.textedit_Notes.document().toHtml()=}")
         _notes_html = self.win.textedit_Notes.document().toHtml()
         _notes = self.win.textedit_Notes.document().toPlainText()
         self.modified = False
-        # print(f"NotesUI.save. {version}")
         return _notes, _notes_html
 
-    def convert_to_text(self):
+    def convert_to_html(self):
         """
         Convert the lua colour codes to html and sets the Notes control with the new html text
 
         :return: N/A
         """
-        text = self.win.textedit_Notes.document().toPlainText()
+        if self.notes:
+            text = self.notes
+        elif self.notes_html:
+            text = self.notes_html
+        else:
+            return
         # remove all obvious duplicate colours (mainly ^7^7)
         for idx in range(10):
             while f"^{idx}^{idx}" in text:
@@ -94,12 +104,15 @@ class NotesUI:
         if f is None:
             text = f'<span style="color:{ColourCodes.NORMAL.value};">{text}'
         # replace newlines
-        text = text.replace("\n", "<br>")
+        text = text.replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;")
+        self.notes_html = text.replace("\n", "<br>")
+
+        # print(f"{self.notes_html=}")
 
         self.win.textedit_Notes.setFontPointSize(self.win.spin_Notes_FontSize.value())
         self.win.textedit_Notes.setCurrentFont(self.win.combo_Notes_Font.currentText())
-        self.win.textedit_Notes.setHtml(text)
-        self.win.btn_ConvertToText.setVisible(False)
+        self.win.textedit_Notes.setHtml(self.notes_html)
+        self.win.btn_ConvertToHTML.setVisible(False)
         self.win.textedit_Notes.setFocus()
 
     # don't use native signal/slot connection, so we can set focus back to edit box

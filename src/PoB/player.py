@@ -141,6 +141,7 @@ class Player:
         # ToDo: use  re.compile()
         # print(f"Calc_Stats: {active_items=}")
         # self.stats["WithPoisonDPS"] = 123.70
+        return
 
         self.clear()
         self.player_class = self.build.current_class

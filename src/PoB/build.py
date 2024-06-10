@@ -85,18 +85,6 @@ class Build:
         self.json = self.json_PoB = self.json_build = self.json_import_field = self.json_items = None
         self.json_skills = self.json_tree = self.json_config = self.json_calcs = self.json_tree_view = None
         self.json_notes = self.json_notes_html = None
-        # self.json = deepcopy(empty_build)
-        # self.json_PoB = self.json["PathOfBuilding"]
-        # self.json_build = self.json_PoB["Build"]
-        # self.json_import_field = self.json_PoB["Import"]
-        # self.json_items = self.json_PoB["Items"]
-        # self.json_skills = self.json_PoB["Skills"]
-        # self.json_tree = self.json_PoB["Tree"]
-        # self.json_config = self.json_PoB["Config"]
-        # self.json_calcs = self.json_PoB["Calcs"]
-        # self.json_tree_view = self.json_PoB["TreeView"]
-        # self.json_notes = self.json_PoB["Notes"]
-        # self.json_notes_html = self.json_PoB["NotesHTML"]
 
         self.last_account_hash = ""
         self.last_character_hash = ""
@@ -208,6 +196,7 @@ class Build:
 
     def set_bandit_by_number(self, new_int):
         """Use a number to set the bandit name. Used by import from poeplanner mainly"""
+        print(f"set_bandit_by_number: {new_int}")
         self.bandit = list(bandits.keys())[new_int]
 
     @property
@@ -415,8 +404,7 @@ class Build:
         self.json_calcs = self.json_PoB["Calcs"]
         self.json_tree_view = self.json_PoB["TreeView"]
         self.json_notes = self.json_PoB["Notes"]
-        self.json_notes_html = None
-
+        self.json_notes_html = self.json_PoB.get("NotesHTML", "")
         self.specs.clear()
         for spec in self.json_tree["Specs"]:
             self.specs.append(Spec(self, spec))
@@ -476,6 +464,9 @@ class Build:
         # ensure these get updated to match the last tree shown (these are properties and will trigger their own save to the dict)
         self.className = self.current_spec.classId_str()
         self.ascendClassName = self.current_spec.ascendClassId_str()
+
+        self.json_PoB["Notes"] = self.json_notes
+        self.json_PoB["NotesHTML"] = self.json_notes_html
 
     def save_to_json(self):
         self.save()

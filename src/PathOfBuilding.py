@@ -30,8 +30,8 @@ import sys
 import tempfile
 
 from PySide6.QtGui import QFont, QFontDatabase
-from PySide6.QtWidgets import QApplication, QStyle
-from PySide6.QtCore import QCoreApplication, QSize, Qt
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QCoreApplication, Qt
 
 from windows.main_window import MainWindow
 
