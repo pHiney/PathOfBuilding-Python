@@ -60,7 +60,7 @@ class NotesUI:
 
         :return: two strings representing the plain text and the html text
         """
-        print(f"Notes.save: {self.win.textedit_Notes.document().toHtml()=}")
+        # print(f"Notes.save: {self.win.textedit_Notes.document().toHtml()=}")
         _notes_html = self.win.textedit_Notes.document().toHtml()
         _notes = self.win.textedit_Notes.document().toPlainText()
         self.modified = False
