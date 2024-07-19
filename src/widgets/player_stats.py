@@ -1,7 +1,6 @@
 """
-This Class is communicating between the calculation Classes and the UI Classes
+This Class is communicating between the calculation Classes and the UI Classes.
 """
-from copy import deepcopy
 
 from PoB.settings import Settings
 from PoB.constants import bad_text, player_stats_list, ColourCodes

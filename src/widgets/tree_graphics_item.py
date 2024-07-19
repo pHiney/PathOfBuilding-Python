@@ -2,7 +2,6 @@
 TreeItem Class
 
 This class represents a graphical instance of one visual element of a Passive Tree for a given tree version.
-
 """
 
 from copy import deepcopy

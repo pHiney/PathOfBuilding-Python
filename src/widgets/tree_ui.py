@@ -1,10 +1,6 @@
 """
-This Class manages all the elements and owns some elements of the "TREE" tab
-
+This Class manages all the elements and owns some elements of the "TREE" tab.
 """
-
-from copy import deepcopy
-import re
 
 from PySide6.QtCore import Qt, Slot, QSize
 from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QLineEdit, QPushButton, QDialog

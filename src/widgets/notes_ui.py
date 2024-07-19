@@ -1,5 +1,5 @@
 """
-This Class manages all the elements and owns some elements of the "NOTES" tab
+This Class manages all the elements and owns some elements of the "NOTES" tab.
 """
 
 from copy import deepcopy

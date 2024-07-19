@@ -1,8 +1,7 @@
 """
-Utilities for the UI that do not have dependencies on MainWindow
+Utilities for the UI that do not have dependencies on MainWindow().
 """
 
-from copy import deepcopy
 import re
 
 from PySide6.QtCore import Qt, QMargins, QPoint, QRect, QSize

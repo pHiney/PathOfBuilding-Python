@@ -11,8 +11,8 @@ import re
 from PySide6.QtWidgets import QLabel, QSpinBox
 
 from PoB.constants import PlayerClasses, bad_text, default_max_charges, extraSaveStats, player_stats_list
-from ui.PoB_Main_Window import Ui_MainWindow
 from PoB.utils import format_number, print_call_stack
+from ui.PoB_Main_Window import Ui_MainWindow
 from widgets.ui_utils import search_stats_list_for_regex
 
 # 2 base accuracy per level.

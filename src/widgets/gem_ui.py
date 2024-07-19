@@ -338,43 +338,6 @@ class GemUI(QWidget):
         # print(f"gem_ui: save: {self.gem=}")
         return self.gem
 
-    # def load_from_xml(self, gem):
-    #     """
-    #     load the UI elements from the xml element
-    #     :return: N/A
-    #     """
-    #     # print(print_a_xml_element(gem))
-    #     if gem is not None:
-    #         self.gem = empty_gem_xml
-    #         self.level = int(gem.get("level", 1))
-    #         self.quality = int(gem.get("quality", 0))
-    #         self.count = gem.get("count", 1) == "nil" and 1 or int(gem.get("count"))
-    #         self.enabled = str_to_bool(gem.get("enabled"))
-    #         self.qualityId = gem.get("qualityId", "Default")
-    #         self.skillId = gem.get("skillId")
-    #
-    #     self.set_triggers()
-
-    # def save_to_xml(self):
-    #     """
-    #     Save the UI elements into the xml element
-    #     This is called by all the elements in this class
-    #
-    #     :param notify: bool: If true don't use call back
-    #     :return: ET.xml snippet
-    #     """
-    #     # This stops an empty gem saving to the xml
-    #     xml_gem = ET.fromstring(empty_gem_xml)
-    #     if self.skillId == "":
-    #         return
-    #     # ToDO: fix
-    #     xml_gem.set("level", str(self.spin_gem_level.value()))
-    #     xml_gem.set("quality", str(self.spin_gem_quality.value()))
-    #     xml_gem.set("count", str(self.spin_gem_count.value()))
-    #     xml_gem.set("enabled", bool_to_str(self.check_gem_enabled.isChecked()))
-    #     xml_gem.set("qualityId", self.combo_gem_variant.currentData())
-    #     xml_gem.set("skillId", self.combo_gem_list.currentData())
-
     @Slot()
     def combo_gem_list_changed(self, item, notify=True):
         """

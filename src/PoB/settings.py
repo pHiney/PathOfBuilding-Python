@@ -1,10 +1,15 @@
 """
 Configuration Class
 
-Read, Writes and manages the settings xml as well as the settings therein
-As the settings.xml can be altered by humans, care must be taken to ensure data integrity, where possible
+Read, Writes and manages the settings json as well as the settings therein
+As the settings.json can be altered by humans, care must be taken to ensure data integrity, where possible.
 
 This is a base PoB class. It doesn't import any other PoB ui classes
+
+Uses PoBDict. This means all the settings in the json are available as class attributes.
+    So settings["maximized"] is now settings.maximized
+    Any class attributes that are **NOT** to be saved, should be prefixed with '_' (underscore).
+      EG: self._screen_rect
 """
 
 from copy import deepcopy

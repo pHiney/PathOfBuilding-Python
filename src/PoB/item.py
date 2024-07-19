@@ -1,5 +1,5 @@
 """
-A class to encapsulate one item
+A class to encapsulate one item.
 """
 
 from copy import deepcopy

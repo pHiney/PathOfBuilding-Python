@@ -1,3 +1,11 @@
+"""
+The owner of everything.
+Builds are opened and saved from here.
+Menus and the button/tool bar are owned and operated here.
+The extra widgets on the button/tool bar are added here as the designer doesn't seem to be add them.
+Functions that involve multi-tabs are here due to this class being their (eg: show_skillset, change_tree).
+"""
+
 import atexit
 from copy import deepcopy
 import datetime

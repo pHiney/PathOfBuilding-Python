@@ -1,19 +1,17 @@
 """
-Functions for reading and writing xml and json
+Functions for reading and writing xml and json.
 
-This is a base PoB class. It doesn't import any other PoB classes
+This is a base PoB class. It doesn't import any other PoB classes.
 
-!!!! read_xml_as_dict(filename) stays in this module as it is used by get_file_info !!!!
+!!!! read_xml_as_dict(filename) is used by get_file_info. !!!!
 """
 
-from copy import deepcopy
 from pathlib import Path, WindowsPath
 import json
 import os
-import xml
-import xmltodict
 
 from PoB.constants import ColourCodes
+from PoB.pob_xml import read_xml_as_dict
 from PoB.utils import _debug, print_call_stack
 
 
@@ -93,7 +91,7 @@ def read_json(filename):
     _fn = Path(filename)
     if _fn.exists():
         try:
-            with _fn.open("r", -1, "utf-8") as json_file:
+            with _fn.open("r", encoding="utf-8") as json_file:
                 _dict = json.load(json_file)
                 return _dict
         # parent of IOError, OSError *and* WindowsError where available
@@ -119,39 +117,17 @@ def read_json16(filename):
     return None
 
 
-def write_json(filename, _dict):
+def write_json(filename, _dict, _indent=2):
     """
     Write a json file
     :param filename: Name of json to be written
     :param _dict: New contents of the file
+    :param _indent: json indent of the file
     :returns: N/A
     """
     _fn = Path(filename)
     try:
-        with _fn.open("w", -1, "utf-8") as json_file:
-            json.dump(_dict, json_file, indent=2)
+        with _fn.open("w", encoding="utf-8") as json_file:
+            json.dump(_dict, json_file, indent=_indent, sort_keys=True)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
         print(f"Unable to write to {_fn}")
-
-
-"""!!!! read_xml_as_dict stays in this module as it is used by get_file_info !!!!. Peter, this means YOU !!!"""
-
-
-def read_xml_as_dict(filename):
-    """
-    Reads a XML file
-    !!!! This stays in this module as it is used by get_file_info !!!!
-    :param filename: Name of xml to be read
-    :returns: A dictionary of the contents of the file
-    """
-    _fn = Path(filename)
-    if _fn.exists():
-        try:
-            with _fn.open("r") as xml_file:
-                xml_content = xml_file.read()
-                _dict = xmltodict.parse(xml_content)
-                return _dict
-        # parent of IOError, OSError *and* WindowsError where available
-        except (EnvironmentError, xml.parsers.expat.ExpatError):
-            print(f"Unable to open {_fn} (read_xml_as_dict)")
-    return None

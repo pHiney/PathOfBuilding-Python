@@ -24,8 +24,9 @@ tree_versions = {
     "3_22": "3.22",
     "3_23": "3.23",
     "3_24": "3.24",
+    "3_25": "3.25",
 }
-_VERSION_str = "3_24"
+_VERSION_str = "3_25"
 _VERSION = tree_versions[_VERSION_str]
 # default_view_mode = "TREE"
 default_view_mode = "ITEMS"
@@ -623,6 +624,7 @@ ascendancy_positions = {
     "Deadeye": {"x": 10200 / global_scale_factor, "y": 2200 / global_scale_factor},
     "Pathfinder": {"x": 10200 / global_scale_factor, "y": 3700 / global_scale_factor},
     "Raider": {"x": 10200 / global_scale_factor, "y": 5200 / global_scale_factor},
+    "Warden": {"x": 10200 / global_scale_factor, "y": 5200 / global_scale_factor},
     "Elementalist": {"x": 0 / global_scale_factor, "y": -9850 / global_scale_factor},
     "Occultist": {"x": -1500 / global_scale_factor, "y": -9850 / global_scale_factor},
     "Necromancer": {"x": 1500 / global_scale_factor, "y": -9850 / global_scale_factor},

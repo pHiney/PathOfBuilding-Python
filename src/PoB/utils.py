@@ -16,7 +16,7 @@ from PoB.constants import ColourCodes, pob_debug, locale
 
 class PoBDict(object):
     """
-    Turns a dictionary into a class. We use load and save to ensure there is only one instatiation of the class
+    Turns a dictionary into a class. We use load and save to ensure there is only one instantiation of the class.
     thoughout the life of the application. This makes it easier to share between other classes.
     If descendant's want to have variables that are not saved in the dictionary, they need to be prefixed with '_'.
       EG: self._variable1 = "blah"

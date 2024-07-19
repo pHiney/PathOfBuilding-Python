@@ -1,13 +1,13 @@
 Clone the 'dev' branch of luaPoB
 
 open <dir>\src\Modules\Main.lua
-Paste the following in at line 26 (following the last LoadModule and in front of '--[[if launch.devMode then')
-Save and run PoB
-Close PoB and you will find the saved .json files in <dir>\src\Data. Do not attempt to create other directories as PoB will crash.
+Paste the following code at line 26 (following the last LoadModule and in front of '--[[if launch.devMode then')
+Save main.lu and run luaPoB.
+Close luaPoB and you will find the saved .json files in <dir>\src\Data. Do not attempt to create other directories as luaPoB will crash.
 Copy/Move the json files to the pyPoB <dir>\scripts\lua_json directory
 Remove the lines from Main.lua and save.
-  This procedure can be run on the live PoB also. As you have changed Main.lua, it will want to repair that.
-  Accept the update to remove this code.
+  This procedure can be run on the live PoB also. As you have changed Main.lua, it will want to repair thatand prompt for an "Update"
+  Accepting the update will remove your change to main.lua.
 
 -- --------snip--------
 local json = require "dkjson"
@@ -37,7 +37,7 @@ f:close()
 
 depth = 1
 # Recursive copy Table function that removes 'function' -> which breaks json
-# This also allow for us to alter the datawithout crashing PoB
+# This also allow for us to alter the data without crashing PoB
 function copyTable(datatable)
   local tblRes={}
   if type(datatable)=="table" then

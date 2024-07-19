@@ -21,8 +21,9 @@ ggpk
 # Developer specific
 *.orig
 *.bak
-settings.xml
+settings.json
 scripts/*.json
+scripts/lua_json/*.json
 #mods.json
 *.xml.new
 archive.zip

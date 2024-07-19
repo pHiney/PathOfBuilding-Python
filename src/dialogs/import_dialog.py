@@ -20,7 +20,6 @@ from PoB.settings import Settings
 from PoB.build import Build
 from PoB.pob_file import write_json, read_json
 from PoB.utils import decode_base64_and_inflate, deflate_and_base64_encode, html_colour_text, unique_sorted
-from PoB.pob_xml import write_xml
 from widgets.ui_utils import HTMLDelegate, set_combo_index_by_text
 
 from ui.PoB_Main_Window import Ui_MainWindow

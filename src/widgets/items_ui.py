@@ -1,5 +1,5 @@
 """
-This Class manages all the elements and owns some elements of the "ITEMS" tab
+This Class manages all the elements and owns some elements of the "ITEMS" tab.
 
 Abyssal sockets are precreated and are made visble or hidden based on what is in them.
 """

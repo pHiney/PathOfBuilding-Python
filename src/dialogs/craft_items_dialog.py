@@ -27,7 +27,6 @@ from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgCraftItems import Ui_CraftItems
 
 
-# noinspection PyArgumentList
 class CraftItemsDlg(Ui_CraftItems, QDialog):
     """Craft Items dialog"""
 
@@ -275,6 +274,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
                     connector.setEnabled(False)
                     connector.setTristate(True)
                     connector.setCheckState(Qt.PartiallyChecked)
+        self.item.sockets = self.sockets
+        self.label_Item.setText(self.item.tooltip(True))
 
     @Slot()
     def change_connector(self, state, idx):
@@ -293,6 +294,8 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             case Qt.Unchecked:
                 self.curr_connector_state[idx] = " "
             # ignore Qt.PartiallyChecked. Don't update self.curr_connector_state for the 'A' socket being selected.
+        self.item.sockets = self.sockets
+        self.label_Item.setText(self.item.tooltip(True))
 
     @Slot()
     def reset(self):
@@ -303,6 +306,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
         _item = Item(self.settings, self.base_items)
         _item.load_from_json(deepcopy(self.original_item.pob_item))
         self.item = _item
+        self.label_Item.setText(self.item.tooltip(True))
 
     @Slot()
     def discard(self):
@@ -312,7 +316,7 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
     @Slot()
     def save(self):
         """
-        Save any information to self.item. Used by AcceptRole button
+        Save any information to self.item. Used by AcceptRole button.
         :return: N/A
         """
         self.item.sockets = self.sockets
@@ -375,3 +379,4 @@ class CraftItemsDlg(Ui_CraftItems, QDialog):
             self.combo_Mods.clear()
             self.combo_Mods.addItems([mod.original_line for mod in self.range_mods])
             self.combo_Mods.view().setMinimumWidth(self.combo_Variants1.minimumSizeHint().width())
+        self.label_Item.setText(self.item.tooltip(True))

@@ -80,7 +80,7 @@ for gem_id, gem in base_gems.items():
     if gem["naturalMaxLevel"] == 20:
         del gem["naturalMaxLevel"]
 
-write_json("../src/data/base_gems.json", dict(sorted(base_gems.items())), 1)
+write_json("../src/data/base_gems.json", base_gems.items(), 1)
 
 # List of dictionaries
 hidden_json = read_json("lua_json/hiddenSkills.json")
@@ -96,7 +96,7 @@ for _dict in hidden_json:
         _value["colour"] = _value.get("color",0)
         _value.pop("color", None)
         hidden_skills[_value["id"]] = _value
-write_json("../src/data/hidden_skills.json", dict(sorted(hidden_skills.items())), 1)
+write_json("../src/data/hidden_skills.json", hidden_skills.items(), 1)
 
 # copy costs, using stat as key for easy lookup
 costs_json = read_json("lua_json/costs.json")
@@ -104,5 +104,5 @@ costs = {}
 for _dict in costs_json:
     # print(type(_dict), _dict)
     costs[_dict["Stat"]] = _value
-write_json("../src/data/costs.json", dict(sorted(costs.items())), 1)
+write_json("../src/data/costs.json", costs.items(), 1)
 

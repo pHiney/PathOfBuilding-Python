@@ -1,5 +1,5 @@
 """
-Represents and manages one Spec in the XML. It has a list of active nodes.
+Represents and manages one Spec in the build jsaon. It has a list of active nodes.
 """
 
 import base64
@@ -15,7 +15,7 @@ class Spec:
         """
         Represents one Spec in the build. Most simple settings are properties.
 
-        :param new_spec: the spec from the XML, dict from json, or None for a new Spec
+        :param new_spec: dict from json, or None for a new Spec.
         """
         self.internal_version = 6
         self.build = build

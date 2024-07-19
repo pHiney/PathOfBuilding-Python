@@ -46,7 +46,7 @@ base_items = {}
 # The dictionary of the incoming json
 base_items_json = read_json("lua_json/item_bases.json")
 
-for item_id in sorted(base_items_json):
+for item_id in base_items_json:
     item = base_items_json[item_id]
     item_type = item["type"]
     if item_type not in wanted_item_types:
@@ -83,7 +83,7 @@ for item_id in sorted(base_items_json):
             initial_sockets = "RGBRGB"
             item["initial_sockets"] = "-".join([char for char in initial_sockets[:socket_number]])
 
-    # Titlecase req's keys to match the program's Requires
+    # Capitalise req's keys to match the program's Requires
     new_reqs = {}
     old_reqs = item.get("req", {})
     if old_reqs:

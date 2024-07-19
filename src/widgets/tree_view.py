@@ -3,14 +3,11 @@ TreeView Class
 
 This class represents an instance of the Passive Tree for a given Build.
 Multiple Trees can exist in a single Build (at various progress levels;
-at different Jewel/Cluster itemizations, etc.)
+  at different Jewel/Cluster itemizations, etc.)
 
 A Tree instance is tied to a Version of the Tree as released by GGG and thus older Trees
-need to be supported for backwards compatibility reason.
-
+  need to be supported for backwards compatibility reason.
 """
-
-from copy import deepcopy
 
 from PySide6.QtCore import QLineF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPen, QPainter, QPixmap

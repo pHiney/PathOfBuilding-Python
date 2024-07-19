@@ -1,6 +1,6 @@
 """
 A class to encapsulate one mod.
-Numeric values default to None so that they can be checked for non use. -1 or 0 could be legitimate values.
+Numeric values default to 'None' so that they can be checked for non use. -1 or 0 could be legitimate values.
 """
 
 import re

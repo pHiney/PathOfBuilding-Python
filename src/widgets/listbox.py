@@ -1,7 +1,5 @@
 """
-Pob implementation of QlistWidget
-
-Currently only needed .
+Pob implementation of QlistWidget to enable the HTML Delegate, for coloured output.
 """
 
 from copy import deepcopy

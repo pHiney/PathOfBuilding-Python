@@ -1,6 +1,6 @@
 """
 A layout to autoorganise widgets according the the size of the window around them.
-This is a compilation of many examples on the internet and PoB original content.
+This is a compilation of many examples on the internet and pyPoB original content.
 """
 
 from copy import deepcopy

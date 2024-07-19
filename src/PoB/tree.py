@@ -6,9 +6,7 @@ This class represents an instance of the GGG Passive Tree for **ONE** tree versi
 Multiple versions of Trees can exist in a single Build, so there could be multiple instantiations of this class.
 
 This holds, in memory, a copy of the tree data and doesn't know about any actively selected nodes.
-  That's the Spec class' job.
-
-It is referenced by the TreeView class to display the tree
+  That's the Spec() class' job.
 """
 
 from copy import deepcopy
@@ -30,13 +28,14 @@ from PoB.constants import (
     PlayerClasses,
     _VERSION_str,
     ascendancy_positions,
+    bad_text,
     global_scale_factor,
     tree_versions,
 )
 from PoB.pob_file import read_json
 from PoB.node import Node
-from widgets.tree_graphics_item import TreeGraphicsItem
 from PoB.utils import _debug
+from widgets.tree_graphics_item import TreeGraphicsItem
 
 nodeOverlay = {
     "Normal": {
@@ -573,8 +572,10 @@ class Tree:
         elif node.isAscendancyStart:
             # node.type = "AscendClassStart"  # Can't use this as there is no "ascendclassstartInactive" sprite
             if node.ascendancyName in ascendancy_positions.keys():
-                ascend_name_map[node.ascendancyName]["ascendClass"]["startNodeId"] = node.id
-                self.ascendancy_start_nodes[node.ascendancyName] = node.id
+                # Handle Raider / Warden change
+                if ascend_name_map.get(node.ascendancyName, bad_text) != bad_text:
+                    ascend_name_map[node.ascendancyName]["ascendClass"]["startNodeId"] = node.id
+                    self.ascendancy_start_nodes[node.ascendancyName] = node.id
         elif node.isMastery:
             node.type = "Mastery"
             # if node.masteryEffects:

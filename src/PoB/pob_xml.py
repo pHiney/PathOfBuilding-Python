@@ -1,5 +1,14 @@
-from pathlib import Path
+"""
+Functions for reading and writing xml only.
+This has been separated to make removal of the xml routines.
+
+This is a base PoB class. It doesn't import any other PoB classes.
+
+!!!! read_xml_as_dict(filename) is used by get_file_info in pob_file !!!!
+"""
+
 from copy import deepcopy
+from pathlib import Path
 import re
 import traceback
 import xml
@@ -18,7 +27,6 @@ from PoB.constants import (
     starting_scion_node,
 )
 
-from PoB.pob_file import read_xml_as_dict
 from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, str_to_bool
 
 """ ################################################### XML ################################################### """
@@ -81,6 +89,26 @@ def print_a_xml_element(the_element):
     print(lines[-2].strip())
     print(ET.tostring(the_element, encoding="utf8").decode("utf8"))
     print()
+
+
+def read_xml_as_dict(filename):
+    """
+    Reads a XML file
+    !!!! This stays in this module as it is used by get_file_info !!!!
+    :param filename: Name of xml to be read
+    :returns: A dictionary of the contents of the file
+    """
+    _fn = Path(filename)
+    if _fn.exists():
+        try:
+            with _fn.open("r") as xml_file:
+                xml_content = xml_file.read()
+                _dict = xmltodict.parse(xml_content)
+                return _dict
+        # parent of IOError, OSError *and* WindowsError where available
+        except (EnvironmentError, xml.parsers.expat.ExpatError):
+            print(f"Unable to open {_fn} (read_xml_as_dict)")
+    return None
 
 
 def read_xml(filename):

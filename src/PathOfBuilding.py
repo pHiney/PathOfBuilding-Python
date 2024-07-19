@@ -16,10 +16,7 @@
 # nuitka- project: --experimental=disable-freelist-all
 
 """
-Path of Building main class
-
-Sets up and connects external components.
-External components are the status bar, toolbar (if exists), menus
+Path of Building main executable.
 
 Icons by  Yusuke Kamiyamane (https://p.yusukekamiyamane.com/)
 Splashscreen by https://creator.nightcafe.studio

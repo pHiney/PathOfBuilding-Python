@@ -1,5 +1,5 @@
 """
-This Class manages all the UI controls and takes ownship of the controls on the "SKILLS" tab
+This Class manages all the UI controls and takes ownship of the controls on the "SKILLS" tab.
 """
 
 from copy import deepcopy

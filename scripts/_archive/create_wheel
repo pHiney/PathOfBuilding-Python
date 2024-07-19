@@ -1,0 +1,14 @@
+#!/bin/sh
+# Build a Wheel file for distribution
+# get parent directory
+cd "$(dirname "$(realpath "$0")")/.."
+
+[ "${VIRTUAL_ENV}" ] || pshell="poetry run"
+
+# Generate .ui files to .py files
+$pshell python build-ui.py
+
+rm -rf build
+$pshell python setup.py bdist_wheel
+rm -rf build
+

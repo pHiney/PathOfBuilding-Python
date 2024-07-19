@@ -1,8 +1,6 @@
 """
-This Class manages all the elements and owns some elements of the "CONFIG" tab
+This Class manages all the elements and owns some elements of the "CONFIG" tab.
 """
-
-from copy import deepcopy
 
 from PySide6.QtWidgets import QGridLayout
 
@@ -66,22 +64,6 @@ class ConfigUI:
         custom_mods = _input.get("customMods", "")
         self.win.textedit_CustomModifiers.setPlainText(list_to_str(custom_mods))
         # self.win.textedit_CustomModifiers.setPlainText(custom_mods.replace("~^", "\n"))
-
-    # def load_from_xml(self, _config):
-    #     """
-    #     Load internal structures from the build object
-    #     :param _config: Reference to the xml <Config> tag set
-    #     """
-    #     # print("config.load_from_xml", self.build.version, self.build.className, print_a_xml_element(_config))
-    #     _input = {}
-    #
-    #     # A list of _config.findall("Input) and create a new dictonary from it and call self.load()
-    #     for xml_input in _config.findall("Input"):
-    #         name = xml_input.get("name")
-    #         _input[name] = self.build.get_config_tag_item("Input", name, "")
-    #
-    #     self.json_config["Input"] = _input
-    #     self.load()
 
     def save(self):
         """

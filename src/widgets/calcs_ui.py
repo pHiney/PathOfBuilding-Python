@@ -2,8 +2,6 @@
 This Class manages all the elements and owns some elements of the "CALCS" tab
 """
 
-from copy import deepcopy
-
 from PoB.settings import Settings
 from PoB.build import Build
 
