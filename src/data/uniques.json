@@ -25536,7 +25536,7 @@
         "{variant:1,2}+(30-40) to maximum Life"
       ],
       "Explicits": [
-        "Grants Level 30 Reckoning Skill",
+        "Grants Level 30 Swordstorm Skill",
         "{variant:0,1}(130-170)% increased Armour",
         "{variant:2}(165-205)% increased Armour",
         "+(65-80) to maximum Life",
@@ -27875,7 +27875,7 @@
         "{variant:0}Adds (130-150) to (200-250) Fire Damage to Spells",
         "{variant:1}Adds (230-250) to (300-350) Fire Damage to Spells",
         "{variant:2}Battlemage",
-        "Grants Level 15 Vengeance Skill",
+        "Grants Level 15 Crushing Fist Skill",
         "{variant:0}100% increased Fire Damage if you have been Hit Recently",
         "{variant:1,2}100% increased Fire Damage",
         "Immune to Freeze and Chill while Ignited",

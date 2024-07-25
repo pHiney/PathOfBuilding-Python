@@ -290,7 +290,7 @@ class TreeView(QGraphicsView):
         if self.build.search_text == "":
             return
         # We only put search rings around a node's overlay, not the node itself.
-        # The stops the ring appearing under or over the node's overlay.
+        # This stops the ring appearing under or over the node's overlay.
         for image in self.build.current_tree.graphics_items:
             if image.node_isoverlay and self.build.search_text in image.build_tooltip():
                 circle = add_circle(image, Qt.yellow, 12)

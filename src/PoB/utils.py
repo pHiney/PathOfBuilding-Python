@@ -11,7 +11,7 @@ import re
 import traceback
 import zlib
 
-from PoB.constants import ColourCodes, pob_debug, locale
+from PoB.constants import ColourCodes, colourEscapes, pob_debug, locale
 
 
 class PoBDict(object):
@@ -210,6 +210,29 @@ def html_colour_text(colour, text):
         c = ColourCodes[colour.upper()].value
     newline = "\n"
     return f'<span style="color:{c};">{text.replace(newline,"<BR>")}</span>'
+
+
+def remove_lua_colours(text, just_duplicates: bool = False):
+    """
+    Remove ^n like colours (EG: ^7).
+    :param text: str: string to check
+    :param just_duplicates: bool: If True, do not replace ^X characters with html spans
+    :return: str: changed string
+    """
+    # remove all obvious duplicate colours (mainly ^7^7)
+    for idx in range(10):  # 0..9
+        while f"^{idx}^{idx}" in text:
+            text = text.replace(f"^{idx}^{idx}", f"^{idx}")
+    if just_duplicates:
+        return text
+    # remove single charactor colours for their full versions
+    for idx in range(10):
+        try:
+            colour_idx = text.index(f"^{idx}")
+            text = html_colour_text(colourEscapes[idx].value, text[colour_idx + 2 :])
+        except ValueError:
+            pass
+    return text
 
 
 def format_number(the_number, format_str, settings, pos_neg_colour=False):

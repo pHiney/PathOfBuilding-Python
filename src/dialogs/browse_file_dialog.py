@@ -59,13 +59,25 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
 
         self.max_filename_width = 100
         self.list_Files.set_delegate()
-        self.list_Files_width = self.list_Files.width()
         if _build.filename:
             path, name = os.path.split(_build.filename)
             self.save_as_text = name
             self.change_dir(path)  # connects triggers
         else:
             self.change_dir(self.settings.build_path)  # connects triggers
+
+    # Overridden function
+    def resizeEvent(self, event):
+        """
+        Work out how many characters can fit in the listbox. One character is 7.3 pixels (ish)
+        Width of the four spaces plus the "Level nnn Elementalist (vn)" is 31
+        :param event:
+        :return: N/A
+        """
+        self.max_filename_width = int(self.list_Files.width() / 7.3) - 31
+        # forcibly refill the list box by calling the only function with trigger controls
+        self.change_dir(self.lineEdit_CurrDir.text())
+        QDialog.resizeEvent(self, event)
 
     @property
     def save_as_text(self):
@@ -76,20 +88,6 @@ class BrowseFileDlg(Ui_BrowseFile, QDialog):
     def save_as_text(self, text):
         """Add to the SaveAs line edit"""
         self.lineEdit_SaveAs.setText(text)
-
-    # Overridden function
-    def resizeEvent(self, event):
-        """
-        Work out how many chanracters can fit in the listbox. One character is 7.3 pixels (ish)
-        Width of the four spaces plus the "Level nnn Elementalist (vn)" is 31
-        :param event:
-        :return: N/A
-        """
-        self.list_Files_width = self.list_Files.width()
-        self.max_filename_width = int(self.list_Files_width / 7.3) - 31
-        # forcibly refill the list box by calling the only function with trigger controls
-        self.change_dir(self.lineEdit_CurrDir.text())
-        QDialog.resizeEvent(self, event)
 
     def connect_triggers(self):
         """Manage the triggers to prevent trigger storms"""

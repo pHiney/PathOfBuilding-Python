@@ -18,7 +18,6 @@ import xmltodict
 from PoB.constants import (
     _VERSION_str,
     bad_text,
-    colourEscapes,
     default_view_mode,
     empty_build,
     empty_item_dict,
@@ -27,7 +26,7 @@ from PoB.constants import (
     starting_scion_node,
 )
 
-from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, str_to_bool
+from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, remove_lua_colours, str_to_bool
 
 """ ################################################### XML ################################################### """
 
@@ -211,26 +210,6 @@ def write_xml_from_dict(filename, _dict):
             xml_file.write(xml_content)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
         print(f"Unable to write to {_fn}")
-
-
-def remove_lua_colours(text):
-    """
-    Remove ^7 like colours
-    :param text: str: string to check
-    :return: str: changed string
-    """
-    # remove all obvious duplicate colours (mainly ^7^7)
-    for idx in range(10):  # 0..9
-        while f"^{idx}^{idx}" in text:
-            text = text.replace(f"^{idx}^{idx}", f"^{idx}")
-    # remove single charactor colours for their full versions
-    for idx in range(10):
-        try:
-            colour_idx = text.index(f"^{idx}")
-            text = html_colour_text(colourEscapes[idx].value, text[colour_idx + 2])
-        except ValueError:
-            pass
-    return text
 
 
 def renumber_variants(mods):
@@ -479,7 +458,7 @@ def load_from_xml(filename_or_xml):
     lua PoB won't put a single Gem, Item, Spec, etc in a list. It will just appear as a single dict()
     So there are lots of checks for this and adding a single entry into a list().
     lua PoB is 1 based in it's counting, pyPob is 0 based
-    :param filename_or_xml: str|dict: either a filepath for loading an xml or an ET from the iport dialog
+    :param filename_or_xml: str|dict: either a filepath for loading an xml or an ET from the import dialog
     :return: dict
     """
 
@@ -554,7 +533,7 @@ def load_from_xml(filename_or_xml):
     }
     for stat_type in ("PlayerStat", "MinionStat"):
         stats = xml_build.get(stat_type, [])
-        if type(stats) is dict:  # list or dict if only one entry
+        if type(stats) is dict:  # Should be a list but will be a dict if only one entry
             stats = [stats]
         for stat in stats:
             name = stat.get("@stat", "")
@@ -617,11 +596,11 @@ def load_from_xml(filename_or_xml):
         "activeSpec": int(xml_tree.get("@activeSpec", "1")) - 1,
         "Specs": [],
     }
-    if type(xml_tree["Spec"]) is dict:  # list or dict if only one entry
+    if type(xml_tree["Spec"]) is dict:  # Should be a list but will be a dict if only one entry
         xml_tree["Spec"] = [xml_tree["Spec"]]
     for xml_spec in xml_tree["Spec"]:
         spec = {
-            "title": remove_lua_colours(xml_spec.get("@title", "Default")),
+            "title": remove_lua_colours(xml_spec.get("@title", "Default"), True),
             "treeVersion": xml_spec.get("@treeVersion", _VERSION_str),
             "classId": int(xml_spec.get("@classId", "0")),
             "ascendClassId": int(xml_spec.get("@ascendClassId", "0")),
@@ -634,7 +613,7 @@ def load_from_xml(filename_or_xml):
         if xml_spec["Sockets"]:
             str_sockets = ""
             sockets = xml_spec["Sockets"]["Socket"]
-            if type(sockets) is dict:  # list or dict if only one entry
+            if type(sockets) is dict:  # Should be a list but will be a dict if only one entry
                 sockets = [sockets]
             for socket in sockets:
                 str_sockets += f"{{{socket['@nodeId']},{socket['@itemId']}}}"
@@ -654,7 +633,7 @@ def load_from_xml(filename_or_xml):
         "showAltQualityGems": str_to_bool(get_param_value(xml_skills.get("@showAltQualityGems", "True"), "True")),
         "SkillSets": [],
     }
-    if type(xml_skills["SkillSet"]) is dict:  # list or dict if only one entry
+    if type(xml_skills["SkillSet"]) is dict:  # Should be a list but will be a dict if only one entry
         xml_skills["SkillSet"] = [xml_skills["SkillSet"]]
     for xml_skillset in xml_skills["SkillSet"]:
         skillset = {
@@ -662,7 +641,7 @@ def load_from_xml(filename_or_xml):
             "title": remove_lua_colours(xml_skillset.get("@title", "Default")),
             "SGroups": [],
         }
-        if type(xml_skillset.get("Skill", bad_text)) is dict:  # list or dict if only one entry
+        if type(xml_skillset.get("Skill", bad_text)) is dict:  # Should be a list but will be a dict if only one entry
             xml_skillset["Skill"] = [xml_skillset["Skill"]]
         for xml_sgroup in xml_skillset.get("Skill", []):
             xml_gem = xml_sgroup.get("Gem", bad_text)
@@ -678,7 +657,7 @@ def load_from_xml(filename_or_xml):
             }
             # Some socket groups have no skills in them as content creators just use the label.
             if xml_gem != bad_text:
-                if type(xml_gem) is dict:  # list or dict if only one entry
+                if type(xml_gem) is dict:  # Should be a list but will be a dict if only one entry
                     xml_gem = [xml_gem]
                 for xml_gem in xml_gem:
                     """
@@ -726,13 +705,13 @@ def load_from_xml(filename_or_xml):
     """Items"""
     xml_items = xml_PoB["Items"]
     # Items
-    if type(xml_items["Item"]) is dict:  # list or dict if only one entry
+    if type(xml_items["Item"]) is dict:  # Should be a list but will be a dict if only one entry
         xml_items["Item"] = [xml_items["Item"]]
     for xml_item in xml_items["Item"]:
         json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item["#text"], int(xml_item.get("@id", "0"))))
     # ItemSets
     json_PoB["Items"]["ItemSets"].clear()  # get rid of the default itemset
-    if type(xml_items["ItemSet"]) is dict:  # list or dict if only one entry
+    if type(xml_items["ItemSet"]) is dict:  # Should be a list but will be a dict if only one entry
         xml_items["ItemSet"] = [xml_items["ItemSet"]]
     for xml_itemset in xml_items["ItemSet"]:
         json_set = {
@@ -752,12 +731,15 @@ def load_from_xml(filename_or_xml):
             except KeyError:
                 pass
         json_set["Slots"] = slots
-        for s_id in xml_itemset.get("SocketIdURL", []):
-            name = s_id.get("@name", "")
-            if name:
-                json_set.setdefault("SocketIdURL", []).append(
-                    {"name": name, "nodeId": int(s_id.get("@nodeId", "")), "itemPbURL": s_id.get("@itemPbURL", "")}
-                )
+        if xml_itemset.get("SocketIdURL", None) is not None:
+            if type(xml_itemset["SocketIdURL"]) is dict:  # Should be a list but will be a dict if only one entry
+                xml_itemset["SocketIdURL"] = [xml_itemset["SocketIdURL"]]
+            for s_id in xml_itemset.get("SocketIdURL", []):
+                name = s_id.get("@name", "")
+                if name:
+                    json_set.setdefault("SocketIdURL", []).append(
+                        {"name": name, "nodeId": int(s_id.get("@nodeId", "")), "itemPbURL": s_id.get("@itemPbURL", "")}
+                    )
         json_PoB["Items"]["ItemSets"].append(json_set)
 
         # Renumber Itemset cause we want to have a nice clean start (and we really don't rely on them).

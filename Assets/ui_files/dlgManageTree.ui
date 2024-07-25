@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>550</width>
+    <width>800</width>
     <height>500</height>
    </rect>
   </property>
@@ -169,7 +169,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QListWidget" name="list_Trees">
+    <widget class="ListBox" name="list_Trees">
      <property name="font">
       <font>
        <family>Noto Sans</family>
@@ -184,9 +184,6 @@
      </property>
      <property name="defaultDropAction">
       <enum>Qt::MoveAction</enum>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>true</bool>
      </property>
      <property name="selectionMode">
       <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -241,6 +238,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ListBox</class>
+   <extends>QListWidget</extends>
+   <header>widgets/listbox</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>list_Trees</tabstop>
   <tabstop>btnCopy</tabstop>

@@ -4,16 +4,18 @@ Import dialog
 Open a dialog for importing a character.
 """
 
+import re
 from copy import deepcopy
 
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, Slot, QEvent
+from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import QDialog, QListWidgetItem, QPushButton
 
 from PoB.constants import _VERSION, _VERSION_str, tree_versions
 from PoB.settings import Settings
 from PoB.build import Build, _debug, print_call_stack
 from dialogs.popup_dialogs import yes_no_dialog, ExportTreePopup, ImportTreePopup, NewTreePopup
-from PoB.utils import html_colour_text
+from PoB.utils import html_colour_text, remove_lua_colours
 
 from ui.PoB_Main_Window import Ui_MainWindow
 from ui.dlgManageTree import Ui_ManageTree
@@ -36,6 +38,7 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
         self.spec_to_be_moved = None
         self.item_being_edited = None
         self.triggers_connected = False
+        self.max_specname_width = 100
 
         self.setupUi(self)
         # Turn off export just so we don't lose the code. But I don't think it adds value. (20230909. Tested working)
@@ -47,9 +50,10 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
                 widget.setToolTip(html_colour_text(self.settings.qss_default_text, widget.toolTip()))
 
         for spec in self.build.specs:
-            title = spec.title
+            title = html_colour_text(self.settings.qss_default_text, spec.title)
             lwi = QListWidgetItem(title)
             lwi.setData(Qt.UserRole, spec)
+            lwi.setWhatsThis(spec.title)
             lwi.setFlags(lwi.flags() | Qt.ItemIsEditable)
             self.list_Trees.addItem(lwi)
 
@@ -68,6 +72,34 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
         self.btnClose.clicked.connect(self.close)
         self.list_Trees.model().rowsMoved.connect(self.specs_rows_moved, Qt.QueuedConnection)
         self.list_Trees.model().rowsAboutToBeMoved.connect(self.specs_rows_about_to_be_moved, Qt.QueuedConnection)
+
+        self.list_Trees.set_delegate()
+        self.list_Trees.installEventFilter(self)
+
+    # Overridden function
+    def resizeEvent(self, event):
+        """
+        Work out how many characters can fit in the listbox. One character is 7.3 pixels (ish)
+        Width of the four spaces plus the "Elementalist, (xxx points)" is 26
+        :param event:
+        :return: N/A
+        """
+        self.max_specname_width = int(self.list_Trees.width() / 7.3) - 26
+        # forcibly refill the list box by calling the only function with trigger controls
+        self.add_detail_to_spec_names()
+        super(ManageTreeDlg, self).resizeEvent(event)
+
+    def eventFilter(self, source, event):
+        """
+        Pressing F2 inside the List Widget shows the whole text including html.
+        This calls the double click method which copies in the plain text for editing.
+        :return bool: True if we consumed the event elsewsie the return of the QDialog parent.
+        """
+        if source == self.list_Trees and event.type() == QEvent.KeyRelease and event.key() == Qt.Key_F2:
+            print(f"{source=}, {event=}")
+            self.list_item_double_clicked(self.list_Trees.currentItem())
+            return True
+        return super(ManageTreeDlg, self).eventFilter(source, event)
 
     def connect_triggers(self):
         # print("connect_triggers", self.triggers_connected)
@@ -91,14 +123,26 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
 
     def add_detail_to_spec_names(self):
         """
-        Add the tree version and other information to the spec title
+        Add the tree version and other information to the spec title.
 
-        :return:
+        :return: N/A
         """
         self.disconnect_triggers()
+        max_length = max([len(spec.title) for spec in self.build.specs])
         for idx, spec in enumerate(self.build.specs):
-            text = spec.treeVersion != _VERSION_str and f"[{tree_versions[spec.treeVersion]}] {spec.title}" or spec.title
-            text += f" ({spec.ascendClassId_str()}, {len(spec.nodes)} points)"
+            ver = spec.treeVersion != _VERSION_str and html_colour_text("Grey", f"[{tree_versions[spec.treeVersion]}] ") or ""
+            # Get the maximum length of the title, trimming it if need be.
+            title = len(spec.title) > self.max_specname_width and (spec.title[: self.max_specname_width] + "..") or spec.title
+            title = html_colour_text(self.settings.qss_default_text, remove_lua_colours(title))
+            # swapping these out (for html codes) removes 2 characters we have already counted. We will need to add spaces for them
+            num_colourcodes = len(re.findall(r"\^\d", spec.title))
+            # Create a spacer string of the correct length to right justify the class info.
+            spacer = (min(max_length, self.max_specname_width) - len(spec.title) + 4 + (num_colourcodes * 2)) * " "
+            ascend_str = spec.ascendClassId_str()
+            class_str = spec.classId_str()
+            s = "" if len(spec.nodes) == 1 else "s"
+            class_info = html_colour_text(class_str, f"{ascend_str}, ({len(spec.nodes)} point{s})")
+            text = f"<pre>{ver}{title}{spacer}{class_info}</pre>"
             self.list_Trees.item(idx).setText(text)
         self.connect_triggers()
 
@@ -219,7 +263,7 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
         self.item_being_edited = lwi
         # Reset the text, removing the spec version information
         row = self.list_Trees.currentRow()
-        lwi.setText(self.build.specs[row].title)
+        lwi.setText(self.build.specs[row].title)  # Remove all the colouring and extra info
         self.connect_triggers()
 
     @Slot()

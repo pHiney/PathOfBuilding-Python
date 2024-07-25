@@ -190,7 +190,7 @@ class Tree:
     def version(self, new_vers):
         self._version = new_vers
         self.tree_version_path = Path(self.settings._data_dir, re.sub(r"\.", "_", str(new_vers)))
-        self.json_file_path = Path(self.tree_version_path, "tree.json")
+        self.json_file_path = Path(self.tree_version_path, "data.json")
         self.legion_path = Path(self.settings._data_dir, "legion")
 
     def load(self):

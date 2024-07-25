@@ -17,7 +17,7 @@ from PoB.utils import _debug, print_call_stack
 
 def get_file_info(settings, filename, max_length, max_filename_width=40, html=True, menu=False):
     """
-    Open the xml and get the class information, level and version. Format a line for display on the listbox.
+    Open the xml/json and get the class information, level and version. Format a line for display on the listbox.
     Take into account the maximum width of the listbox and trim names as needed.
 
     :param settings: Settings():
@@ -36,7 +36,7 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
         version = 2
     else:
         _file = read_xml_as_dict(filename)
-        pre = "@"
+        pre = "@"  # xml have @ as the prefix to a name
         version = 1
 
     if _file is None:
@@ -51,9 +51,9 @@ def get_file_info(settings, filename, max_length, max_filename_width=40, html=Tr
             # but File Open/Save dialog only passes in filenames. This is what gives the ValueError.
             pass
         name = os.path.splitext(filename)[0]
-        # Get the maximum length of a name, trimming it if need be
+        # Get the maximum length of the name, trimming it if need be.
         name = len(name) > max_filename_width and (name[:max_filename_width] + "..") or name
-        # Create a spacer string of the correct length to right justify the class info
+        # Create a spacer string of the correct length to right justify the class info.
         spacer = (min(max_length, max_filename_width) - len(name) + 4) * " "
 
         # The information on the right. pre is @ for xml's ("@level") and "level" for json's

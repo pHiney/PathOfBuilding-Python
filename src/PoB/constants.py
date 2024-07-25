@@ -440,6 +440,7 @@ class ColourCodes(enum.Enum):
     GEM = "#1AA29B"
     GOLD = "#FFD700"
     GRAY = "#D3D3D3"
+    GREY = "#D3D3D3"
     GREEN = "#00FF00"
     LIGHTGRAY = "#808B96"
     LIGHTNING = "#ADAA47"
