@@ -137,12 +137,14 @@ class ManageTreeDlg(Ui_ManageTree, QDialog):
             # swapping these out (for html codes) removes 2 characters we have already counted. We will need to add spaces for them
             num_colourcodes = len(re.findall(r"\^\d", spec.title))
             # Create a spacer string of the correct length to right justify the class info.
-            spacer = (min(max_length, self.max_specname_width) - len(spec.title) + 4 + (num_colourcodes * 2)) * " "
+            spacer_length = min(max_length, self.max_specname_width) - len(spec.title) + 4 + (num_colourcodes * 2)
+            if ver:
+                spacer_length -= 7
             ascend_str = spec.ascendClassId_str()
             class_str = spec.classId_str()
             s = "" if len(spec.nodes) == 1 else "s"
             class_info = html_colour_text(class_str, f"{ascend_str}, ({len(spec.nodes)} point{s})")
-            text = f"<pre>{ver}{title}{spacer}{class_info}</pre>"
+            text = f"<pre>{ver}{title}{spacer_length * ' '}{class_info}</pre>"
             self.list_Trees.item(idx).setText(text)
         self.connect_triggers()
 

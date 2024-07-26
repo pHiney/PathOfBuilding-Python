@@ -2,10 +2,13 @@
 This Class manages all the elements and owns some elements of the "TREE" tab.
 """
 
+import re
+
 from PySide6.QtCore import Qt, Slot, QSize
+from PySide6.QtGui import QBrush
 from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QLineEdit, QPushButton, QDialog
 
-from PoB.constants import tree_versions, PlayerClasses, _VERSION_str
+from PoB.constants import colourEscapes, tree_versions, ColourCodes, PlayerClasses, _VERSION_str
 from PoB.settings import Settings
 from PoB.spec import Spec
 from dialogs.manage_tree_dialog import ManageTreeDlg
@@ -197,6 +200,9 @@ class TreeUI:
 
         :return: N/A
         """
+        hex_regex = re.compile(r"#([0-9a-fA-F]{6})")
+        single_colour_regex = re.compile(r"\^(\d{1})")
+
         # let's protect activeSpec as the next part will erase it
         active_spec = self.build.activeSpec
         for combo in (self.combo_manage_tree, self.win.combo_ItemsManageTree, self.combo_compare):
@@ -204,14 +210,27 @@ class TreeUI:
         for idx, spec in enumerate(self.build.specs):
             # print(f"fill_current_tree_combo: {type(spec), spec.title}")
             if spec is not None:
-                if spec.treeVersion != _VERSION_str:
-                    title = f"[{tree_versions[spec.treeVersion]}] {spec.title}"
+                title = spec.title
+                colour = ColourCodes.NORMAL.value
+                m = re.search(single_colour_regex, title)
+                if m:
+                    index = int(m.group(1))
+                    title = title.replace(f"^{index}", "")
+                    colour = colourEscapes[index].value
+
                 else:
-                    title = spec.title
+                    m = re.search(hex_regex, title)
+                    if m:
+                        colour = f"#{m.group(1)}"
+                        title = title.replace(colour, "")
+
+                if spec.treeVersion != _VERSION_str:
+                    title = f"[{tree_versions[spec.treeVersion]}] {title}"
                 for combo in (self.combo_manage_tree, self.win.combo_ItemsManageTree, self.combo_compare):
                     # print("fill_current_tree_combo", title, idx)
                     combo.addItem(title, idx)
                     combo.view().setMinimumWidth(combo.minimumSizeHint().width())
+                    combo.setItemData(idx, QBrush(colour), Qt.ForegroundRole)
 
         # reset activeSpec
         self.combo_manage_tree.setCurrentIndex(active_spec)
