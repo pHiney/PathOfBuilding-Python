@@ -130,5 +130,7 @@
  "MinionsAreUndamageable",
  "InnateTrauma",
  "DualWieldRequiresDifferentTypes",
- "NoVolley"
+ "NoVolley",
+ "Retaliation",
+ "NeverExertable"
 ]

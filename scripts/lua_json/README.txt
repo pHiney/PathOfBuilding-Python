@@ -1,1 +1,1 @@
-This directory is where you put the exported json files from the lua PoB
+This directory is where you put the exported json files from the lua PoB (see docs/Getting_info_out_of_luaPoB.txt)
