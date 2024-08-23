@@ -38,7 +38,6 @@ from dialogs.popup_dialogs import critical_dialog, yes_no_dialog
 from widgets.ui_utils import set_combo_index_by_data
 from PoB.utils import (
     _debug,
-    is_str_a_boolean,
     is_str_a_number,
     str_to_bool,
     bool_to_str,

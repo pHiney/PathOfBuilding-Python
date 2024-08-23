@@ -26,7 +26,7 @@ from PoB.constants import (
     starting_scion_node,
 )
 
-from PoB.utils import _debug, bool_to_str, html_colour_text, index_exists, remove_lua_colours, str_to_bool
+from PoB.utils import _debug, bool_to_str, check_title_for_colour, html_colour_text, index_exists, remove_lua_colours, str_to_bool
 
 """ ################################################### XML ################################################### """
 
@@ -507,7 +507,6 @@ def load_from_xml(filename_or_xml):
                 except KeyError:
                     continue
 
-    # ToDo: Complete
     if type(filename_or_xml) is xml.etree.ElementTree.ElementTree:
         xml_PoB = xmltodict.parse(ET.tostring(filename_or_xml.getroot(), encoding="utf8").decode("utf8"))
     else:
@@ -599,8 +598,9 @@ def load_from_xml(filename_or_xml):
     if type(xml_tree["Spec"]) is dict:  # Should be a list but will be a dict if only one entry
         xml_tree["Spec"] = [xml_tree["Spec"]]
     for xml_spec in xml_tree["Spec"]:
+        _title = xml_spec.get("@title", "Default")
         spec = {
-            "title": remove_lua_colours(xml_spec.get("@title", "Default"), True),
+            "title": _title,
             "treeVersion": xml_spec.get("@treeVersion", _VERSION_str),
             "classId": int(xml_spec.get("@classId", "0")),
             "ascendClassId": int(xml_spec.get("@ascendClassId", "0")),
@@ -610,6 +610,9 @@ def load_from_xml(filename_or_xml):
             "Sockets": "",
             "Overrides": "",
         }
+        if "^" in _title:
+            spec["colour"] = check_title_for_colour(_title)
+
         if xml_spec["Sockets"]:
             str_sockets = ""
             sockets = xml_spec["Sockets"]["Socket"]
@@ -799,11 +802,12 @@ def save_item_to_xml(_item, text_only=False):
     # save
 
 
-def save_to_xml(filename, build):
+def save_to_xml(filename, build, do_calcs=False):
     """
     Everything needed to convert internal dict to xml
     :param filename:
     :param build: Build() class
+    :param do_calcs: bool: If True, called from Do_Calcs(). Don't export some entries, like Notes, to xml
     :return: N/A
     """
 
@@ -843,10 +847,11 @@ def save_to_xml(filename, build):
         f"</Build>"
     )
     xml_build = ET.fromstring(_build)
-    for stat, value in json_build["PlayerStat"].items():
-        xml_build.append(ET.fromstring(f'<PlayerStat stat="{stat}" value="{str(value)}"/>'))
-    for stat, value in json_build["MinionStat"].items():
-        xml_build.append(ET.fromstring(f'<MinionStat stat="{stat}" value="{str(value)}"/>'))
+    if not do_calcs:
+        for stat, value in json_build["PlayerStat"].items():
+            xml_build.append(ET.fromstring(f'<PlayerStat stat="{stat}" value="{str(value)}"/>'))
+        for stat, value in json_build["MinionStat"].items():
+            xml_build.append(ET.fromstring(f'<MinionStat stat="{stat}" value="{str(value)}"/>'))
     tld = json_build["TimelessData"]
     xml_build.append(
         ET.fromstring(
@@ -860,22 +865,23 @@ def save_to_xml(filename, build):
         print_a_xml_element(xml_build)
 
     """Import"""
-    json_import = build["PathOfBuilding"]["Import"]
-    xml_import = ET.fromstring(
-        f'<Import lastCharacterHash="{json_import.get("lastCharacterHash","")}" lastRealm="{json_import.get("lastRealm","")}"'
-        f' exportParty="{bool_to_str(json_import.get("exportParty","False"))}" lastAccountHash="{json_import.get("lastAccountHash","")}"/>'
-    )
-    xml_root.append(xml_import)
-    if debug:
-        print_a_xml_element(xml_import)
+    if not do_calcs:
+        json_import = build["PathOfBuilding"]["Import"]
+        xml_import = ET.fromstring(
+            f'<Import lastCharacterHash="{json_import.get("lastCharacterHash","")}" lastRealm="{json_import.get("lastRealm","")}"'
+            f' exportParty="{bool_to_str(json_import.get("exportParty","False"))}" lastAccountHash="{json_import.get("lastAccountHash","")}"/>'
+        )
+        xml_root.append(xml_import)
+        if debug:
+            print_a_xml_element(xml_import)
 
     """Tree"""
     json_tree = build["PathOfBuilding"]["Tree"]
     xml_tree = ET.fromstring(f'<Tree activeSpec="{str(json_tree["activeSpec"]+1)}"> </Tree>')
     for spec in json_tree["Specs"]:
         _spec = (
-            f'<Spec masteryEffects="{str(spec["masteryEffects"])}" title="{spec["title"]}" ascendClassId="{str(spec["ascendClassId"])}" '
-            f'nodes="{str(spec["nodes"])}" secondaryAscendClassId="0" '
+            f'<Spec masteryEffects="{str(spec["masteryEffects"])}" title="{spec["title"].replace("&", "&amp;")}"'
+            f' ascendClassId="{str(spec["ascendClassId"])}" nodes="{str(spec["nodes"])}" secondaryAscendClassId="0" '
             f'treeVersion="{spec["treeVersion"]}" classId="{str(spec["classId"])}" />'
         )
         xml_spec = ET.fromstring(_spec)
@@ -895,19 +901,20 @@ def save_to_xml(filename, build):
         print_a_xml_element(xml_tree)
 
     """Notes"""
-    xml_root.append(ET.fromstring(f'<Notes>{build["PathOfBuilding"]["Notes"]}</Notes>'))
+    if not do_calcs:
+        xml_root.append(ET.fromstring(f'<Notes>{build["PathOfBuilding"]["Notes"]}</Notes>'))
 
     """Skills"""
     json_skills = build["PathOfBuilding"]["Skills"]
     skills = (
-        f'<Skills sortGemsByDPSField="{json_skills["sortGemsByDPSField"]}" activeSkillSet="{str(json_skills["activeSkillSet"]+1)}" '
+        f'<Skills sortGemsByDPSField="{json_skills["sortGemsByDPSField"]}" activeSkillSet="{str(json_skills["activeSkillSet"])}" '
         f'sortGemsByDPS="{bool_to_str(json_skills["sortGemsByDPS"])}" defaultGemQuality="{str(json_skills["defaultGemQuality"])}" '
         f'defaultGemLevel="{json_skills["defaultGemLevel"]}" showSupportGemTypes="{json_skills["showSupportGemTypes"]}" '
         f'showAltQualityGems="{bool_to_str(json_skills["showAltQualityGems"])}" />'
     )
     xml_skills = ET.fromstring(skills)
     for _set in json_skills["SkillSets"]:
-        xml_set = ET.fromstring(f'<SkillSet id="{str(_set["id"])}"/>')
+        xml_set = ET.fromstring(f'<SkillSet id="{str(_set["id"])}" title="{str(_set["title"])}"/>')
         for _sg in _set["SGroups"]:
             source_text = ""
             if _sg.get("source", ""):
@@ -915,7 +922,8 @@ def save_to_xml(filename, build):
                 source_text = f'source="{_sg.get("source","")}" '
             text_sg = (
                 f'<Skill mainActiveSkillCalcs="{str(_sg["mainActiveSkillCalcs"]+1)}" '
-                f'includeInFullDPS="{bool_to_str(_sg["includeInFullDPS"])}" label="{_sg["label"]}" {source_text} '
+                f'includeInFullDPS="{bool_to_str(_sg["includeInFullDPS"])}" '
+                f'label="{_sg["label"].replace("&", "&amp;")}" {source_text} '
                 f'enabled="{bool_to_str(_sg["enabled"])}" slot="{_sg["slot"]}" '
                 f'mainActiveSkill="{str(_sg["mainActiveSkill"]+1)}" />'
             )
@@ -950,23 +958,25 @@ def save_to_xml(filename, build):
     for _name, _value in json_calcs["Input"].items():
         _value, value_type = get_value_s_type(_value)
         xml_calcs.append(ET.fromstring(f'<Input name="{_name}" {value_type}="{_value}"/>'))
-    for _name, _value in json_calcs["Sections"].items():
-        xml_calcs.append(
-            ET.fromstring(f'<Section subsection="{_name}" collapsed="{bool_to_str(_value["collapsed"])}" id="{_value["id"]}"/>')
-        )
+    if not do_calcs:
+        for _name, _value in json_calcs["Sections"].items():
+            xml_calcs.append(
+                ET.fromstring(f'<Section subsection="{_name}" collapsed="{bool_to_str(_value["collapsed"])}" id="{_value["id"]}"/>')
+            )
     xml_root.append(xml_calcs)
     if debug:
         print_a_xml_element(xml_calcs)
 
     """TreeView"""
-    json_tv = build["PathOfBuilding"]["TreeView"]
-    tv = (
-        f'<TreeView searchStr="{json_tv["searchStr"]}" zoomY="0" zoomLevel="3" '
-        f'showStatDifferences="{bool_to_str(json_tv["showStatDifferences"])}" zoomX="0" />'
-    )
-    xml_root.append(ET.fromstring(tv))
-    if debug:
-        print_a_xml_element(ET.fromstring(tv))
+    if not do_calcs:
+        json_tv = build["PathOfBuilding"]["TreeView"]
+        tv = (
+            f'<TreeView searchStr="{json_tv["searchStr"]}" zoomY="0" zoomLevel="3" '
+            f'showStatDifferences="{bool_to_str(json_tv["showStatDifferences"])}" zoomX="0" />'
+        )
+        xml_root.append(ET.fromstring(tv))
+        if debug:
+            print_a_xml_element(ET.fromstring(tv))
 
     """Items"""
     json_items = build["PathOfBuilding"]["Items"]

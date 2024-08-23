@@ -14,6 +14,7 @@ import os
 import platform
 import pyperclip
 import re
+import subprocess
 import sys
 
 from typing import Union
@@ -38,6 +39,7 @@ from PySide6.QtWidgets import (
 )
 
 from PoB.constants import (
+    ColourCodes,
     PlayerClasses,
     bandits,
     bad_text,
@@ -55,7 +57,7 @@ from PoB.build import Build
 from PoB.settings import Settings
 from PoB.pob_file import get_file_info
 from PoB.player import Player
-from PoB.utils import html_colour_text, format_number, print_call_stack, _debug
+from PoB.utils import html_colour_text, format_number, is_str_a_number, print_call_stack, str_to_bool, _debug
 from PoB.pob_xml import load_from_xml, save_to_xml
 from dialogs.browse_file_dialog import BrowseFileDlg
 from dialogs.export_dialog import ExportDlg
@@ -1170,12 +1172,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :param new_index: string: the combo's index. -1 during a .clear()
         :return: N/A
         """
+        print(f"main_skill_index_changed: {new_index=}")
         if new_index == -1:
             return
         # print("main_skill_index_changed.current_index ", new_index, self.combo_MainSkill.currentText())
         # must happen before call to update_socket_group_labels
         self.build.mainSocketGroup = new_index
         self.skills_ui.update_socket_group_labels()
+        self.do_calcs()
 
     @Slot()
     def update_status_bar(self, message="", timeout=5, colour=""):
@@ -1206,6 +1210,121 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot()
     def do_calcs(self, test_item=None, test_node=None):
+        """
+        Do and Display Calculations
+        :param: test_item: Item() - future comparison
+        :param: test_node: Node() - future comparison
+        :return: N/A
+        """
+
+        def get_resist_overcap_value(res_type):
+            """
+            Get a resists over cap value andreturn it if it's not 0
+            :param res_type: str: Fire|Cold|Lightning
+            :return: str: formate string for adding to the main Res value
+            """
+            _value = self.player.stats.get(f"{res_type}ResistOverCap", 0)
+            if _value > 0:
+                _value_str = format_number(_value, " (%d%%)", self.settings)
+                return html_colour_text("DARKGRAY", _value_str)
+            else:
+                return ""
+
+        if not self.alerting:
+            # Don't keep calculating as a build is loaded
+            return
+        self.config_ui.save()
+        save_to_xml("c:/git/_PathOfBuilding.play/src/Builds/stats.xml", self.build.json, True)
+        try:
+            result = subprocess.check_output(
+                "c:/git/_PathOfBuilding.play/runtime/luajit.exe HeadlessWrapper.lua",
+                shell=True,
+                text=True,
+                cwd="c:/git/_PathOfBuilding.play/src",
+                timeout=5,
+            )
+            # Add the lines with ' = ' in them to player Stats
+            self.player.clear()
+            for line in [line for line in result.splitlines() if "=" in line]:
+                key, value = line.strip().split(" = ")
+                if value and is_str_a_number(value):
+                    if "." in value:
+                        self.player.stats[key] = float(value)
+                    else:
+                        self.player.stats[key] = int(value)
+                elif value and value[1:].lower() in ("t", "f"):
+                    self.player.conditions[key] = str_to_bool(value)
+                if "Minion." in key:
+                    # self.minion.stats[key.replace('Minion.','')] = value
+                    pass
+                elif "MainHand." in key:
+                    self.player.mainhand[key.replace("MainHand.", "")] = value
+                elif "OffHand." in key:
+                    self.player.offhand[key.replace("OffHand.", "")] = value
+            # print(self.player.stats)
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing command: {e}")
+            return
+
+        # Now show them
+        self.textedit_Statistics.clear()
+        just_added_blank = False  # Prevent duplicate blank lines. Faster than investigating the last line added of a QLineEdit.
+        for stat_name in player_stats_list:
+            if stat_name in ("Speed", "HitChance"):
+                # ToDo: What are the other entries for ??
+                # Speed has attack, spell and "". How do we differentiate?
+                stat = deepcopy(player_stats_list[stat_name]["attack"])
+            elif stat_name in ("TotalDPS", "ImpaleDPS", "WithImpaleDPS"):
+                stat = deepcopy(player_stats_list[stat_name]["showAverage"])
+            else:
+                stat = deepcopy(player_stats_list[stat_name])
+            # print(f"{stat_name=}, {type(stat)=}, {stat.values()=}")
+            if "blank" in stat_name:
+                if not just_added_blank:
+                    self.textedit_Statistics.append("")
+                    just_added_blank = True
+            # elif stat.get("label", 0) == 0:
+            # ToDo: Need to use the flag attribute to separate
+            # stat = list(stat.values())[0]
+            else:
+                # Do we have this stat in our stats dict
+                stat_value = self.player.stats.get(stat_name, bad_text)
+                # print(f"{stat_name=}, {stat_value=}, {stat.get('condition', bad_text)=}")
+                if stat_value != bad_text:
+                    # Work out if we can show this stat
+                    stat_condition = stat.get("condition", bad_text)
+                    if stat_condition != bad_text:
+                        if stat_condition == "Y":
+                            display, stat = self.player.stat_conditions(stat_name, stat_value, stat)
+                        else:
+                            display = self.player.conditions.get(stat.get("condition"), False)
+                    else:
+                        display = not stat.get("hideStat", False) and stat_value != 0
+                    if stat_name == "LightningMaximumHitTaken" and not display:
+                        # Special Case for (Lightning,Fire,Cold)MaximumHitTaken are all the same
+                        display = (
+                            self.player.stats.get("LightningMaximumHitTaken", bad_text)
+                            == self.player.stats.get("FireMaximumHitTaken", bad_text)
+                            == self.player.stats.get("ColdMaximumHitTaken", bad_text)
+                        )
+                        stat["label"] = "Elemental Max Hit"
+
+                    if display:
+                        _colour = stat.get("colour", self.settings.qss_default_text)
+                        _fmt = stat.get("fmt", "%d")
+                        _str_value = format_number(stat_value, _fmt, self.settings, True)
+                        match stat_name:
+                            case "FireResist" | "ColdResist" | "LightningResist":
+                                _extra_value = get_resist_overcap_value(stat_name.replace("Resist", ""))
+                            case _:
+                                _extra_value = ""
+                        self.textedit_Statistics.append(
+                            f'<span style="white-space: pre; color:{_colour};">{stat["label"]:>24}:</span> {_str_value} {_extra_value}'
+                        )
+                        just_added_blank = False
+
+    @Slot()
+    def do_calcs_v1(self, test_item=None, test_node=None):
         """
         Do and Display Calculations
         :param: test_item: Item() - future comparison

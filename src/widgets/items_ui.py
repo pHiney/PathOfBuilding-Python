@@ -238,6 +238,7 @@ class ItemsUI:
         # print("lines", lines)
         item_class = lines.pop(0)
         m = re.search(r"(.*): (.*)", item_class)
+        print(f"process_item_from_clipboard: {m=}, {m.groups()=}")
         if m.group(2) not in import_classes:
             print("Error: Dave, I don't know what to do with this:\nUnknown 'Item Class'\n", data)
             self.win.update_status_bar(f"Item Paste: Wrong item class -> {m.group(2)}.", 10, "RED")

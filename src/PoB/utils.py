@@ -84,6 +84,15 @@ class PoBDict(object):
         return self.__dict__.items()
 
 
+def bool_to_str(in_bool):
+    """
+    Return a string from a boolean.
+    :param: in_bool: Boolean: The setting to be evaluated
+    :returns: String: true or false
+    """
+    return in_bool and "true" or "false"
+
+
 def str_to_bool(in_str):
     """
     Return a boolean from a string. As the settings could be manipulated by a human, we can't trust eval()
@@ -94,16 +103,7 @@ def str_to_bool(in_str):
     return in_str.lower() in ("yes", "true", "t", "1", "on")
 
 
-def bool_to_str(in_bool):
-    """
-    Return a string from a boolean.
-    :param: in_bool: Boolean: The setting to be evaluated
-    :returns: String: true or false
-    """
-    return in_bool and "true" or "false"
-
-
-is_str_a_boolean = str_to_bool
+# is_str_a_boolean = str_to_bool
 
 
 def bool_to_int(in_bool):
@@ -121,7 +121,11 @@ def is_str_a_number(in_str):
     :param: in_str: String: The setting to be evaluated
     :returns: True if it looks like it could be a float or integer
     """
-    return in_str.startswith(r"[-+]") and in_str[1:].isdigit() or in_str.isdigit()
+    try:
+        float(in_str)
+        return True
+    except ValueError:
+        return False
 
 
 def index_exists(_list_or_dict, index):
@@ -233,6 +237,20 @@ def remove_lua_colours(text, just_duplicates: bool = False):
         except ValueError:
             pass
     return text
+
+
+def check_title_for_colour(title):
+    """
+    Check inputstring for a ^N (where N is 0..9)
+    :param title: str
+    :return: _colour: #XXXXXX if ^N found or "" if not.
+    """
+    _colour = ""
+    __title = remove_lua_colours(title, True)
+    m = re.search(r"\^(\d)", __title)
+    if m:
+        _colour = colourEscapes[int(m.group(1))].value
+    return _colour
 
 
 def format_number(the_number, format_str, settings, pos_neg_colour=False):

@@ -54,6 +54,10 @@ class Player:
         self.level = build.level
         # dictionary lists of the stat elements
         self.stats = {}
+        self.mainhand = {}
+        self.offhand = {}
+        # dictionary list of things like ManaHasCost = True
+        self.conditions = {}
         # self.skills = []
         # self.item_sets = set()
         # self.minions = set()
@@ -67,6 +71,8 @@ class Player:
         self.item_minion_stats = {}
         self.node_minion_stats = {}
         self.all_minion_stats = {}
+        # List of warnings
+        self.warnings = []
 
     def __repr__(self) -> str:
         return f"Level {self.level} {self.player_class.name}"
@@ -462,31 +468,154 @@ class Player:
         self.node_minion_stats.clear()
         self.all_player_stats.clear()
         self.all_minion_stats.clear()
+        self.stats.clear()
+        self.conditions.clear()
+        self.mainhand.clear()
+        self.offhand.clear()
 
-    def stat_conditions(self, stat_name, stat_value, max_value=0):
+    def stat_conditions(self, stat_name, stat_value, stat, max_value=0):
         """
         Check if this stat can be shown.
         :param max_value:
         :param stat_name: str
         :param stat_value: int or float
+        :param stat: dictionary from player_stats_list constant (this is deepcopied so can be altered)
         :param max_value: int
-        :return: bool: true if stat_value is not 0
+        :return:
+            bool: true if stat_value is not 0
+            stat: a copy of the passed in stat, altered if needed.
         """
-        match stat_name:
-            case "ReqStr":
-                return stat_value > self.stats["Str"]
-            case "ReqDex":
-                return stat_value > self.stats["Dex"]
-            case "ReqInt":
-                return stat_value > self.stats["Int"]
-            case "Spec:ManaInc":
-                return self.stats["Mana"] != 0
-            case "Spec:EnergyShieldInc":
-                return self.stats.get("EnergyShield", 0) != 0
-            case "Spec:ArmourInc":
-                return self.stats.get("Armour", 0) != 0
-            case "FireResistOverCap" | "ColdResistOverCap" | "LightningResistOverCap":
-                # These are shown with the resists
-                return False
-            case _:
-                return stat_value != 0
+        # print(f"stat_conditions: {stat_name=}, {stat_value=}")
+
+        # match statement, according to research on the internet, is just one big if/then/elif.
+        #   This OP shows it's gets slower the further down the list it gets: https://stackoverflow.com/questions/68476576
+        # Whilst this is more unwieldy from an admin point of view, it is fast - as a dictionary is a hash table
+        #   and all the entries are constants.
+
+        # Local variable we can overwrite when needed
+        _stat = deepcopy(stat)
+
+        def averagedamage():
+            nonlocal _stat
+            # ToDo: what is monster explode and where do we get it.
+            print(f"player.averagedamage: {stat_name=}", stat)
+            print(f"player.averagedamage: ", stat["attack"])
+            _stat = stat["attack"]
+            return True
+
+        def reqstr():
+            ret = stat_value > self.stats["Str"]
+            if ret:
+                self.warnings.append("You do not meet the Strength requirement")
+            return ret
+
+        def reqdex():
+            ret = stat_value > self.stats["Dex"]
+            if ret:
+                self.warnings.append("You do not meet the Dexterity requirement")
+            return ret
+
+        def reqint():
+            ret = stat_value > self.stats["Int"]
+            if ret:
+                self.warnings.append("You do not meet the Intelligence requirement")
+            return ret
+
+        def reqomni():
+            ret = self.stats.get("Omni", bad_text) != bad_text and stat_value > self.stats["Omni"]
+            if ret:
+                self.warnings.append("You do not meet the Omniscience requirement")
+            return ret
+
+        def spec_manainc():
+            return self.stats["Mana"] != 0
+
+        def spec_energyshieldinc():
+            return self.stats.get("EnergyShield", 0) != 0
+
+        def spec_evasioninc():
+            return self.stats.get("Evasion", 0) != 0
+
+        def spec_armourinc():
+            return self.stats.get("Armour", 0) != 0
+
+        def elemaximumhittaken():
+            return not (
+                self.stats.get("LightningMaximumHitTaken", bad_text)
+                == self.stats.get("FireMaximumHitTaken", bad_text)
+                == self.stats.get("ColdMaximumHitTaken", bad_text)
+            )
+
+        def spec_lifeinc():
+            return stat_value > 0 and self.stats.get("Life", 0) > 1
+
+        def lifeunreserved():
+            ret = stat_value < self.stats.get("Life", 0)
+            if ret:
+                self.warnings.append("Your unreserved Life is below 1")
+            return ret
+
+        def liferecoverable():
+            return stat_value < self.stats.get("LifeUnreserved", 0)
+
+        def liferecovery():
+            # ToDo: duplicate stats
+            return stat_value < self.stats.get("LifeUnreserved", 0)
+
+        def lifeunreservedpercent():
+            return stat_value < 100
+
+        def liferegenrecovery():
+            # ToDo: duplicate stats
+            # label = "Life Regen"
+            return (
+                self.stats.get("LifeRecovery", bad_text) != bad_text
+                and self.stats["LifeRecovery"] <= 0
+                and self.stats.get("LifeRegenRecovery", 0) != 0,
+            )
+
+            # # label = "Life Recovery"
+            # return self.stats["LifeRecovery"] > 0 and self.stats.get("LifeRegenRecovery", 0) != 0
+
+        def manaunreserved():
+            ret = stat_value < self.stats.get("Mana", 0)
+            if ret:
+                self.warnings.append("Your unreserved Mana is negative")
+            return ret
+
+        def manaunreservedpercent():
+            return stat_value < 100
+
+        def manaregenrecovery():
+            # ToDo: duplicate stats
+            pass
+
+        # Do Not add the (). ie: averagedamage()
+        stat_funcs = {
+            "AverageDamage": averagedamage,
+            "ReqStr": reqstr,
+            "ReqDex": reqdex,
+            "ReqInt": reqint,
+            "ReqOmni": reqomni,
+            "Spec:ManaInc": spec_manainc,
+            "Spec:EnergyShieldInc": spec_energyshieldinc,
+            "Spec:EvasionInc": spec_evasioninc,
+            "Spec:ArmourInc": spec_armourinc,
+            "LightningMaximumHitTaken": elemaximumhittaken,
+            "FireMaximumHitTaken": elemaximumhittaken,
+            "ColdMaximumHitTaken": elemaximumhittaken,
+            "Spec:LifeInc": spec_lifeinc,
+            "LifeUnreserved": lifeunreserved,
+            "LifeRecovery": liferecovery,
+            "LifeRecoverable": liferecoverable,
+            "LifeUnreservedPercent": lifeunreservedpercent,
+            "LifeRegenRecovery": liferegenrecovery,
+            "ManaUnreserved": manaunreserved,
+            "ManaUnreservedPercent": manaunreservedpercent,
+            "ManaRegenRecovery": manaregenrecovery,
+        }
+
+        return stat_funcs[stat_name](), _stat
+        #
+        # ToDo: stat = "MainHand", childStat = "Accuracy", label = "MH Accuracy", fmt = "d", condFunc = function(v,o) return o.PreciseTechnique end, warnFunc = function(v,o) return v < o.Life and "You do not have enough Accuracy for Precise Technique" end, warnColor = true
+        # ToDo: stat = "OffHand", childStat = "Accuracy", label = "OH Accuracy", fmt = "d", condFunc = function(v,o) return o.PreciseTechnique end, warnFunc = function(v,o) return v < o.Life and "You do not have enough Accuracy for Precise Technique" end, warnColor = true

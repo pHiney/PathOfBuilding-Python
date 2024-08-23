@@ -925,6 +925,7 @@ class SkillsUI:
         :param info: Some sort of info for a widget. EG: checked state for a checkBox, text for a comboBox.
         :return: N/A
         """
+        print(f"save_socket_group_settings, {info=}")
         if self.current_socket_group is not None:
             # print(f"save_socket_group_settings, {type(info)}, '{info}'")
             self.current_socket_group["slot"] = self.win.combo_SocketedIn.currentText()
@@ -933,9 +934,11 @@ class SkillsUI:
             self.current_socket_group["includeInFullDPS"] = self.win.check_SocketGroup_FullDPS.isChecked()
             item = self.win.list_SocketGroups.currentItem()
             # stop a recursion error as save_socket_group_settings is called from define_socket_group_label as well
+            print(f"save_socket_group_settings2, {info=}")
             if info is not None:
                 self.define_socket_group_label(item)
-            self.load_main_skill_combo()
+            # self.load_main_skill_combo()
+        print(f"save_socket_group_settings3, {info=}")
 
     @Slot()
     def socket_groups_rows_moved(self, parent, start, end, destination, dest_row):
