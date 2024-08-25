@@ -1217,6 +1217,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         :param: test_node: Node() - future comparison
         :return: N/A
         """
+        # Leave this on so we can see how many times do_calcs is called in a row. Ideally only once.
+        # But changing trees ran five times on tree change.
+        _debug(f"do_calcs: {self.alerting=}")
 
         def get_resist_overcap_value(res_type):
             """
@@ -1269,7 +1272,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         # Now show them
-        print(f"{self.player.current_skill=}")
+        # print(f"{self.player.current_skill=}")
         self.textedit_Statistics.clear()
         just_added_blank = False  # Prevent duplicate blank lines. Faster than investigating the last line added of a QLineEdit.
         for stat_name in player_stats_list:

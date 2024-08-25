@@ -166,7 +166,7 @@ def _debug(*text):
     """
     if pob_debug:
         lines = traceback.format_stack()
-        print(f"{datetime.datetime.now()}: {text}", ":", lines[-2].strip().partition("\n")[0])
+        print(f"{datetime.datetime.now()}: {text}", ":", lines[-3].strip().partition("\n")[0])
 
 
 def unique_sorted(values):
