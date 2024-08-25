@@ -21,7 +21,7 @@ from typing import Union
 from pathlib import Path
 import psutil
 
-from PySide6.QtCore import Qt, QPoint, Slot
+from PySide6.QtCore import Qt, QPoint, QProcess, Slot
 from PySide6.QtGui import QAction, QColor, QPalette
 from PySide6.QtWidgets import (
     QApplication,
@@ -297,6 +297,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Start the statusbar self updating
         self.update_status_bar()
+
+        self.calc_process = None
+        self.current_stats = []  # list of lines from the luajit. Used for future comparisons.
+        # self.do_calcs()
 
         # init
 
@@ -1212,7 +1216,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @Slot()
     def do_calcs(self, test_item: None = None, test_node: None = None) -> None:
         """
-        Do and Display Calculations
+        Run luaPoB and Display Calculations.
+        https://www.pythonguis.com/tutorials/pyside6-qprocess-external-programs/
+        Comparison items are probs not needed, as we will need to deepcopy build, make the adjustment and call
+        do_calcs. This would then need a different callback (so that would be the 1st param) who would know to compare the current stats
+        to these new stats.
         :param: test_item: Item() - future comparison
         :param: test_node: Node() - future comparison
         :return: N/A
@@ -1220,6 +1228,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Leave this on so we can see how many times do_calcs is called in a row. Ideally only once.
         # But changing trees ran five times on tree change.
         _debug(f"do_calcs: {self.alerting=}")
+        if not self.alerting or self.calc_process is not None:
+            # Don't keep calculating as a build is loaded or a thread running
+            return
+
+        self.config_ui.save()
+        save_to_xml("c:/git/_PathOfBuilding.play/src/Builds/stats.xml", self.build.json, True)
+
+        # self.thread_data = []
+        # self.calc_process = threading.Thread(target=self.do_calcs_thread(self.thread_data), daemon=True, name="PyPoB Do Calcs")
+        self.calc_process = QProcess()
+        _debug(f"pre_start: {self.alerting=}")
+        self.calc_process.finished.connect(self.do_calcs_callback)
+        self.calc_process.setWorkingDirectory(f"{self.settings._exe_dir}/lua/src")
+        self.calc_process.start(f"{self.settings._exe_dir}/lua/runtime/luajit.exe", ["../PoB_jit.lua"])
+
+    @Slot()
+    def do_calcs_callback(self) -> None:
+        """Callback function from luajit Process started by do_calcs"""
 
         def get_resist_overcap_value(res_type):
             """
@@ -1234,42 +1260,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             else:
                 return ""
 
-        if not self.alerting:
-            # Don't keep calculating as a build is loaded
-            return
+        _debug(f"do_calcs_callback:")
+        self.current_stats = bytes(self.calc_process.readAllStandardOutput()).decode("utf8").splitlines()
 
-        self.config_ui.save()
-        save_to_xml("c:/git/_PathOfBuilding.play/src/Builds/stats.xml", self.build.json, True)
-        try:
-            result = subprocess.check_output(
-                "c:/git/_PathOfBuilding.play/runtime/luajit.exe HeadlessWrapper.lua",
-                shell=True,
-                text=True,
-                cwd="c:/git/_PathOfBuilding.play/src",
-                timeout=5,
-            )
-            # Add the lines with ' = ' in them to player Stats
-            self.player.clear()
-            for line in [line for line in result.splitlines() if "=" in line]:
-                key, value = line.strip().split(" = ")
-                if value and is_str_a_number(value):
-                    if "." in value:
-                        self.player.stats[key] = float(value)
-                    else:
-                        self.player.stats[key] = int(value)
-                elif value and value[1:].lower() in ("t", "f"):
-                    self.player.conditions[key] = str_to_bool(value)
-                if "Minion." in key:
-                    # self.minion.stats[key.replace('Minion.','')] = value
-                    pass
-                elif "MainHand." in key:
-                    self.player.mainhand[key.replace("MainHand.", "")] = value
-                elif "OffHand." in key:
-                    self.player.offhand[key.replace("OffHand.", "")] = value
-            # print(self.player.stats)
-        except subprocess.CalledProcessError as e:
-            print(f"Error executing command: {e}")
-            return
+        # Add the lines with ' = ' in them to player Stats
+        self.player.clear()
+        for line in [line for line in self.current_stats if "=" in line]:
+            key, value = line.strip().split(" = ")
+            if value and is_str_a_number(value):
+                if "." in value:
+                    self.player.stats[key] = float(value)
+                else:
+                    self.player.stats[key] = int(value)
+            elif value and value[1:].lower() in ("t", "f"):
+                self.player.conditions[key] = str_to_bool(value)
+            if "Minion." in key:
+                # self.minion.stats[key.replace('Minion.','')] = value
+                pass
+            elif "MainHand." in key:
+                self.player.mainhand[key.replace("MainHand.", "")] = value
+            elif "OffHand." in key:
+                self.player.offhand[key.replace("OffHand.", "")] = value
+        # print(self.player.stats)
 
         # Now show them
         # print(f"{self.player.current_skill=}")
@@ -1330,9 +1342,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             f'<span style="white-space: pre; color:{_colour};">{stat["label"]:>24}:</span> {_str_value} {_extra_value}'
                         )
                         just_added_blank = False
+            self.calcs_active = False
+            self.calc_process = None
+            self.calcs_active = False
 
     @Slot()
-    def do_calcs_v1(self, test_item=None, test_node=None):
+    def do_calcs_difference_callback(self) -> None:
+        """Future Callback function from luajit Process started by do_calcs to show differences"""
+        pass
+
+    @Slot()
+    def do_calcs_v1(self, test_item=None, test_node=None) -> None:
         """
         Do and Display Calculations
         :param: test_item: Item() - future comparison

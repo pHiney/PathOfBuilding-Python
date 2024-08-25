@@ -901,8 +901,9 @@ def save_to_xml(filename, build, do_calcs=False):
         print_a_xml_element(xml_tree)
 
     """Notes"""
-    if not do_calcs:
-        xml_root.append(ET.fromstring(f'<Notes>{build["PathOfBuilding"]["Notes"]}</Notes>'))
+    # 20240825: I'm disabling this as I'm corrupting Notes field with HTML
+    # if not do_calcs:
+    #     xml_root.append(ET.fromstring(f'<Notes>{build["PathOfBuilding"]["Notes"]}</Notes>'))
 
     """Skills"""
     json_skills = build["PathOfBuilding"]["Skills"]
