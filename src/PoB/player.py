@@ -73,6 +73,7 @@ class Player:
         self.all_minion_stats = {}
         # List of warnings
         self.warnings = []
+        self.current_skill = {}
 
     def __repr__(self) -> str:
         return f"Level {self.level} {self.player_class.name}"
@@ -473,13 +474,14 @@ class Player:
         self.mainhand.clear()
         self.offhand.clear()
 
-    def stat_conditions(self, stat_name, stat_value, stat, max_value=0):
+    def stat_conditions(self, stat_name: str, stat_value: any, stat: dict, skill_flags: list, max_value: int = 0) -> bool:
         """
         Check if this stat can be shown.
         :param max_value:
         :param stat_name: str
         :param stat_value: int or float
         :param stat: dictionary from player_stats_list constant (this is deepcopied so can be altered)
+        :param skill_flags: list. The baseFlags entry from the current skill, or []
         :param max_value: int
         :return:
             bool: true if stat_value is not 0
@@ -498,10 +500,140 @@ class Player:
         def averagedamage():
             nonlocal _stat
             # ToDo: what is monster explode and where do we get it.
-            print(f"player.averagedamage: {stat_name=}", stat)
-            print(f"player.averagedamage: ", stat["attack"])
             _stat = stat["attack"]
             return True
+
+        def averageburstdamage():
+            return self.stats.get("AverageBurstHits", 0) > 1 and stat_value > 0
+
+        def speed():
+            nonlocal _stat
+            if "attack" in skill_flags:
+                _stat = stat["attack"]
+                return stat_value > 0 and self.stats.get("TriggerTime", 0) == 0
+            elif "spell" in skill_flags:
+                _stat = stat["spell"]
+                return stat_value > 0 and self.stats.get("TriggerTime", 0) == 0
+            else:
+                _stat = stat["trigger"]
+                return self.stats.get("TriggerTime", 0) != 0
+
+        def not_triggertime():
+            return self.stats.get("TriggerTime", bad_text) == bad_text
+
+        def critchance():
+            return stat_value != self.stats.get("PreEffectiveCritChance", 0)
+
+        def critmultiplier():
+            return self.stats.get("CritChance", 0) != 0
+
+        def hitchance():
+            nonlocal _stat
+            if self.stats.get("enemyHasSpellBlock", bad_text) != bad_text:
+                _stat = stat["enemyHasSpellBlock"]
+                return
+            else:
+                _stat = stat["attack"]
+                return "attack" in skill_flags
+
+        def totaldps():
+            nonlocal _stat
+            # ToDo: Need to work out the diff for "showAverage" and "notAverage".
+            _stat = stat["showAverage"]
+            return True
+
+        def withdotdps():
+            return (
+                stat_value != self.stats["TotalDPS"]
+                and self.stats.get("PoisonDPS", 0) == 0
+                and self.stats.get("IgniteDPS", 0) == 0
+                and self.stats.get("ImpaleDPS", 0) == 0
+                and self.stats.get("BleedDPS", 0) == 0
+            )
+
+        def corruptingblooddps():
+            # ToDo: v >= data.misc.DotDpsCap
+            return True
+
+        def withbleeddps():
+            return (
+                stat_value != self.stats["TotalDPS"]
+                and self.stats.get("PoisonDPS", 0) == 0
+                and self.stats.get("IgniteDPS", 0) == 0
+                and self.stats.get("ImpaleDPS", 0) == 0
+                and self.stats.get("TotalDot", 0) == 0
+            )
+
+        def mirageburninggrounddps():
+            return stat_value != self.stats.get("BurningGroundDPS", bad_text)
+
+        def withignitedps():
+            return (
+                stat_value != self.stats["TotalDPS"]
+                and self.stats.get("PoisonDPS", 0) == 0
+                and self.stats.get("BleedDPS", 0) == 0
+                and self.stats.get("ImpaleDPS", 0) == 0
+                and self.stats.get("TotalDot", 0) == 0
+            )
+
+        def miragecausticgrounddps():
+            return stat_value != self.stats.get("CausticGroundDPS", bad_text)
+
+        def withpoisondps():
+            return (
+                stat_value != self.stats["TotalDPS"]
+                and self.stats.get("IgniteDPS", 0) == 0
+                and self.stats.get("BleedDPS", 0) == 0
+                and self.stats.get("ImpaleDPS", 0) == 0
+                and self.stats.get("TotalDot", 0) == 0
+            )
+
+        def totaldotdps():
+            return self.stats.get("showTotalDotDPS", 0) or (
+                stat_value != self.stats.get("TotalDot", 0)
+                and stat_value != self.stats.get("TotalPoisonDPS", 0)
+                and stat_value != self.stats.get("CausticGroundDPS", 0)
+                and stat_value != (self.stats.get("TotalIgniteDPS", 0) or self.stats.get("IgniteDPS", 0))
+                and stat_value != self.stats.get("BurningGroundDPS", 0)
+                and stat_value != self.stats.get("BleedDPS", 0)
+                and stat_value != self.stats.get("CorruptingBloodDPS", 0)
+                and stat_value != self.stats.get("MirageCausticGroundDPS", 0)
+                and stat_value != self.stats.get("MirageBurningGroundDPS", 0)
+            )
+
+        def withimpaledps():
+            return (
+                stat_value != self.stats["TotalDPS"]
+                and self.stats.get("IgniteDPS", 0) == 0
+                and self.stats.get("BleedDPS", 0) == 0
+                and self.stats.get("PoisonDPS", 0) == 0
+                and self.stats.get("TotalDot", 0) == 0
+            )
+
+        def combineddps():
+            return (
+                stat_value != (self.stats.get("TotalDPS", 0) + (self.stats.get("TotalDot", 0)))
+                and stat_value != self.stats.get("WithImpaleDPS", 0)
+                and (
+                    self.stats.get("showTotalDotDPS", 0) != 0
+                    or (
+                        stat_value != self.stats.get("WithPoisonDPS", 0) != 0
+                        and stat_value != self.stats.get("WithIgniteDPS", 0) != 0
+                        and stat_value != self.stats.get("WithBleedDPS", 0) != 0
+                    )
+                )
+            )
+
+        def combinedavg():
+            return (
+                stat_value != self.stats.get("AverageDamage", 0)
+                and (self.stats.get("TotalDot", 0) == 0)
+                and (
+                    stat_value != self.stats.get("WithPoisonDPS", 0)
+                    or stat_value != self.stats.get("WithIgniteDPS", 0)
+                    or stat_value != self.stats.get("WithBleedDPS", 0)
+                )
+            )
 
         def reqstr():
             ret = stat_value > self.stats["Str"]
@@ -540,11 +672,16 @@ class Player:
             return self.stats.get("Armour", 0) != 0
 
         def elemaximumhittaken():
-            return not (
+            nonlocal _stat
+            # Todo: Revist for Ele Max hit (alt Tag ?)
+            ret = not (
                 self.stats.get("LightningMaximumHitTaken", bad_text)
                 == self.stats.get("FireMaximumHitTaken", bad_text)
                 == self.stats.get("ColdMaximumHitTaken", bad_text)
             )
+            if not ret and stat_name == "LightningMaximumHitTaken":
+                _stat["label"] = _stat["alt_label"]
+            return ret
 
         def spec_lifeinc():
             return stat_value > 0 and self.stats.get("Life", 0) > 1
@@ -593,6 +730,26 @@ class Player:
         # Do Not add the (). ie: averagedamage()
         stat_funcs = {
             "AverageDamage": averagedamage,
+            "AverageBurstDamage": averageburstdamage,
+            "Speed": speed,
+            "HitSpeed": not_triggertime,
+            "HitTime": not_triggertime,
+            "TotemPlacementTime": not_triggertime,
+            "CritChance": critchance,
+            "CritMultiplier": critmultiplier,
+            "HitChance": hitchance,
+            "TotalDPS": totaldps,
+            "WithDotDPS": withdotdps,
+            "CorruptingBloodDPS": corruptingblooddps,
+            "WithBleedDPS": withbleeddps,
+            "MirageBurningGroundDPS": mirageburninggrounddps,
+            "WithIgniteDPS": withignitedps,
+            "MirageCausticGroundDPS": miragecausticgrounddps,
+            "WithPoisonDPS": withpoisondps,
+            "TotalDotDPS": totaldotdps,
+            "WithImpaleDPS": withimpaledps,
+            "CombinedDPS": combineddps,
+            "CombinedAvg": combinedavg,
             "ReqStr": reqstr,
             "ReqDex": reqdex,
             "ReqInt": reqint,

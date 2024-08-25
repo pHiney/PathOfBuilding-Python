@@ -1084,7 +1084,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dlg = ExportDlg(self.settings, xml_root, self)
         dlg.exec()
 
-    def set_current_tab(self, tab_name=""):
+    def set_current_tab(self, tab_name: str = "") -> None:
         """
         Actions required when setting the current tab from the configuration xml file
 
@@ -1101,15 +1101,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tab_main.setCurrentIndex(0)
 
     @Slot()
-    def active_skill_changed(self, _skill_text):
+    def active_skill_changed(self, _skill_text: str) -> None:
         """
         Actions when changing combo_MainSkillActive
 
         :return: N/A
         """
+        self.player.current_skill = self.skills_ui.gems_by_name_or_id.get(_skill_text, None)
         self.do_calcs()
 
-    def load_main_skill_combo(self, _list):
+    def load_main_skill_combo(self, _list: list) -> None:
         """
         Load the left hand socket group (under "Main Skill") controls
 
@@ -1143,7 +1144,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.combo_MainSkill.setCurrentIndex(current_index)
 
     @Slot()
-    def main_skill_text_changed(self, new_text):
+    def main_skill_text_changed(self, new_text: str) -> None:
         """
         Fill out combo_MainSkillActive with the current text of combo_MainSkill
 
@@ -1160,19 +1161,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.combo_MainSkillActive.clear()
         self.combo_MainSkillActive.addItems(self.combo_MainSkill.currentData().split(", "))
         self.combo_MainSkillActive.view().setMinimumWidth(self.combo_MainSkillActive.minimumSizeHint().width())
-        self.combo_MainSkillActive.setCurrentIndex(0)
 
         self.combo_MainSkillActive.currentTextChanged.connect(self.active_skill_changed)
+        self.combo_MainSkillActive.setCurrentIndex(0)
 
     @Slot()
-    def main_skill_index_changed(self, new_index):
+    def main_skill_index_changed(self, new_index: int) -> None:
         """
         Actions when changing the main skill combo. Update the Skills tab.
 
         :param new_index: string: the combo's index. -1 during a .clear()
         :return: N/A
         """
-        print(f"main_skill_index_changed: {new_index=}")
+        # print(f"main_skill_index_changed: {new_index=}")
         if new_index == -1:
             return
         # print("main_skill_index_changed.current_index ", new_index, self.combo_MainSkill.currentText())
@@ -1182,7 +1183,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.do_calcs()
 
     @Slot()
-    def update_status_bar(self, message="", timeout=5, colour=""):
+    def update_status_bar(self, message: str = "", timeout: int = 5, colour: str = "") -> None:
         """
         Update the status bar. Use default text if no message is supplied.
         This triggers when the message is set and when it is cleared after the time out.
@@ -1209,7 +1210,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.statusbar_MainWindow.showMessage(message, timeout * 1000)
 
     @Slot()
-    def do_calcs(self, test_item=None, test_node=None):
+    def do_calcs(self, test_item: None = None, test_node: None = None) -> None:
         """
         Do and Display Calculations
         :param: test_item: Item() - future comparison
@@ -1233,6 +1234,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not self.alerting:
             # Don't keep calculating as a build is loaded
             return
+
         self.config_ui.save()
         save_to_xml("c:/git/_PathOfBuilding.play/src/Builds/stats.xml", self.build.json, True)
         try:
@@ -1267,6 +1269,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         # Now show them
+        print(f"{self.player.current_skill=}")
         self.textedit_Statistics.clear()
         just_added_blank = False  # Prevent duplicate blank lines. Faster than investigating the last line added of a QLineEdit.
         for stat_name in player_stats_list:
@@ -1274,7 +1277,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # ToDo: What are the other entries for ??
                 # Speed has attack, spell and "". How do we differentiate?
                 stat = deepcopy(player_stats_list[stat_name]["attack"])
-            elif stat_name in ("TotalDPS", "ImpaleDPS", "WithImpaleDPS"):
+            elif stat_name in ("ImpaleDPS", "WithImpaleDPS"):
                 stat = deepcopy(player_stats_list[stat_name]["showAverage"])
             else:
                 stat = deepcopy(player_stats_list[stat_name])
@@ -1295,7 +1298,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     stat_condition = stat.get("condition", bad_text)
                     if stat_condition != bad_text:
                         if stat_condition == "Y":
-                            display, stat = self.player.stat_conditions(stat_name, stat_value, stat)
+                            display, stat = self.player.stat_conditions(
+                                stat_name, stat_value, stat, self.player.current_skill.get("baseFlags", [])
+                            )
                         else:
                             display = self.player.conditions.get(stat.get("condition"), False)
                     else:
