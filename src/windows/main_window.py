@@ -1233,7 +1233,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
 
         self.config_ui.save()
-        save_to_xml("c:/git/_PathOfBuilding.play/src/Builds/stats.xml", self.build.json, True)
+        save_to_xml(f"{self.settings._exe_dir}/lua/src/Builds/stats.xml", self.build.json, True)
 
         # self.thread_data = []
         # self.calc_process = threading.Thread(target=self.do_calcs_thread(self.thread_data), daemon=True, name="PyPoB Do Calcs")
