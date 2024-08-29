@@ -909,6 +909,7 @@ class ItemsUI:
     @Slot()
     def item_list_double_clicked(self, lwi: QListWidgetItem):
         """Actions for editing an item"""
+        # print(f"item_list_double_clicked: {lwi}")
         self.win.btn_DeleteItem.setEnabled(True)
         dlg = CraftItemsDlg(self.settings, self.base_items, self.mods, "save", self.win)
         dlg.item = lwi.data(Qt.UserRole)

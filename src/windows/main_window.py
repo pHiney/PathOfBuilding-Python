@@ -697,7 +697,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             path, name = os.path.split(name)
             xml = file_extension == ".xml"
             if xml:
-                self.build.new(load_from_xml(filename_or_dict))
+                self.build.new(load_from_xml(filename_or_dict, self.items_ui.base_items))
                 self.build.filename = filename_or_dict.replace(".xml", ".json")
                 self.build.name = name
             else:
@@ -1073,7 +1073,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.import_character_name = ""
         self.import_league = ""
         if dlg.xml is not None:
-            self.build_loader(load_from_xml(dlg.xml), "Imported")
+            self.build_loader(load_from_xml(dlg.xml, self.items_ui.base_items), "Imported")
         elif dlg.character_data is not None:
             self.account_name = dlg.lineedit_Account.text()
             self.import_character_name = dlg.character_data["character"]["name"]
@@ -1227,7 +1227,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         # Leave this on so we can see how many times do_calcs is called in a row. Ideally only once.
         # But changing trees ran five times on tree change.
-        _debug(f"do_calcs: {self.alerting=}")
+        # _debug(f"do_calcs: {self.alerting=}")
         if not self.alerting or self.calc_process is not None:
             # Don't keep calculating as a build is loaded or a thread running
             return
@@ -1313,9 +1313,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     stat_condition = stat.get("condition", bad_text)
                     if stat_condition != bad_text:
                         if stat_condition == "Y":
-                            display, stat = self.player.stat_conditions(
-                                stat_name, stat_value, stat, self.player.current_skill.get("baseFlags", [])
-                            )
+                            base_flags = self.player.current_skill and self.player.current_skill.get("baseFlags", []) or []
+                            display, stat = self.player.stat_conditions(stat_name, stat_value, stat, base_flags)
                         else:
                             display = self.player.conditions.get(stat.get("condition"), False)
                     else:

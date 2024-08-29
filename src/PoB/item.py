@@ -125,7 +125,10 @@ class Item:
         if m:
             new_value = m.group(1)
         self.pob_item["base_name"] = new_value
-        self.name = f'{self.title and f"{self.title}, " or ""}{new_value}'
+        if self.rarity in ("NORMAL", "MAGIC"):
+            self.name = self.title
+        else:
+            self.name = f'{self.title and f"{self.title}, " or ""}{new_value}'
         # Look up base_items to get the item type
         self.base_item = self.base_items.get(new_value, None)
         if self.base_item is not None:

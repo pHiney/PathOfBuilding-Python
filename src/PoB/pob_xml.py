@@ -230,11 +230,12 @@ def renumber_variants(mods):
     return new_list
 
 
-def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
+def load_item_from_xml(items_free_text, base_items, _id=0, debug_lines=False):
     """
     Load internal structures from the free text version of item's xml
 
     :param items_free_text: str: contents of the item's xml
+    :param base_items: dict. The items from base_items.json. For magic items to find their bases.
     :param _id: int: id of the item for builds, 0 for uniques import
     :param debug_lines: Temporary to debug the process
     :return: boolean
@@ -347,8 +348,14 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
     json_item["Rarity"] = m.group(2).upper()
     # The 2nd line is either the title or the name of a magic/normal item. This is why Rarity is first.
     line = lines.pop(0)
-    if json_item["Rarity"] in ("NORMAL", "MAGIC"):
+    if json_item["Rarity"] == "NORMAL":
         json_item["base_name"] = line
+    elif json_item["Rarity"] == "MAGIC":
+        json_item["title"] = line
+        # Find the base name in the title
+        b = [base for base in base_items.keys() if base in line]
+        if b:
+            json_item["base_name"] = b[0]
     else:
         json_item["title"] = line
         line = lines.pop(0)
@@ -452,13 +459,14 @@ def load_item_from_xml(items_free_text, _id=0, debug_lines=False):
     # load_item_from_xml
 
 
-def load_from_xml(filename_or_xml):
+def load_from_xml(filename_or_xml, base_items):
     """
     Convert a lua PoB xml to a dict.
     lua PoB won't put a single Gem, Item, Spec, etc in a list. It will just appear as a single dict()
     So there are lots of checks for this and adding a single entry into a list().
     lua PoB is 1 based in it's counting, pyPob is 0 based
     :param filename_or_xml: str|dict: either a filepath for loading an xml or an ET from the import dialog
+    :param base_items: dict. The items from base_items.json. For load_item_from_xml().
     :return: dict
     """
 
@@ -711,7 +719,7 @@ def load_from_xml(filename_or_xml):
     if type(xml_items["Item"]) is dict:  # Should be a list but will be a dict if only one entry
         xml_items["Item"] = [xml_items["Item"]]
     for xml_item in xml_items["Item"]:
-        json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item["#text"], int(xml_item.get("@id", "0"))))
+        json_PoB["Items"]["Items"].append(load_item_from_xml(xml_item["#text"], base_items, int(xml_item.get("@id", "0"))))
     # ItemSets
     json_PoB["Items"]["ItemSets"].clear()  # get rid of the default itemset
     if type(xml_items["ItemSet"]) is dict:  # Should be a list but will be a dict if only one entry
