@@ -14,15 +14,14 @@ import os
 import platform
 import pyperclip
 import re
-import subprocess
 import sys
 
 from typing import Union
 from pathlib import Path
 import psutil
 
-from PySide6.QtCore import Qt, QPoint, QProcess, Slot
 from PySide6.QtGui import QAction, QColor, QPalette
+from PySide6.QtCore import Qt, QPoint, QProcess, Slot
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
